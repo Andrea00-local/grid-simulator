@@ -52,7 +52,8 @@ interface GaugeProps {
 
 function Gauge({ label, description, value, target, currentText, targetText }: GaugeProps) {
   const clamped     = Math.min(1, Math.max(0, value))
-  const needleAngle = 180 - clamped * 180          // 180° = bad (left), 0° = good (right)
+  // CSS rotate() is clockwise; arc goes counterclockwise left→top→right, so negate
+  const cssRotation = clamped * 180 - 180           // −180° = bad (left), 0° = good (right)
   const targetAngle = 180 - Math.min(1, target) * 180
   const isGood      = value >= target
 
@@ -85,7 +86,7 @@ function Gauge({ label, description, value, target, currentText, targetText }: G
         <g
           style={{
             transformOrigin: `${CX}px ${CY}px`,
-            transform: `rotate(${needleAngle}deg)`,
+            transform: `rotate(${cssRotation}deg)`,
             transition: 'transform 0.65s cubic-bezier(0.34, 1.4, 0.64, 1)',
           }}
           filter="url(#needle-shadow)"
