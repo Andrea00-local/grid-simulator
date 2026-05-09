@@ -4,7 +4,7 @@ import { LevelIntro } from '@/components/layout/LevelIntro'
 import { DataSources } from '@/components/ui/DataSources'
 import { ObjectivesPanel } from '@/components/ui/ObjectivesPanel'
 import { ControlsPanel } from '@/components/controls/ControlsPanel'
-import { EnergyMixChart } from '@/components/charts/EnergyMixChart'
+import { EnergyDonutChart } from '@/components/charts/EnergyDonutChart'
 import { EmissionsChart } from '@/components/charts/EmissionsChart'
 import { BalanceIndicator } from '@/components/charts/BalanceIndicator'
 import { ITALY_CO2_BASELINE_MT } from '@/models/constants'
@@ -45,7 +45,7 @@ export default function Level1() {
 
         <div className="space-y-6">
           <div className="gs-card p-5">
-            <EnergyMixChart result={result} />
+            <EnergyDonutChart result={result} />
           </div>
 
           <div className="grid sm:grid-cols-2 gap-6">

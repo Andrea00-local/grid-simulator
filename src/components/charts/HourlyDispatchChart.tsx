@@ -5,6 +5,21 @@ import {
 import type { HourlyPoint, Source } from '@/models/types'
 import { SOURCE_DEFINITIONS } from '@/models/sources'
 
+const SUN_MOON: Record<number, string> = {
+  0: '🌙', 6: '🌅', 12: '☀️', 18: '🌆', 23: '🌑',
+}
+
+function SunMoonTick({ x, y, payload }: { x?: number; y?: number; payload?: { value: number } }) {
+  const h    = payload?.value ?? 0
+  const icon = SUN_MOON[h] ?? ''
+  return (
+    <g transform={`translate(${x},${y})`}>
+      <text x={0} y={0} dy={12} textAnchor="middle" fontSize={10} fill="#9ca3af">{h}:00</text>
+      <text x={0} y={0} dy={25} textAnchor="middle" fontSize={13}>{icon}</text>
+    </g>
+  )
+}
+
 // Stack bottom → top: baseload first, then variable, then flexible (gas = shows duck curve)
 const STACK_ORDER: Source[] = [
   'nuclear', 'coal', 'imports', 'biomass', 'geothermal',
@@ -49,8 +64,8 @@ export function HourlyDispatchChart({ hours, storageCapacityGWh, title }: Props)
           <XAxis
             dataKey="hour"
             ticks={[0, 6, 12, 18, 23]}
-            tickFormatter={h => `${h}:00`}
-            tick={{ fontSize: 11 }}
+            tick={<SunMoonTick />}
+            height={42}
           />
           <YAxis
             width={38}

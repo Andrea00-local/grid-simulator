@@ -5,9 +5,8 @@ import { DataSources } from '@/components/ui/DataSources'
 import { ObjectivesPanel } from '@/components/ui/ObjectivesPanel'
 import { LEVEL2_CONFIG } from '@/simulation/levels/level2'
 import { ControlsPanel } from '@/components/controls/ControlsPanel'
-import { EnergyMixChart } from '@/components/charts/EnergyMixChart'
 import { EmissionsChart } from '@/components/charts/EmissionsChart'
-import { MonthlyChart } from '@/components/charts/MonthlyChart'
+import { MonthlyStreamChart } from '@/components/charts/MonthlyStreamChart'
 import { MonthlyMixChart } from '@/components/charts/MonthlyMixChart'
 import { BalanceIndicator } from '@/components/charts/BalanceIndicator'
 import { ITALY_CO2_BASELINE_MT } from '@/models/constants'
@@ -57,9 +56,9 @@ export default function Level2() {
         <ControlsPanel />
 
         <div className="space-y-6">
-          {/* Monthly chart */}
+          {/* Monthly stream chart */}
           <div className="gs-card p-5">
-            <MonthlyChart
+            <MonthlyStreamChart
               periods={result.periods}
               selectedMonth={selectedMonth}
               onSelectMonth={setSelectedMonth}
@@ -114,14 +113,9 @@ export default function Level2() {
             />
           </div>
 
-          {/* Annual charts */}
-          <div className="grid sm:grid-cols-2 gap-6">
-            <div className="gs-card p-5">
-              <EnergyMixChart result={result} />
-            </div>
-            <div className="gs-card p-5">
-              <EmissionsChart emissionsMt={emissionsMt} />
-            </div>
+          {/* Annual emissions */}
+          <div className="gs-card p-5">
+            <EmissionsChart emissionsMt={emissionsMt} />
           </div>
 
           <div className="gs-callout-emerald p-4">

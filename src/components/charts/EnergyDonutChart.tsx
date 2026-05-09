@@ -1,7 +1,9 @@
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts'
-import type { PeriodResult, Source } from '@/models/types'
+import type { SimResult, Source } from '@/models/types'
 import { SOURCE_DEFINITIONS } from '@/models/sources'
+import { useTheme } from '@/contexts/ThemeContext'
 
+// Grouped for cleaner donut segments
 const GROUPS: { label: string; sources: Source[] }[] = [
   { label: 'Solare',   sources: ['solar'] },
   { label: 'Eolico',   sources: ['wind_onshore', 'wind_offshore'] },
@@ -15,28 +17,25 @@ const GROUPS: { label: string; sources: Source[] }[] = [
 ]
 
 interface Props {
-  period: PeriodResult
+  result: SimResult
 }
 
-export function MonthlyMixChart({ period }: Props) {
-  const balanceTWh = period.balance / 1_000_000
-  const demandTWh  = period.demand  / 1_000_000
-  const isSurplus  = balanceTWh >= 0
+export function EnergyDonutChart({ result }: Props) {
+  const { } = useTheme()
+  const prod = result.totalProductionBySource
 
   const segments = GROUPS
     .map(({ label, sources }) => ({
       label,
-      twh:   sources.reduce((s, src) => s + (period.production[src] ?? 0) / 1_000_000, 0),
+      twh:   sources.reduce((s, src) => s + (prod[src] ?? 0) / 1_000_000, 0),
       color: SOURCE_DEFINITIONS[sources[0]].color,
     }))
-    .filter(s => s.twh > 0.01)
+    .filter(s => s.twh > 0.1)
 
-  const totalTWh = segments.reduce((s, x) => s + x.twh, 0)
+  const totalTWh     = segments.reduce((s, x) => s + x.twh, 0)
+  const renewablePct = (result.renewableShare * 100).toFixed(0)
 
-  const CustomTooltip = ({ active, payload }: {
-    active?: boolean
-    payload?: { payload: typeof segments[0] }[]
-  }) => {
+  const CustomTooltip = ({ active, payload }: { active?: boolean; payload?: { payload: typeof segments[0] }[] }) => {
     if (!active || !payload?.[0]) return null
     const d = payload[0].payload
     return (
@@ -53,36 +52,22 @@ export function MonthlyMixChart({ period }: Props) {
 
   return (
     <div>
-      {/* Balance banner */}
-      <div className={`rounded-xl p-3 mb-4 border flex items-center justify-between ${
-        isSurplus
-          ? 'bg-green-50 dark:bg-green-950/40 border-green-200 dark:border-green-900/50'
-          : 'bg-red-50 dark:bg-red-950/40 border-red-200 dark:border-red-900/50'
-      }`}>
-        <div>
-          <p className={`text-xs font-semibold uppercase tracking-wide ${isSurplus ? 'text-green-600' : 'text-red-500'}`}>
-            {isSurplus ? 'Surplus' : 'Deficit'}
-          </p>
-          <p className={`text-xl font-bold tabular-nums ${isSurplus ? 'text-green-700 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
-            {isSurplus ? '+' : ''}{balanceTWh.toFixed(1)} TWh
-          </p>
-        </div>
-        <div className="text-right text-xs text-gray-500 dark:text-slate-400">
-          <p>Produzione: <strong className="text-gray-700 dark:text-slate-200">{((period.demand + period.balance) / 1_000_000).toFixed(1)} TWh</strong></p>
-          <p>Domanda: <strong className="text-gray-700 dark:text-slate-200">{demandTWh.toFixed(1)} TWh</strong></p>
-          <p>CO₂: <strong className="text-gray-700 dark:text-slate-200">{(period.emissions / 1_000_000).toFixed(2)} MtCO₂</strong></p>
-        </div>
+      <div className="flex items-center justify-between mb-2">
+        <h3 className="text-sm font-semibold text-gray-700 dark:text-slate-300">Mix energetico (TWh/anno)</h3>
+        <span className="text-xs text-gray-500 dark:text-slate-400">
+          Domanda: {(result.totalDemand / 1_000_000).toFixed(0)} TWh
+        </span>
       </div>
 
-      <div className="relative" style={{ height: 200 }}>
-        <ResponsiveContainer width="100%" height={200}>
+      <div className="relative" style={{ height: 220 }}>
+        <ResponsiveContainer width="100%" height={220}>
           <PieChart margin={{ top: 5, right: 5, bottom: 5, left: 5 }}>
             <Pie
               data={segments}
               cx="50%"
               cy="50%"
-              innerRadius={60}
-              outerRadius={88}
+              innerRadius={68}
+              outerRadius={98}
               dataKey="twh"
               nameKey="label"
               paddingAngle={1.5}
@@ -99,10 +84,13 @@ export function MonthlyMixChart({ period }: Props) {
 
         {/* Center text */}
         <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-          <p className="text-xl font-bold tabular-nums text-gray-900 dark:text-slate-100">
-            {totalTWh.toFixed(1)}
+          <p className="text-2xl font-bold tabular-nums text-gray-900 dark:text-slate-100">
+            {totalTWh.toFixed(0)}
           </p>
-          <p className="text-xs text-gray-400 dark:text-slate-500">TWh</p>
+          <p className="text-xs text-gray-400 dark:text-slate-500">TWh prodotti</p>
+          <p className={`text-sm font-semibold mt-1 ${Number(renewablePct) >= 65 ? 'text-green-600' : 'text-amber-500'}`}>
+            {renewablePct}% rinnovabile
+          </p>
         </div>
       </div>
 
