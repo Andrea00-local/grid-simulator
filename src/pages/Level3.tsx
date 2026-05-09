@@ -1,15 +1,14 @@
 import { useState, useEffect, useMemo } from 'react'
 import { LevelIntro } from '@/components/layout/LevelIntro'
 import { DataSources } from '@/components/ui/DataSources'
-import { Leaf, Zap, Flame, Wind, BatteryCharging } from 'lucide-react'
+import { ObjectivesPanel } from '@/components/ui/ObjectivesPanel'
+import { Zap, BatteryCharging } from 'lucide-react'
 import { useSimStore } from '@/store/simulationStore'
 import { LEVEL3_CONFIG } from '@/simulation/levels/level3'
 import { computeLevel3 } from '@/models/balanceHourly'
 import { MEGAPACK_HOURS } from '@/models/hourlyProfiles'
 import { ControlsPanel } from '@/components/controls/ControlsPanel'
 import { HourlyDispatchChart } from '@/components/charts/HourlyDispatchChart'
-import { KpiCard } from '@/components/charts/KpiCard'
-import { formatPercent, formatMtCO2 } from '@/lib/utils'
 import { ITALY_CO2_BASELINE_MT } from '@/models/constants'
 import type { Scenario } from '@/models/types'
 
@@ -52,7 +51,8 @@ export default function Level3() {
 
   const storageCapacityGWh = storagePowerGW * MEGAPACK_HOURS
   const selectedDay = level3.months[selectedMonth]
-  const co2Change = level3.emissionsMtAnnual - ITALY_CO2_BASELINE_MT
+  const coverage    = Math.max(0, 1 - level3.annualDeficitTWh / level3.annualDemandTWh)
+  const avoidedMt   = ITALY_CO2_BASELINE_MT - level3.emissionsMtAnnual
 
   return (
     <>
@@ -72,40 +72,24 @@ export default function Level3() {
         </p>
       </div>
 
-      {/* Annual KPIs */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
-        <KpiCard
-          title="Quota rinnovabile"
-          value={formatPercent(level3.renewableShareAnnual)}
-          unit="%"
-          sub="Media annua (extrap.)"
-          trend={level3.renewableShareAnnual >= 0.5 ? 'good' : level3.renewableShareAnnual >= 0.39 ? 'neutral' : 'bad'}
-          icon={<Leaf className="w-3.5 h-3.5" />}
-        />
-        <KpiCard
-          title="Emissioni CO₂"
-          value={formatMtCO2(level3.emissionsMtAnnual)}
-          unit="MtCO₂"
-          sub={`${co2Change >= 0 ? '+' : ''}${co2Change.toFixed(1)} Mt vs 2023`}
-          trend={level3.emissionsMtAnnual <= 35 ? 'good' : level3.emissionsMtAnnual <= ITALY_CO2_BASELINE_MT ? 'neutral' : 'bad'}
-          icon={<Wind className="w-3.5 h-3.5" />}
-        />
-        <KpiCard
-          title="Deficit annuo"
-          value={level3.annualDeficitTWh < 0.1 ? '0' : `-${level3.annualDeficitTWh.toFixed(1)}`}
-          unit="TWh"
-          sub={level3.annualDeficitTWh < 0.1 ? 'Domanda interamente coperta' : 'Domanda non coperta'}
-          trend={level3.annualDeficitTWh < 1 ? 'good' : level3.annualDeficitTWh < 20 ? 'neutral' : 'bad'}
-          icon={<Flame className="w-3.5 h-3.5" />}
-        />
-        <KpiCard
-          title="Energia stoccata"
-          value={level3.annualBatteryCycledTWh < 0.1 ? '—' : level3.annualBatteryCycledTWh.toFixed(1)}
-          unit={level3.annualBatteryCycledTWh < 0.1 ? '' : 'TWh'}
-          sub={storagePowerGW > 0 ? `${storagePowerGW} GW / ${storageCapacityGWh.toFixed(0)} GWh installati` : 'Nessuna batteria'}
-          trend={storagePowerGW > 0 ? 'good' : 'neutral'}
-          icon={<BatteryCharging className="w-3.5 h-3.5" />}
-        />
+      <ObjectivesPanel
+        coverage={coverage}
+        renewableShare={level3.renewableShareAnnual}
+        avoidedMt={avoidedMt}
+      />
+
+      {/* Storage KPI */}
+      <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4 flex items-center gap-3 mb-8 -mt-2">
+        <BatteryCharging className="w-4 h-4 text-gray-400 flex-shrink-0" />
+        <div className="flex-1 min-w-0">
+          <span className="text-xs text-gray-500">Energia stoccata annua</span>
+          <span className="ml-2 text-sm font-bold text-gray-800 tabular-nums">
+            {level3.annualBatteryCycledTWh < 0.1 ? '—' : `${level3.annualBatteryCycledTWh.toFixed(1)} TWh`}
+          </span>
+        </div>
+        <span className="text-xs text-gray-400">
+          {storagePowerGW > 0 ? `${storagePowerGW} GW / ${storageCapacityGWh.toFixed(0)} GWh installati` : 'Nessuna batteria installata'}
+        </span>
       </div>
 
       {/* Main layout */}
@@ -212,7 +196,7 @@ export default function Level3() {
               },
               {
                 label: 'Rinnovabili oggi',
-                value: formatPercent(selectedDay.renewableShareDay) + '%',
+                value: `${(selectedDay.renewableShareDay * 100).toFixed(1)}%`,
                 sub: `${(selectedDay.dailyRenewMWh / 1_000).toFixed(0)} GWh`,
               },
               {

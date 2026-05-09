@@ -1,7 +1,8 @@
 import { useState, useEffect, useMemo } from 'react'
-import { Zap, MapPin, ArrowRightLeft, Leaf } from 'lucide-react'
+import { Zap, MapPin } from 'lucide-react'
 import { LevelIntro } from '@/components/layout/LevelIntro'
 import { DataSources } from '@/components/ui/DataSources'
+import { ObjectivesPanel } from '@/components/ui/ObjectivesPanel'
 import { useSimStore } from '@/store/simulationStore'
 import { LEVEL4_CONFIG } from '@/simulation/levels/level4'
 import { computeLevel4 } from '@/models/balanceRegional'
@@ -9,8 +10,6 @@ import { REGIONS, PLAN_LABELS } from '@/models/italianRegions'
 import { ItalyGeoMap } from '@/components/map/ItalyGeoMap'
 import { RegionDetail } from '@/components/map/RegionDetail'
 import { ControlsPanel } from '@/components/controls/ControlsPanel'
-import { KpiCard } from '@/components/charts/KpiCard'
-import { formatPercent, formatMtCO2 } from '@/lib/utils'
 import { ITALY_CO2_BASELINE_MT } from '@/models/constants'
 import * as RadixSlider from '@radix-ui/react-slider'
 import type { RegionId, DistributionPlan } from '@/models/types'
@@ -35,7 +34,8 @@ export default function Level4() {
     [renewableCapacity, directProduction, demandTWh, plan, txBoost],
   )
 
-  const co2Change = level4.emissionsMtAnnual - ITALY_CO2_BASELINE_MT
+  const coverage  = Math.max(0, 1 - level4.annualDeficitTWh / demandTWh)
+  const avoidedMt = ITALY_CO2_BASELINE_MT - level4.emissionsMtAnnual
 
   return (
     <>
@@ -56,40 +56,31 @@ export default function Level4() {
         </p>
       </div>
 
-      {/* KPIs */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
-        <KpiCard
-          title="Regioni in deficit"
-          value={`${level4.regionsWithDeficit.length}`}
-          unit="/ 20"
-          sub={level4.regionsWithDeficit.length === 0 ? 'Tutte bilanciate' : level4.regionsWithDeficit.map(id => REGIONS[id].abbr).join(', ')}
-          trend={level4.regionsWithDeficit.length === 0 ? 'good' : level4.regionsWithDeficit.length <= 3 ? 'neutral' : 'bad'}
-          icon={<MapPin className="w-3.5 h-3.5" />}
-        />
-        <KpiCard
-          title="Quota rinnovabile"
-          value={formatPercent(level4.nationalRenewableShare)}
-          unit="%"
-          sub="Media nazionale"
-          trend={level4.nationalRenewableShare >= 0.5 ? 'good' : level4.nationalRenewableShare >= 0.39 ? 'neutral' : 'bad'}
-          icon={<Leaf className="w-3.5 h-3.5" />}
-        />
-        <KpiCard
-          title="Surplus sprecato"
-          value={level4.annualSurplusTWh.toFixed(1)}
-          unit="TWh"
-          sub="Non instradabile"
-          trend={level4.annualSurplusTWh < 5 ? 'good' : 'neutral'}
-          icon={<Zap className="w-3.5 h-3.5" />}
-        />
-        <KpiCard
-          title="Emissioni CO₂"
-          value={formatMtCO2(level4.emissionsMtAnnual)}
-          unit="MtCO₂"
-          sub={`${co2Change >= 0 ? '+' : ''}${co2Change.toFixed(1)} Mt vs 2023`}
-          trend={level4.emissionsMtAnnual <= 35 ? 'good' : level4.emissionsMtAnnual <= ITALY_CO2_BASELINE_MT ? 'neutral' : 'bad'}
-          icon={<ArrowRightLeft className="w-3.5 h-3.5" />}
-        />
+      <ObjectivesPanel
+        coverage={coverage}
+        renewableShare={level4.nationalRenewableShare}
+        avoidedMt={avoidedMt}
+      />
+
+      {/* Regional deficit summary */}
+      <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4 flex items-center gap-3 mb-8 -mt-2">
+        <MapPin className="w-4 h-4 text-gray-400 flex-shrink-0" />
+        <div className="flex-1 min-w-0">
+          <span className="text-xs text-gray-500">Regioni in deficit</span>
+          <span className="ml-2 text-sm font-bold text-gray-800 tabular-nums">
+            {level4.regionsWithDeficit.length} / 20
+          </span>
+        </div>
+        <span className="text-xs text-gray-400 truncate">
+          {level4.regionsWithDeficit.length === 0
+            ? 'Tutte le regioni sono bilanciate'
+            : level4.regionsWithDeficit.map(id => REGIONS[id].abbr).join(', ')}
+        </span>
+        <Zap className="w-4 h-4 text-gray-400 flex-shrink-0 ml-4" />
+        <span className="text-xs text-gray-500">Surplus non instradabile</span>
+        <span className="text-sm font-bold text-gray-800 tabular-nums ml-1">
+          {level4.annualSurplusTWh.toFixed(1)} TWh
+        </span>
       </div>
 
       {/* Main grid */}

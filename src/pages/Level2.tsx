@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react'
-import { Leaf, Wind, Zap, Flame } from 'lucide-react'
 import { useSimStore } from '@/store/simulationStore'
 import { LevelIntro } from '@/components/layout/LevelIntro'
 import { DataSources } from '@/components/ui/DataSources'
+import { ObjectivesPanel } from '@/components/ui/ObjectivesPanel'
 import { LEVEL2_CONFIG } from '@/simulation/levels/level2'
 import { ControlsPanel } from '@/components/controls/ControlsPanel'
 import { EnergyMixChart } from '@/components/charts/EnergyMixChart'
@@ -10,10 +10,7 @@ import { EmissionsChart } from '@/components/charts/EmissionsChart'
 import { MonthlyChart } from '@/components/charts/MonthlyChart'
 import { MonthlyMixChart } from '@/components/charts/MonthlyMixChart'
 import { BalanceIndicator } from '@/components/charts/BalanceIndicator'
-import { KpiCard } from '@/components/charts/KpiCard'
-import { formatPercent, formatMtCO2 } from '@/lib/utils'
 import { ITALY_CO2_BASELINE_MT } from '@/models/constants'
-import { MONTH_LABELS } from '@/models/profiles'
 
 export default function Level2() {
   const [showIntro, setShowIntro] = useState(true)
@@ -26,14 +23,11 @@ export default function Level2() {
   }, [setLevelConfig])
 
   const emissionsMt = result.totalEmissionsMt
-  const co2Change   = emissionsMt - ITALY_CO2_BASELINE_MT
   const surplusTWh  = result.totalSurplusMWh / 1_000_000
   const deficitTWh  = result.totalDeficitMWh / 1_000_000
   const netTWh      = result.totalBalance / 1_000_000
-
-  const deficitMonths = result.periods
-    .map((p, i) => ({ i, balance: p.balance / 1_000_000 }))
-    .filter((m) => m.balance < -0.05)
+  const coverage    = Math.max(0, 1 - result.totalDeficitMWh / result.totalDemand)
+  const avoidedMt   = ITALY_CO2_BASELINE_MT - emissionsMt
 
   const selectedPeriod = selectedMonth !== null ? result.periods[selectedMonth] : null
 
@@ -53,45 +47,11 @@ export default function Level2() {
         </p>
       </div>
 
-      {/* Annual KPIs */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
-        <KpiCard
-          title="Quota rinnovabile"
-          value={formatPercent(result.renewableShare)}
-          unit="%"
-          sub="Baseline 2023: 39%"
-          trend={result.renewableShare >= 0.5 ? 'good' : result.renewableShare >= 0.39 ? 'neutral' : 'bad'}
-          icon={<Leaf className="w-3.5 h-3.5" />}
-        />
-        <KpiCard
-          title="Emissioni CO₂"
-          value={formatMtCO2(emissionsMt)}
-          unit="MtCO₂"
-          sub={`${co2Change >= 0 ? '+' : ''}${co2Change.toFixed(1)} Mt vs 2023`}
-          trend={emissionsMt <= 35 ? 'good' : emissionsMt <= ITALY_CO2_BASELINE_MT ? 'neutral' : 'bad'}
-          icon={<Wind className="w-3.5 h-3.5" />}
-        />
-        <KpiCard
-          title="Energia sprecata"
-          value={`+${surplusTWh.toFixed(1)}`}
-          unit="TWh"
-          sub="Surplus mensili cumulati"
-          trend={surplusTWh < 5 ? 'good' : 'neutral'}
-          icon={<Flame className="w-3.5 h-3.5" />}
-        />
-        <KpiCard
-          title="Domanda non coperta"
-          value={`-${deficitTWh.toFixed(1)}`}
-          unit="TWh"
-          sub={
-            deficitMonths.length === 0
-              ? 'Nessun mese in deficit'
-              : `${deficitMonths.length} mes${deficitMonths.length === 1 ? 'e' : 'i'}: ${deficitMonths.map((m) => MONTH_LABELS[m.i]).join(', ')}`
-          }
-          trend={deficitTWh < 1 ? 'good' : deficitTWh < 20 ? 'neutral' : 'bad'}
-          icon={<Zap className="w-3.5 h-3.5" />}
-        />
-      </div>
+      <ObjectivesPanel
+        coverage={coverage}
+        renewableShare={result.renewableShare}
+        avoidedMt={avoidedMt}
+      />
 
       <div className="grid lg:grid-cols-[340px,1fr] gap-8">
         <ControlsPanel />
