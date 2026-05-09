@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { ThemeProvider } from '@/contexts/ThemeContext'
 import { AppShell } from '@/components/layout/AppShell'
 import Home from '@/pages/Home'
 import Level1 from '@/pages/Level1'
@@ -8,6 +9,7 @@ import Level4 from '@/pages/Level4'
 
 export default function App() {
   return (
+    <ThemeProvider>
     <BrowserRouter>
       <AppShell>
         <Routes>
@@ -19,5 +21,6 @@ export default function App() {
         </Routes>
       </AppShell>
     </BrowserRouter>
+    </ThemeProvider>
   )
 }

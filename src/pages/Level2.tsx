@@ -40,8 +40,8 @@ export default function Level2() {
           <span className="bg-emerald-600 text-white text-xs rounded-full px-2 py-0.5">Livello 2</span>
           Stagionalità Mensile
         </div>
-        <h1 className="text-2xl font-bold text-gray-900">Bilancio mese per mese</h1>
-        <p className="text-gray-500 text-sm mt-1">
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-slate-100">Bilancio mese per mese</h1>
+        <p className="text-gray-500 dark:text-slate-400 text-sm mt-1">
           Il termico copre la domanda residua in proporzione — ma nei mesi con alto solare il surplus
           non compensa il deficit invernale. Clicca su ogni mese per il dettaglio.
         </p>
@@ -58,7 +58,7 @@ export default function Level2() {
 
         <div className="space-y-6">
           {/* Monthly chart */}
-          <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
+          <div className="gs-card p-5">
             <MonthlyChart
               periods={result.periods}
               selectedMonth={selectedMonth}
@@ -96,7 +96,7 @@ export default function Level2() {
 
           {/* Month detail */}
           {selectedPeriod && (
-            <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
+            <div className="gs-card p-5">
               <h3 className="text-sm font-semibold text-gray-700 mb-4">
                 Mix energetico — {selectedPeriod.label}
               </h3>
@@ -105,7 +105,7 @@ export default function Level2() {
           )}
 
           {/* Gross balance summary */}
-          <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
+          <div className="gs-card p-5">
             <BalanceIndicator
               balanceTWh={netTWh}
               surplusTWh={surplusTWh}
@@ -116,15 +116,15 @@ export default function Level2() {
 
           {/* Annual charts */}
           <div className="grid sm:grid-cols-2 gap-6">
-            <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
+            <div className="gs-card p-5">
               <EnergyMixChart result={result} />
             </div>
-            <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
+            <div className="gs-card p-5">
               <EmissionsChart emissionsMt={emissionsMt} />
             </div>
           </div>
 
-          <div className="bg-emerald-50 rounded-xl border border-emerald-100 p-4">
+          <div className="gs-callout-emerald p-4">
             <h3 className="text-sm font-semibold text-emerald-800 mb-1">Il punto chiave del Livello 2</h3>
             <p className="text-xs text-emerald-700 leading-relaxed">
               Il bilancio annuale netto può essere zero, ma nascondere <strong>surplus estivi</strong> (solare

@@ -27,8 +27,8 @@ export default function Level1() {
           <span className="bg-blue-600 text-white text-xs rounded-full px-2 py-0.5">Livello 1</span>
           Bilancio Nazionale Annuale
         </div>
-        <h1 className="text-2xl font-bold text-gray-900">Costruisci il mix energetico italiano</h1>
-        <p className="text-gray-500 text-sm mt-1">
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-slate-100">Costruisci il mix energetico italiano</h1>
+        <p className="text-gray-500 dark:text-slate-400 text-sm mt-1">
           Rinnovabili in GW (produzione da capacity factor) · Fossili e nucleare in TWh (produzione diretta).
           Il bilancio può essere negativo — la domanda non si auto-copre.
         </p>
@@ -44,20 +44,20 @@ export default function Level1() {
         <ControlsPanel />
 
         <div className="space-y-6">
-          <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
+          <div className="gs-card p-5">
             <EnergyMixChart result={result} />
           </div>
 
           <div className="grid sm:grid-cols-2 gap-6">
-            <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
+            <div className="gs-card p-5">
               <EmissionsChart emissionsMt={emissionsMt} />
             </div>
-            <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
+            <div className="gs-card p-5">
               <BalanceIndicator balanceTWh={balanceTWh} />
             </div>
           </div>
 
-          <div className="bg-blue-50 rounded-xl border border-blue-100 p-4">
+          <div className="gs-callout-blue p-4">
             <h3 className="text-sm font-semibold text-blue-800 mb-1">Come funziona il modello</h3>
             <p className="text-xs text-blue-700 leading-relaxed">
               Le <strong>rinnovabili</strong> producono in base al capacity factor (solare ~10%, eolico ~22%).

@@ -2,13 +2,58 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ── CSS variables (consumed by Recharts props via JS) ───────────────────── */
+:root {
+  --chart-grid:    #e2e8f0;
+  --chart-tick:    #6b7280;
+  --chart-tooltip-bg:     #ffffff;
+  --chart-tooltip-border: #e5e7eb;
+  --chart-tooltip-text:   #111827;
+}
+.dark {
+  --chart-grid:    #1e293b;
+  --chart-tick:    #94a3b8;
+  --chart-tooltip-bg:     #1e293b;
+  --chart-tooltip-border: #334155;
+  --chart-tooltip-text:   #f1f5f9;
+}
+
 @layer base {
-  * {
-    box-sizing: border-box;
-  }
+  * { box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
 
   body {
-    @apply bg-gray-50 text-gray-900 antialiased;
-    font-family: system-ui, -apple-system, sans-serif;
+    @apply antialiased;
+    font-family: 'Inter', system-ui, sans-serif;
+    background-color: #FAFAF9;
+    color: #111827;
   }
+
+  .dark body {
+    background-color: #0F172A;
+    color: #f1f5f9;
+  }
+
+  /* Space Grotesk on all headings */
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Space Grotesk', 'Inter', system-ui, sans-serif;
+  }
+}
+
+@layer components {
+  /* Reusable card primitive — apply padding separately */
+  .gs-card {
+    @apply bg-white dark:bg-slate-800
+           rounded-xl
+           border border-gray-200 dark:border-slate-700
+           shadow-sm;
+  }
+
+  /* Callout boxes */
+  .gs-callout-blue   { @apply bg-blue-50   dark:bg-blue-950/40  rounded-xl border border-blue-100   dark:border-blue-900/50;  }
+  .gs-callout-green  { @apply bg-green-50  dark:bg-green-950/40 rounded-xl border border-green-100  dark:border-green-900/50; }
+  .gs-callout-amber  { @apply bg-amber-50  dark:bg-amber-950/40 rounded-xl border border-amber-100  dark:border-amber-900/50; }
+  .gs-callout-violet { @apply bg-violet-50 dark:bg-violet-950/40 rounded-xl border border-violet-100 dark:border-violet-900/50; }
+  .gs-callout-emerald{ @apply bg-emerald-50 dark:bg-emerald-950/40 rounded-xl border border-emerald-100 dark:border-emerald-900/50; }
 }

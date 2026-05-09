@@ -48,8 +48,8 @@ export default function Level4() {
           <span className="bg-violet-600 text-white text-xs rounded-full px-2 py-0.5">Livello 4</span>
           Distribuzione Territoriale
         </div>
-        <h1 className="text-2xl font-bold text-gray-900">Bilancio per regione</h1>
-        <p className="text-gray-500 text-sm mt-1">
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-slate-100">Bilancio per regione</h1>
+        <p className="text-gray-500 dark:text-slate-400 text-sm mt-1">
           Imposta le rinnovabili nazionali, scegli come distribuirle e vedi come il
           routing Dijkstra bilancia surplus e deficit sulle linee Terna. Clicca una regione
           per il dettaglio.
@@ -63,7 +63,7 @@ export default function Level4() {
       />
 
       {/* Regional deficit summary */}
-      <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4 flex items-center gap-3 mb-8 -mt-2">
+      <div className="gs-card p-4 flex items-center gap-3 mb-8 -mt-2">
         <MapPin className="w-4 h-4 text-gray-400 flex-shrink-0" />
         <div className="flex-1 min-w-0">
           <span className="text-xs text-gray-500">Regioni in deficit</span>
@@ -90,7 +90,7 @@ export default function Level4() {
         <div className="space-y-5">
 
           {/* Distribution plan */}
-          <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
+          <div className="gs-card p-5">
             <h2 className="text-sm font-semibold text-gray-700 mb-1">Piano di distribuzione</h2>
             <p className="text-xs text-gray-400 mb-3">Come vengono allocate le rinnovabili nazionali alle regioni</p>
             <div className="space-y-2">
@@ -111,7 +111,7 @@ export default function Level4() {
           </div>
 
           {/* Transmission boost */}
-          <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
+          <div className="gs-card p-5">
             <h2 className="text-sm font-semibold text-gray-700 mb-1">Potenziamento trasmissione</h2>
             <p className="text-xs text-gray-400 mb-3">Moltiplicatore sulle capacità Terna (1× = attuale)</p>
             <div className="flex items-center justify-between mb-3">
@@ -144,7 +144,7 @@ export default function Level4() {
         <div className="space-y-5">
 
           {/* Map */}
-          <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4">
+          <div className="gs-card p-4">
             <h3 className="text-sm font-semibold text-gray-700 mb-3">
               Bilancio regionale post-routing
               <span className="ml-2 text-xs font-normal text-gray-400">Clicca per dettaglio</span>
@@ -169,7 +169,7 @@ export default function Level4() {
 
           {/* Flow table */}
           {level4.flows.length > 0 && (
-            <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
+            <div className="gs-card p-5">
               <h3 className="text-sm font-semibold text-gray-700 mb-3">
                 Principali flussi di energia ({level4.flows.length} rotte)
               </h3>
@@ -198,7 +198,7 @@ export default function Level4() {
           )}
 
           {/* Educational callout */}
-          <div className="bg-violet-50 rounded-xl border border-violet-100 p-4">
+          <div className="gs-callout-violet p-4">
             <h3 className="text-sm font-semibold text-violet-800 mb-1">Perché la distribuzione conta</h3>
             <p className="text-xs text-violet-700 leading-relaxed">
               Il <strong>piano "Massimizza CF"</strong> concentra solare e eolico nelle regioni più soleggiate

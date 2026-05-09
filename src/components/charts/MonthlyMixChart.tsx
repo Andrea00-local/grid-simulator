@@ -4,6 +4,7 @@ import {
 } from 'recharts'
 import type { PeriodResult, Source } from '@/models/types'
 import { SOURCE_DEFINITIONS } from '@/models/sources'
+import { useTheme } from '@/contexts/ThemeContext'
 
 const GROUPS: { label: string; sources: Source[]; stackId: string }[] = [
   { label: 'Carbone',  sources: ['coal'],                              stackId: 's' },
@@ -22,9 +23,10 @@ interface Props {
 }
 
 export function MonthlyMixChart({ period }: Props) {
-  const demandTWh = period.demand / 1_000_000
+  const { chart } = useTheme()
+  const demandTWh  = period.demand / 1_000_000
   const balanceTWh = period.balance / 1_000_000
-  const isSurplus = balanceTWh >= 0
+  const isSurplus  = balanceTWh >= 0
 
   const data = GROUPS
     .map(({ label, sources, stackId }) => {
@@ -49,21 +51,21 @@ export function MonthlyMixChart({ period }: Props) {
     const items = payload.filter(p => p.value > 0.001)
     const total = items.reduce((s, p) => s + p.value, 0)
     return (
-      <div className="bg-white border border-gray-200 rounded-lg p-3 shadow-lg text-xs min-w-[130px]">
-        <p className="font-semibold text-gray-900 mb-1">{label}</p>
+      <div className="gs-card p-3 text-xs min-w-[130px]">
+        <p className="font-semibold text-gray-900 dark:text-slate-100 mb-1">{label}</p>
         {items.map(item => (
           <div key={item.dataKey} className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-1.5">
               <div className="w-2 h-2 rounded-full" style={{ backgroundColor: item.fill }} />
-              <span className="text-gray-600">{SOURCE_DEFINITIONS[item.dataKey as Source]?.labelShort ?? item.dataKey}</span>
+              <span className="text-gray-600 dark:text-slate-400">{SOURCE_DEFINITIONS[item.dataKey as Source]?.labelShort ?? item.dataKey}</span>
             </div>
-            <span className="font-mono">{item.value.toFixed(1)} TWh</span>
+            <span className="font-mono dark:text-slate-200">{item.value.toFixed(1)} TWh</span>
           </div>
         ))}
         {items.length > 1 && (
-          <div className="border-t mt-1 pt-1 flex justify-between text-gray-500">
+          <div className="border-t dark:border-slate-700 mt-1 pt-1 flex justify-between text-gray-500 dark:text-slate-400">
             <span>Totale</span>
-            <span className="font-mono font-semibold">{total.toFixed(1)} TWh</span>
+            <span className="font-mono font-semibold dark:text-slate-200">{total.toFixed(1)} TWh</span>
           </div>
         )}
       </div>
@@ -74,36 +76,36 @@ export function MonthlyMixChart({ period }: Props) {
     <div>
       {/* Balance banner */}
       <div className={`rounded-xl p-3 mb-4 border flex items-center justify-between ${
-        isSurplus ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'
+        isSurplus ? 'bg-green-50 dark:bg-green-950/40 border-green-200 dark:border-green-900/50'
+                  : 'bg-red-50 dark:bg-red-950/40 border-red-200 dark:border-red-900/50'
       }`}>
         <div>
           <p className={`text-xs font-semibold uppercase tracking-wide ${isSurplus ? 'text-green-600' : 'text-red-500'}`}>
             {isSurplus ? 'Surplus' : 'Deficit'}
           </p>
-          <p className={`text-xl font-bold tabular-nums ${isSurplus ? 'text-green-700' : 'text-red-600'}`}>
+          <p className={`text-xl font-bold tabular-nums ${isSurplus ? 'text-green-700 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
             {isSurplus ? '+' : ''}{balanceTWh.toFixed(1)} TWh
           </p>
         </div>
-        <div className="text-right text-xs text-gray-500">
-          <p>Produzione: <strong className="text-gray-700">{((period.demand + period.balance) / 1_000_000).toFixed(1)} TWh</strong></p>
-          <p>Domanda: <strong className="text-gray-700">{demandTWh.toFixed(1)} TWh</strong></p>
-          <p>CO₂: <strong className="text-gray-700">{(period.emissions / 1_000_000).toFixed(2)} MtCO₂</strong></p>
+        <div className="text-right text-xs text-gray-500 dark:text-slate-400">
+          <p>Produzione: <strong className="text-gray-700 dark:text-slate-200">{((period.demand + period.balance) / 1_000_000).toFixed(1)} TWh</strong></p>
+          <p>Domanda: <strong className="text-gray-700 dark:text-slate-200">{demandTWh.toFixed(1)} TWh</strong></p>
+          <p>CO₂: <strong className="text-gray-700 dark:text-slate-200">{(period.emissions / 1_000_000).toFixed(2)} MtCO₂</strong></p>
         </div>
       </div>
 
-      {/* Bar chart */}
       <ResponsiveContainer width="100%" height={200}>
         <BarChart data={data} margin={{ top: 4, right: 8, bottom: 0, left: 0 }} barCategoryGap="4%" barGap={0}>
-          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
-          <XAxis dataKey="label" tick={{ fontSize: 10, fill: '#6b7280' }} axisLine={false} tickLine={false} />
-          <YAxis tick={{ fontSize: 10, fill: '#6b7280' }} axisLine={false} tickLine={false} unit=" TWh" width={50} />
+          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={chart.grid} />
+          <XAxis dataKey="label" tick={{ fontSize: 10, fill: chart.tick }} axisLine={false} tickLine={false} />
+          <YAxis tick={{ fontSize: 10, fill: chart.tick }} axisLine={false} tickLine={false} unit=" TWh" width={50} />
           <Tooltip content={<CustomTooltip />} />
           <ReferenceLine
             y={demandTWh}
             stroke="#0f172a"
             strokeWidth={2}
             strokeDasharray="5 3"
-            label={{ value: 'Domanda', position: 'right', fontSize: 10, fill: '#0f172a' }}
+            label={{ value: 'Domanda', position: 'right', fontSize: 10, fill: chart.tick }}
           />
           {GROUPS.flatMap(({ sources, stackId }) =>
             sources.map(src => (
@@ -120,18 +122,17 @@ export function MonthlyMixChart({ period }: Props) {
         </BarChart>
       </ResponsiveContainer>
 
-      {/* Legend */}
       <div className="flex flex-wrap gap-x-3 gap-y-1 mt-2">
         {GROUPS.flatMap(({ sources }) => sources).filter(src =>
           (period.production[src] ?? 0) > 50_000
         ).map(src => (
-          <div key={src} className="flex items-center gap-1 text-xs text-gray-500">
+          <div key={src} className="flex items-center gap-1 text-xs text-gray-500 dark:text-slate-400">
             <div className="w-2 h-2 rounded-sm" style={{ backgroundColor: SOURCE_DEFINITIONS[src].color }} />
             {SOURCE_DEFINITIONS[src].labelShort}
           </div>
         ))}
-        <div className="flex items-center gap-1 text-xs text-gray-500">
-          <div className="w-4 h-0.5 bg-gray-900" />
+        <div className="flex items-center gap-1 text-xs text-gray-500 dark:text-slate-400">
+          <div className="w-4 h-0.5 bg-gray-900 dark:bg-slate-300" />
           Domanda
         </div>
       </div>

@@ -9,6 +9,7 @@ import {
 } from 'recharts'
 import type { SimResult } from '@/models/types'
 import { SOURCE_DEFINITIONS } from '@/models/sources'
+import { useTheme } from '@/contexts/ThemeContext'
 
 interface Props {
   result: SimResult
@@ -38,8 +39,6 @@ const ZERO_ENTRY: Omit<ChartEntry, 'label'> = {
   solar: 0,
 }
 
-// Display groups — each becomes one x-axis column
-// Hydro and Wind are stacked internally, all others are single-source columns
 const GROUPS: { label: string; sources: (keyof Omit<ChartEntry, 'label'>)[] }[] = [
   { label: 'Carbone',  sources: ['coal'] },
   { label: 'Gas OCGT', sources: ['gas_ocgt'] },
@@ -53,7 +52,6 @@ const GROUPS: { label: string; sources: (keyof Omit<ChartEntry, 'label'>)[] }[] 
   { label: 'Solare',   sources: ['solar'] },
 ]
 
-// All sources share one stackId → one full-width bar per category
 const STACK_IDS: Partial<Record<keyof Omit<ChartEntry, 'label'>, string>> = {
   hydro_run: 's', hydro_reservoir: 's',
   wind_onshore: 's', wind_offshore: 's',
@@ -62,28 +60,13 @@ const STACK_IDS: Partial<Record<keyof Omit<ChartEntry, 'label'>, string>> = {
   geothermal: 's', solar: 's',
 }
 
-const SOURCE_COLORS: Partial<Record<keyof Omit<ChartEntry, 'label'>, string>> = {
-  solar:           SOURCE_DEFINITIONS.solar.color,
-  wind_onshore:    SOURCE_DEFINITIONS.wind_onshore.color,
-  wind_offshore:   SOURCE_DEFINITIONS.wind_offshore.color,
-  hydro_run:       SOURCE_DEFINITIONS.hydro_run.color,
-  hydro_reservoir: SOURCE_DEFINITIONS.hydro_reservoir.color,
-  biomass:         SOURCE_DEFINITIONS.biomass.color,
-  geothermal:      SOURCE_DEFINITIONS.geothermal.color,
-  nuclear:         SOURCE_DEFINITIONS.nuclear.color,
-  gas_ccgt:        SOURCE_DEFINITIONS.gas_ccgt.color,
-  gas_ocgt:        SOURCE_DEFINITIONS.gas_ocgt.color,
-  coal:            SOURCE_DEFINITIONS.coal.color,
-  imports:         SOURCE_DEFINITIONS.imports.color,
-}
-
 const ALL_SOURCES = Object.keys(ZERO_ENTRY) as (keyof Omit<ChartEntry, 'label'>)[]
 
 export function EnergyMixChart({ result }: Props) {
-  const prod = result.totalProductionBySource
+  const { chart } = useTheme()
+  const prod   = result.totalProductionBySource
   const demand = result.totalDemand / 1_000_000
 
-  // Build one data entry per group
   const data: ChartEntry[] = GROUPS
     .map(({ label, sources }) => {
       const entry: ChartEntry = { label, ...ZERO_ENTRY }
@@ -107,26 +90,26 @@ export function EnergyMixChart({ result }: Props) {
     const items = payload.filter((p) => p.value > 0.05)
     const total = items.reduce((s, p) => s + p.value, 0)
     return (
-      <div className="bg-white border border-gray-200 rounded-lg p-3 shadow-lg text-sm min-w-[140px]">
-        <p className="font-semibold text-gray-900 mb-1">{label}</p>
+      <div className="gs-card p-3 text-sm min-w-[140px]">
+        <p className="font-semibold text-gray-900 dark:text-slate-100 mb-1">{label}</p>
         {items.map((item) => (
           <div key={item.dataKey} className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-1.5">
               <div className="w-2 h-2 rounded-full" style={{ backgroundColor: item.fill }} />
-              <span className="text-gray-600 text-xs">
+              <span className="text-gray-600 dark:text-slate-400 text-xs">
                 {SOURCE_DEFINITIONS[item.dataKey as keyof typeof SOURCE_DEFINITIONS]?.labelShort ?? item.dataKey}
               </span>
             </div>
-            <span className="text-gray-900 font-mono text-xs">{item.value.toFixed(1)} TWh</span>
+            <span className="text-gray-900 dark:text-slate-100 font-mono text-xs">{item.value.toFixed(1)} TWh</span>
           </div>
         ))}
         {items.length > 1 && (
-          <div className="border-t border-gray-100 mt-1 pt-1 flex justify-between">
-            <span className="text-gray-500 text-xs">Totale</span>
-            <span className="font-mono text-xs font-semibold">{total.toFixed(1)} TWh</span>
+          <div className="border-t border-gray-100 dark:border-slate-700 mt-1 pt-1 flex justify-between">
+            <span className="text-gray-500 dark:text-slate-400 text-xs">Totale</span>
+            <span className="font-mono text-xs font-semibold dark:text-slate-100">{total.toFixed(1)} TWh</span>
           </div>
         )}
-        <p className="text-gray-400 text-xs mt-1">{((total / demand) * 100).toFixed(1)}% della domanda</p>
+        <p className="text-gray-400 dark:text-slate-500 text-xs mt-1">{((total / demand) * 100).toFixed(1)}% della domanda</p>
       </div>
     )
   }
@@ -134,21 +117,21 @@ export function EnergyMixChart({ result }: Props) {
   return (
     <div>
       <div className="flex items-center justify-between mb-3">
-        <h3 className="text-sm font-semibold text-gray-700">Mix energetico (TWh/anno)</h3>
-        <span className="text-xs text-gray-500">Domanda: {demand.toFixed(0)} TWh</span>
+        <h3 className="text-sm font-semibold text-gray-700 dark:text-slate-300">Mix energetico (TWh/anno)</h3>
+        <span className="text-xs text-gray-500 dark:text-slate-400">Domanda: {demand.toFixed(0)} TWh</span>
       </div>
       <ResponsiveContainer width="100%" height={220}>
         <BarChart data={data} margin={{ top: 4, right: 8, bottom: 0, left: 0 }} barCategoryGap="4%" barGap={0}>
-          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
-          <XAxis dataKey="label" tick={{ fontSize: 11, fill: '#6b7280' }} axisLine={false} tickLine={false} />
-          <YAxis tick={{ fontSize: 11, fill: '#6b7280' }} axisLine={false} tickLine={false} unit=" TWh" width={58} />
+          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={chart.grid} />
+          <XAxis dataKey="label" tick={{ fontSize: 11, fill: chart.tick }} axisLine={false} tickLine={false} />
+          <YAxis tick={{ fontSize: 11, fill: chart.tick }} axisLine={false} tickLine={false} unit=" TWh" width={58} />
           <Tooltip content={<CustomTooltip />} />
           {ALL_SOURCES.map((src) => (
             <Bar
               key={src}
               dataKey={src}
               stackId={STACK_IDS[src]}
-              fill={SOURCE_COLORS[src]}
+              fill={SOURCE_DEFINITIONS[src as keyof typeof SOURCE_DEFINITIONS]?.color}
               radius={0}
               maxBarSize={120}
             />
@@ -156,11 +139,10 @@ export function EnergyMixChart({ result }: Props) {
         </BarChart>
       </ResponsiveContainer>
 
-      {/* Legend */}
       <div className="flex flex-wrap gap-x-4 gap-y-1 mt-3">
         {ALL_SOURCES.filter((src) => (prod[src as keyof typeof prod] ?? 0) > 50_000).map((src) => (
-          <div key={src} className="flex items-center gap-1.5 text-xs text-gray-600">
-            <div className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: SOURCE_COLORS[src] }} />
+          <div key={src} className="flex items-center gap-1.5 text-xs text-gray-600 dark:text-slate-400">
+            <div className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: SOURCE_DEFINITIONS[src as keyof typeof SOURCE_DEFINITIONS]?.color }} />
             {SOURCE_DEFINITIONS[src as keyof typeof SOURCE_DEFINITIONS]?.labelShort}
           </div>
         ))}

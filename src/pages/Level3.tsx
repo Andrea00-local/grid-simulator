@@ -65,8 +65,8 @@ export default function Level3() {
           <span className="bg-amber-600 text-white text-xs rounded-full px-2 py-0.5">Livello 3</span>
           Giorno Tipo Orario
         </div>
-        <h1 className="text-2xl font-bold text-gray-900">Bilancio orario con storage</h1>
-        <p className="text-gray-500 text-sm mt-1">
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-slate-100">Bilancio orario con storage</h1>
+        <p className="text-gray-500 dark:text-slate-400 text-sm mt-1">
           Un giorno lavorativo tipo per ogni mese — scegli le condizioni meteo e installa batterie
           per ridurre i picchi di gas. Il duck curve del solare diventa visibile ora per ora.
         </p>
@@ -79,7 +79,7 @@ export default function Level3() {
       />
 
       {/* Storage KPI */}
-      <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4 flex items-center gap-3 mb-8 -mt-2">
+      <div className="gs-card p-4 flex items-center gap-3 mb-8 -mt-2">
         <BatteryCharging className="w-4 h-4 text-gray-400 flex-shrink-0" />
         <div className="flex-1 min-w-0">
           <span className="text-xs text-gray-500">Energia stoccata annua</span>
@@ -102,7 +102,7 @@ export default function Level3() {
         <div className="space-y-5">
 
           {/* Scenario selector */}
-          <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
+          <div className="gs-card p-5">
             <h3 className="text-sm font-semibold text-gray-700 mb-3">Condizioni meteorologiche</h3>
             <div className="flex gap-2">
               {(Object.keys(SCENARIO_CONFIG) as Scenario[]).map(s => {
@@ -162,7 +162,7 @@ export default function Level3() {
           </div>
 
           {/* Hourly dispatch chart */}
-          <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
+          <div className="gs-card p-5">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-sm font-semibold text-gray-700">
                 Dispacciamento orario — {selectedDay.monthLabel} ({SCENARIO_CONFIG[scenario].label.toLowerCase()})
@@ -214,7 +214,7 @@ export default function Level3() {
                   : 'Nessuna batteria',
               },
             ].map(({ label, value, sub }) => (
-              <div key={label} className="bg-white rounded-xl border border-gray-200 shadow-sm p-4">
+              <div key={label} className="gs-card p-4">
                 <p className="text-xs text-gray-400 mb-1">{label}</p>
                 <p className="text-base font-bold text-gray-800">{value}</p>
                 <p className="text-xs text-gray-500 mt-0.5">{sub}</p>
@@ -223,7 +223,7 @@ export default function Level3() {
           </div>
 
           {/* Annualization note */}
-          <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
+          <div className="gs-card p-5">
             <h3 className="text-sm font-semibold text-gray-700 mb-3">Proiezione annuale (giorno tipo × giorni)</h3>
             <div className="grid grid-cols-3 gap-4">
               {level3.months.map((day, i) => {
@@ -253,7 +253,7 @@ export default function Level3() {
           </div>
 
           {/* Educational callout */}
-          <div className="bg-amber-50 rounded-xl border border-amber-100 p-4">
+          <div className="gs-callout-amber p-4">
             <h3 className="text-sm font-semibold text-amber-800 mb-1">Il duck curve e lo storage</h3>
             <p className="text-xs text-amber-700 leading-relaxed">
               Nei mesi estivi il <strong>solare crea un surplus a mezzogiorno</strong> che spinge il gas
