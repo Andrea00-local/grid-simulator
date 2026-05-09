@@ -3,6 +3,8 @@ import { Zap, MapPin } from 'lucide-react'
 import { LevelIntro } from '@/components/layout/LevelIntro'
 import { DataSources } from '@/components/ui/DataSources'
 import { ObjectivesPanel } from '@/components/ui/ObjectivesPanel'
+import { PrintButton } from '@/components/print/PrintButton'
+import { ScenarioPrintHeader } from '@/components/print/ScenarioPrintHeader'
 import { useSimStore } from '@/store/simulationStore'
 import { LEVEL4_CONFIG } from '@/simulation/levels/level4'
 import { computeLevel4 } from '@/models/balanceRegional'
@@ -42,18 +44,37 @@ export default function Level4() {
       {showIntro && <LevelIntro level={4} onStart={() => setShowIntro(false)} />}
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
+      <ScenarioPrintHeader
+        level={4}
+        levelName="Distribuzione Territoriale"
+        coverage={coverage}
+        renewableShare={level4.nationalRenewableShare}
+        avoidedMt={avoidedMt}
+        extraParams={[
+          { label: 'Piano distribuzione', value: PLAN_LABELS[plan] },
+          { label: 'Potenziamento rete', value: `${txBoost.toFixed(1)}×` },
+          { label: 'Regioni in deficit', value: `${level4.regionsWithDeficit.length} / 20` },
+          { label: 'Surplus non instradabile', value: `${level4.annualSurplusTWh.toFixed(1)} TWh` },
+        ]}
+      />
+
       {/* Header */}
-      <div className="mb-8">
-        <div className="flex items-center gap-2 text-sm text-violet-600 font-medium mb-1">
-          <span className="bg-violet-600 text-white text-xs rounded-full px-2 py-0.5">Livello 4</span>
-          Distribuzione Territoriale
+      <div className="mb-8 print:hidden">
+        <div className="flex items-start justify-between">
+          <div>
+            <div className="flex items-center gap-2 text-sm text-violet-600 font-medium mb-1">
+              <span className="bg-violet-600 text-white text-xs rounded-full px-2 py-0.5">Livello 4</span>
+              Distribuzione Territoriale
+            </div>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-slate-100">Bilancio per regione</h1>
+            <p className="text-gray-500 dark:text-slate-400 text-sm mt-1">
+              Imposta le rinnovabili nazionali, scegli come distribuirle e vedi come il
+              routing Dijkstra bilancia surplus e deficit sulle linee Terna. Clicca una regione
+              per il dettaglio.
+            </p>
+          </div>
+          <PrintButton className="mt-1 flex-shrink-0" />
         </div>
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-slate-100">Bilancio per regione</h1>
-        <p className="text-gray-500 dark:text-slate-400 text-sm mt-1">
-          Imposta le rinnovabili nazionali, scegli come distribuirle e vedi come il
-          routing Dijkstra bilancia surplus e deficit sulle linee Terna. Clicca una regione
-          per il dettaglio.
-        </p>
       </div>
 
       <ObjectivesPanel
@@ -84,10 +105,10 @@ export default function Level4() {
       </div>
 
       {/* Main grid */}
-      <div className="grid lg:grid-cols-[340px,1fr] gap-8">
+      <div className="grid lg:grid-cols-[340px,1fr] gap-8 print:grid-cols-1">
 
         {/* Left: controls */}
-        <div className="space-y-5">
+        <div className="space-y-5 print:hidden">
 
           {/* Distribution plan */}
           <div className="gs-card p-5">
@@ -213,7 +234,9 @@ export default function Level4() {
         </div>
       </div>
 
-      <DataSources level={4} />
+      <div className="print:hidden">
+        <DataSources level={4} />
+      </div>
 
       {/* Region detail drawer (slide-in from right) */}
       {/* Backdrop */}

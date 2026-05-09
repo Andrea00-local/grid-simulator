@@ -9,6 +9,8 @@ import { computeLevel3 } from '@/models/balanceHourly'
 import { MEGAPACK_HOURS } from '@/models/hourlyProfiles'
 import { ControlsPanel } from '@/components/controls/ControlsPanel'
 import { HourlyDispatchChart } from '@/components/charts/HourlyDispatchChart'
+import { PrintButton } from '@/components/print/PrintButton'
+import { ScenarioPrintHeader } from '@/components/print/ScenarioPrintHeader'
 import { ITALY_CO2_BASELINE_MT } from '@/models/constants'
 import type { Scenario } from '@/models/types'
 
@@ -59,17 +61,35 @@ export default function Level3() {
       {showIntro && <LevelIntro level={3} onStart={() => setShowIntro(false)} />}
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
+      <ScenarioPrintHeader
+        level={3}
+        levelName="Giorno Tipo Orario"
+        coverage={coverage}
+        renewableShare={level3.renewableShareAnnual}
+        avoidedMt={avoidedMt}
+        extraParams={[
+          { label: 'Condizioni meteo', value: SCENARIO_CONFIG[scenario].label },
+          { label: 'Mese visualizzato', value: level3.months[selectedMonth].monthLabel },
+          { label: 'Storage BESS', value: storagePowerGW > 0 ? `${storagePowerGW} GW / ${storageCapacityGWh.toFixed(0)} GWh` : 'Non installato' },
+        ]}
+      />
+
       {/* Header */}
-      <div className="mb-8">
-        <div className="flex items-center gap-2 text-sm text-amber-600 font-medium mb-1">
-          <span className="bg-amber-600 text-white text-xs rounded-full px-2 py-0.5">Livello 3</span>
-          Giorno Tipo Orario
+      <div className="mb-8 print:hidden">
+        <div className="flex items-start justify-between">
+          <div>
+            <div className="flex items-center gap-2 text-sm text-amber-600 font-medium mb-1">
+              <span className="bg-amber-600 text-white text-xs rounded-full px-2 py-0.5">Livello 3</span>
+              Giorno Tipo Orario
+            </div>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-slate-100">Bilancio orario con storage</h1>
+            <p className="text-gray-500 dark:text-slate-400 text-sm mt-1">
+              Un giorno lavorativo tipo per ogni mese — scegli le condizioni meteo e installa batterie
+              per ridurre i picchi di gas. Il duck curve del solare diventa visibile ora per ora.
+            </p>
+          </div>
+          <PrintButton className="mt-1 flex-shrink-0" />
         </div>
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-slate-100">Bilancio orario con storage</h1>
-        <p className="text-gray-500 dark:text-slate-400 text-sm mt-1">
-          Un giorno lavorativo tipo per ogni mese — scegli le condizioni meteo e installa batterie
-          per ridurre i picchi di gas. Il duck curve del solare diventa visibile ora per ora.
-        </p>
       </div>
 
       <ObjectivesPanel
@@ -93,16 +113,18 @@ export default function Level3() {
       </div>
 
       {/* Main layout */}
-      <div className="grid lg:grid-cols-[340px,1fr] gap-8">
+      <div className="grid lg:grid-cols-[340px,1fr] gap-8 print:grid-cols-1">
 
         {/* Left: controls + storage */}
-        <ControlsPanel showStorage />
+        <div className="print:hidden">
+          <ControlsPanel showStorage />
+        </div>
 
         {/* Right: charts */}
         <div className="space-y-5">
 
           {/* Scenario selector */}
-          <div className="gs-card p-5">
+          <div className="gs-card p-5 print:hidden">
             <h3 className="text-sm font-semibold text-gray-700 mb-3">Condizioni meteorologiche</h3>
             <div className="flex gap-2">
               {(Object.keys(SCENARIO_CONFIG) as Scenario[]).map(s => {
@@ -129,7 +151,7 @@ export default function Level3() {
           </div>
 
           {/* Month pills */}
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-2 print:hidden">
             {level3.months.map((day, i) => {
               const netGWh = (day.dailyBatteryCycledMWh + day.dailyProductionMWh - day.dailyDemandMWh) / 1_000
               const hasDeficit = day.dailyDeficitMWh > 0.5
@@ -223,7 +245,7 @@ export default function Level3() {
           </div>
 
           {/* Annualization note */}
-          <div className="gs-card p-5">
+          <div className="gs-card p-5 print:hidden">
             <h3 className="text-sm font-semibold text-gray-700 mb-3">Proiezione annuale (giorno tipo × giorni)</h3>
             <div className="grid grid-cols-3 gap-4">
               {level3.months.map((day, i) => {
@@ -279,7 +301,9 @@ export default function Level3() {
         </div>
       </div>
 
-      <DataSources level={3} />
+      <div className="print:hidden">
+        <DataSources level={3} />
+      </div>
     </div>
     </>
   )

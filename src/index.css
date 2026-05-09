@@ -57,3 +57,20 @@
   .gs-callout-violet { @apply bg-violet-50 dark:bg-violet-950/40 rounded-xl border border-violet-100 dark:border-violet-900/50; }
   .gs-callout-emerald{ @apply bg-emerald-50 dark:bg-emerald-950/40 rounded-xl border border-emerald-100 dark:border-emerald-900/50; }
 }
+
+@media print {
+  @page { margin: 15mm 15mm 12mm; }
+
+  /* Force white background and black text for print */
+  body { background: white !important; color: #1e293b !important; }
+
+  /* Hide AppShell header, controls, callouts, accordions, action buttons */
+  .gs-callout-blue,
+  .gs-callout-green,
+  .gs-callout-amber,
+  .gs-callout-violet,
+  .gs-callout-emerald { display: none !important; }
+
+  /* Prevent page breaks inside cards */
+  .gs-card { break-inside: avoid; }
+}

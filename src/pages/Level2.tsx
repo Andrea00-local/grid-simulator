@@ -9,6 +9,8 @@ import { EmissionsChart } from '@/components/charts/EmissionsChart'
 import { MonthlyStreamChart } from '@/components/charts/MonthlyStreamChart'
 import { MonthlyMixChart } from '@/components/charts/MonthlyMixChart'
 import { BalanceIndicator } from '@/components/charts/BalanceIndicator'
+import { PrintButton } from '@/components/print/PrintButton'
+import { ScenarioPrintHeader } from '@/components/print/ScenarioPrintHeader'
 import { ITALY_CO2_BASELINE_MT } from '@/models/constants'
 
 export default function Level2() {
@@ -34,16 +36,30 @@ export default function Level2() {
     <>
       {showIntro && <LevelIntro level={2} onStart={() => setShowIntro(false)} />}
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="mb-8">
-        <div className="flex items-center gap-2 text-sm text-emerald-600 font-medium mb-1">
-          <span className="bg-emerald-600 text-white text-xs rounded-full px-2 py-0.5">Livello 2</span>
-          Stagionalità Mensile
+
+      <ScenarioPrintHeader
+        level={2}
+        levelName="Stagionalità Mensile"
+        coverage={coverage}
+        renewableShare={result.renewableShare}
+        avoidedMt={avoidedMt}
+      />
+
+      <div className="mb-8 print:hidden">
+        <div className="flex items-start justify-between">
+          <div>
+            <div className="flex items-center gap-2 text-sm text-emerald-600 font-medium mb-1">
+              <span className="bg-emerald-600 text-white text-xs rounded-full px-2 py-0.5">Livello 2</span>
+              Stagionalità Mensile
+            </div>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-slate-100">Bilancio mese per mese</h1>
+            <p className="text-gray-500 dark:text-slate-400 text-sm mt-1">
+              Il termico copre la domanda residua in proporzione — ma nei mesi con alto solare il surplus
+              non compensa il deficit invernale. Clicca su ogni mese per il dettaglio.
+            </p>
+          </div>
+          <PrintButton className="mt-1 flex-shrink-0" />
         </div>
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-slate-100">Bilancio mese per mese</h1>
-        <p className="text-gray-500 dark:text-slate-400 text-sm mt-1">
-          Il termico copre la domanda residua in proporzione — ma nei mesi con alto solare il surplus
-          non compensa il deficit invernale. Clicca su ogni mese per il dettaglio.
-        </p>
       </div>
 
       <ObjectivesPanel
@@ -52,8 +68,10 @@ export default function Level2() {
         avoidedMt={avoidedMt}
       />
 
-      <div className="grid lg:grid-cols-[340px,1fr] gap-8">
-        <ControlsPanel />
+      <div className="grid lg:grid-cols-[340px,1fr] gap-8 print:grid-cols-1">
+        <div className="print:hidden">
+          <ControlsPanel />
+        </div>
 
         <div className="space-y-6">
           {/* Monthly stream chart */}
@@ -66,7 +84,7 @@ export default function Level2() {
           </div>
 
           {/* Month pills */}
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-2 print:hidden">
             {result.periods.map((p, i) => {
               const bal = p.balance / 1_000_000
               const isSurplus = bal >= 0
@@ -131,7 +149,9 @@ export default function Level2() {
         </div>
       </div>
 
-      <DataSources level={2} />
+      <div className="print:hidden">
+        <DataSources level={2} />
+      </div>
     </div>
     </>
   )

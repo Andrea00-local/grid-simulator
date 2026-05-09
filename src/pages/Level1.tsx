@@ -7,6 +7,8 @@ import { ControlsPanel } from '@/components/controls/ControlsPanel'
 import { EnergyDonutChart } from '@/components/charts/EnergyDonutChart'
 import { EmissionsChart } from '@/components/charts/EmissionsChart'
 import { BalanceIndicator } from '@/components/charts/BalanceIndicator'
+import { PrintButton } from '@/components/print/PrintButton'
+import { ScenarioPrintHeader } from '@/components/print/ScenarioPrintHeader'
 import { ITALY_CO2_BASELINE_MT } from '@/models/constants'
 
 export default function Level1() {
@@ -22,16 +24,30 @@ export default function Level1() {
     <>
       {showIntro && <LevelIntro level={1} onStart={() => setShowIntro(false)} />}
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="mb-8">
-        <div className="flex items-center gap-2 text-sm text-blue-600 font-medium mb-1">
-          <span className="bg-blue-600 text-white text-xs rounded-full px-2 py-0.5">Livello 1</span>
-          Bilancio Nazionale Annuale
+
+      <ScenarioPrintHeader
+        level={1}
+        levelName="Bilancio Nazionale Annuale"
+        coverage={coverage}
+        renewableShare={result.renewableShare}
+        avoidedMt={avoidedMt}
+      />
+
+      <div className="mb-8 print:hidden">
+        <div className="flex items-start justify-between">
+          <div>
+            <div className="flex items-center gap-2 text-sm text-blue-600 font-medium mb-1">
+              <span className="bg-blue-600 text-white text-xs rounded-full px-2 py-0.5">Livello 1</span>
+              Bilancio Nazionale Annuale
+            </div>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-slate-100">Costruisci il mix energetico italiano</h1>
+            <p className="text-gray-500 dark:text-slate-400 text-sm mt-1">
+              Rinnovabili in GW (produzione da capacity factor) · Fossili e nucleare in TWh (produzione diretta).
+              Il bilancio può essere negativo — la domanda non si auto-copre.
+            </p>
+          </div>
+          <PrintButton className="mt-1 flex-shrink-0" />
         </div>
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-slate-100">Costruisci il mix energetico italiano</h1>
-        <p className="text-gray-500 dark:text-slate-400 text-sm mt-1">
-          Rinnovabili in GW (produzione da capacity factor) · Fossili e nucleare in TWh (produzione diretta).
-          Il bilancio può essere negativo — la domanda non si auto-copre.
-        </p>
       </div>
 
       <ObjectivesPanel
@@ -40,8 +56,10 @@ export default function Level1() {
         avoidedMt={avoidedMt}
       />
 
-      <div className="grid lg:grid-cols-[340px,1fr] gap-8">
-        <ControlsPanel />
+      <div className="grid lg:grid-cols-[340px,1fr] gap-8 print:grid-cols-1">
+        <div className="print:hidden">
+          <ControlsPanel />
+        </div>
 
         <div className="space-y-6">
           <div className="gs-card p-5">
@@ -70,7 +88,9 @@ export default function Level1() {
         </div>
       </div>
 
-      <DataSources level={1} />
+      <div className="print:hidden">
+        <DataSources level={1} />
+      </div>
     </div>
     </>
   )
