@@ -1,7 +1,9 @@
+import { useState } from 'react'
 import { Slider } from '@/components/ui/slider'
 import { SOURCE_DEFINITIONS } from '@/models/sources'
 import type { Source } from '@/models/types'
 import { useSimStore } from '@/store/simulationStore'
+import { SourceDetailModal } from '@/components/ui/SourceDetailModal'
 
 const TWH_RANGES: Partial<Record<Source, { min: number; max: number; step: number }>> = {
   nuclear:  { min: 0, max: 80,  step: 1 },
@@ -16,6 +18,7 @@ interface Props {
 }
 
 export function ThermalSlider({ source }: Props) {
+  const [open, setOpen] = useState(false)
   const def    = SOURCE_DEFINITIONS[source]
   const twh    = useSimStore((s) => s.directProduction[source] ?? 0)
   const setDir = useSimStore((s) => s.setDirectProduction)
@@ -26,8 +29,14 @@ export function ThermalSlider({ source }: Props) {
       <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: def.color }} />
       <div className="flex-1 min-w-0">
         <div className="flex items-center justify-between mb-1">
-          <span className="text-sm text-gray-700 truncate">{def.labelShort}</span>
-          <span className="text-sm font-mono font-medium text-gray-900 ml-2 flex-shrink-0">
+          <button
+            onClick={() => setOpen(true)}
+            className="text-sm text-gray-700 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors text-left truncate"
+            title="Clicca per dettagli"
+          >
+            {def.labelShort}
+          </button>
+          <span className="text-sm font-mono font-medium text-gray-900 dark:text-slate-100 ml-2 flex-shrink-0">
             {twh.toFixed(0)} TWh
           </span>
         </div>
@@ -40,6 +49,7 @@ export function ThermalSlider({ source }: Props) {
           accentColor={def.color}
         />
       </div>
+      <SourceDetailModal sourceKey={source} currentValue={twh} isOpen={open} onClose={() => setOpen(false)} />
     </div>
   )
 }
