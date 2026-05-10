@@ -9,11 +9,20 @@ import { computeLevel3 } from '@/models/balanceHourly'
 import { MEGAPACK_HOURS } from '@/models/hourlyProfiles'
 import { ControlsPanel } from '@/components/controls/ControlsPanel'
 import { HourlyDispatchChart } from '@/components/charts/HourlyDispatchChart'
+import { SourceBreakdownPanel } from '@/components/charts/SourceBreakdownPanel'
 import { PrintButton } from '@/components/print/PrintButton'
 import { ScenarioPrintHeader } from '@/components/print/ScenarioPrintHeader'
 import { YearSelector } from '@/components/ui/YearSelector'
 import { ITALY_CO2_BASELINE_MT } from '@/models/constants'
-import type { Scenario } from '@/models/types'
+import { SOURCE_DEFINITIONS } from '@/models/sources'
+import type { Scenario, Source } from '@/models/types'
+
+const STACK_ORDER_L3: Source[] = [
+  'nuclear', 'coal', 'imports', 'biomass', 'geothermal',
+  'hydro_run', 'hydro_reservoir',
+  'wind_offshore', 'wind_onshore', 'solar',
+  'gas_ccgt',
+]
 
 const SCENARIO_CONFIG: Record<Scenario, { label: string; desc: string; color: string }> = {
   bad:     { label: 'Giornata pessima',  desc: 'Cielo coperto, vento calmo',       color: 'red'   },
@@ -44,6 +53,7 @@ export default function Level3() {
   const storagePowerGW       = useSimStore(s => s.storagePowerGW)
 
   const [selectedMonth, setSelectedMonth] = useState<number>(6)  // default: July
+  const [selectedSource, setSelectedSource] = useState<string | null>(null)
 
   useEffect(() => { setLevelConfig(LEVEL3_CONFIG) }, [setLevelConfig])
 
@@ -56,6 +66,37 @@ export default function Level3() {
   const selectedDay = level3.months[selectedMonth]
   const coverage    = Math.max(0, 1 - level3.annualDeficitTWh / level3.annualDemandTWh)
   const avoidedMt   = ITALY_CO2_BASELINE_MT - level3.emissionsMtAnnual
+
+  const hasBattery = storagePowerGW > 0
+
+  const breakdownEntries = useMemo(() => {
+    const hours = selectedDay.hours
+    const result: { key: string; label: string; color: string; value: number; unit: string }[] =
+      STACK_ORDER_L3
+        .map(src => ({
+          key: src as string,
+          label: SOURCE_DEFINITIONS[src].labelShort,
+          color: SOURCE_DEFINITIONS[src].color,
+          value: hours.reduce((s, hp) => s + (hp.production[src] ?? 0), 0) / 1_000,
+          unit: 'GWh',
+        }))
+        .filter(e => e.value > 0.01)
+
+    if (hasBattery) {
+      const battValue = hours.reduce((s, hp) => s + hp.batteryDischarge, 0) / 1_000
+      if (battValue > 0.01) {
+        result.push({
+          key: 'battery',
+          label: 'Batteria',
+          color: '#14b8a6',
+          value: battValue,
+          unit: 'GWh',
+        })
+      }
+    }
+
+    return result
+  }, [selectedDay, hasBattery])
 
   return (
     <>
@@ -115,15 +156,7 @@ export default function Level3() {
       </div>
 
       {/* Main layout */}
-      <div className="grid lg:grid-cols-[340px,1fr] gap-8 print:grid-cols-1">
-
-        {/* Left: controls + storage */}
-        <div className="print:hidden">
-          <ControlsPanel showStorage />
-        </div>
-
-        {/* Right: charts */}
-        <div className="space-y-5">
+      <div className="space-y-5">
 
           {/* Scenario selector */}
           <div className="gs-card p-5 print:hidden">
@@ -185,7 +218,7 @@ export default function Level3() {
             <span className="text-xs text-gray-400 self-center ml-1">GWh/giorno</span>
           </div>
 
-          {/* Hourly dispatch chart */}
+          {/* Hourly dispatch chart with breakdown panel */}
           <div className="gs-card p-5">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-sm font-semibold text-gray-700">
@@ -204,10 +237,20 @@ export default function Level3() {
                 )}
               </div>
             </div>
-            <HourlyDispatchChart
-              hours={selectedDay.hours}
-              storageCapacityGWh={storageCapacityGWh > 0 ? storageCapacityGWh : undefined}
-            />
+            <div className="grid grid-cols-[1fr,220px] gap-4 items-start">
+              <HourlyDispatchChart
+                hours={selectedDay.hours}
+                storageCapacityGWh={storageCapacityGWh > 0 ? storageCapacityGWh : undefined}
+                selectedSource={selectedSource}
+                onSelectSource={setSelectedSource}
+              />
+              <SourceBreakdownPanel
+                entries={breakdownEntries}
+                selectedSource={selectedSource}
+                onSelectSource={setSelectedSource}
+                title={selectedDay.monthLabel}
+              />
+            </div>
           </div>
 
           {/* Daily KPIs */}
@@ -300,7 +343,10 @@ export default function Level3() {
               non mostrato separatamente.
             </p>
           </div>
-        </div>
+      </div>
+
+      <div className="mt-8 print:hidden">
+        <ControlsPanel showStorage layout="horizontal" />
       </div>
 
       <div className="print:hidden">

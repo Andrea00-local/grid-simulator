@@ -18,9 +18,11 @@ interface Props {
   periods: PeriodResult[]
   selectedMonth: number | null
   onSelectMonth: (idx: number) => void
+  selectedSource?: string | null
+  onSelectSource?: (s: string | null) => void
 }
 
-export function MonthlyStreamChart({ periods, selectedMonth, onSelectMonth }: Props) {
+export function MonthlyStreamChart({ periods, selectedMonth, onSelectMonth, selectedSource, onSelectSource }: Props) {
   const { chart } = useTheme()
 
   const data = periods.map((p) => {
@@ -109,20 +111,29 @@ export function MonthlyStreamChart({ periods, selectedMonth, onSelectMonth }: Pr
             width={52}
           />
           <Tooltip content={<CustomTooltip />} />
-          {ALL_SOURCES.map(src => (
-            <Area
-              key={src}
-              type="monotone"
-              dataKey={src}
-              stackId="s"
-              fill={SOURCE_DEFINITIONS[src].color}
-              stroke={SOURCE_DEFINITIONS[src].color}
-              fillOpacity={selectedMonth === null ? 0.88 : 0.75}
-              strokeWidth={0}
-              name={SOURCE_DEFINITIONS[src].labelShort}
-              isAnimationActive={false}
-            />
-          ))}
+          {ALL_SOURCES.map(src => {
+            const isSelected = selectedSource === src
+            const isDimmed = selectedSource !== null && !isSelected
+            return (
+              <Area
+                key={src}
+                type="monotone"
+                dataKey={src}
+                stackId="s"
+                fill={SOURCE_DEFINITIONS[src].color}
+                stroke={SOURCE_DEFINITIONS[src].color}
+                fillOpacity={isDimmed ? 0.06 : (selectedSource !== null && isSelected ? 0.9 : (selectedMonth === null ? 0.88 : 0.75))}
+                strokeOpacity={isDimmed ? 0.1 : (selectedSource !== null && isSelected ? 1 : 1)}
+                strokeWidth={0}
+                name={SOURCE_DEFINITIONS[src].labelShort}
+                isAnimationActive={false}
+                style={{ cursor: onSelectSource ? 'pointer' : 'default' }}
+                onClick={() => {
+                  if (onSelectSource) onSelectSource(selectedSource === src ? null : src)
+                }}
+              />
+            )
+          })}
           <Line
             type="monotone"
             dataKey="demand"
@@ -135,20 +146,22 @@ export function MonthlyStreamChart({ periods, selectedMonth, onSelectMonth }: Pr
         </AreaChart>
       </ResponsiveContainer>
 
-      <div className="flex flex-wrap gap-x-3 gap-y-1 mt-2">
-        {ALL_SOURCES.filter(src =>
-          periods.some(p => (p.production[src] ?? 0) > 50_000)
-        ).map(src => (
-          <div key={src} className="flex items-center gap-1 text-xs text-gray-500 dark:text-slate-400">
-            <div className="w-2 h-2 rounded-sm" style={{ backgroundColor: SOURCE_DEFINITIONS[src].color }} />
-            {SOURCE_DEFINITIONS[src].labelShort}
+      {!onSelectSource && (
+        <div className="flex flex-wrap gap-x-3 gap-y-1 mt-2">
+          {ALL_SOURCES.filter(src =>
+            periods.some(p => (p.production[src] ?? 0) > 50_000)
+          ).map(src => (
+            <div key={src} className="flex items-center gap-1 text-xs text-gray-500 dark:text-slate-400">
+              <div className="w-2 h-2 rounded-sm" style={{ backgroundColor: SOURCE_DEFINITIONS[src].color }} />
+              {SOURCE_DEFINITIONS[src].labelShort}
+            </div>
+          ))}
+          <div className="flex items-center gap-1 text-xs text-gray-500 dark:text-slate-400">
+            <div className="w-4 h-0.5 bg-gray-900 dark:bg-slate-300" />
+            Domanda
           </div>
-        ))}
-        <div className="flex items-center gap-1 text-xs text-gray-500 dark:text-slate-400">
-          <div className="w-4 h-0.5 bg-gray-900 dark:bg-slate-300" />
-          Domanda
         </div>
-      </div>
+      )}
     </div>
   )
 }

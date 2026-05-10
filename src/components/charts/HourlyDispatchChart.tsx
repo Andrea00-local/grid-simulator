@@ -35,9 +35,11 @@ interface Props {
   hours: HourlyPoint[]
   storageCapacityGWh?: number
   title?: string
+  selectedSource?: string | null
+  onSelectSource?: (s: string | null) => void
 }
 
-export function HourlyDispatchChart({ hours, storageCapacityGWh, title }: Props) {
+export function HourlyDispatchChart({ hours, storageCapacityGWh, title, selectedSource, onSelectSource }: Props) {
   const dispatchData = hours.map(hp => {
     const pt: Record<string, number> = { hour: hp.hour }
     for (const src of STACK_ORDER) pt[src]    = hp.production[src] / 1_000
@@ -80,6 +82,8 @@ export function HourlyDispatchChart({ hours, storageCapacityGWh, title }: Props)
 
           {STACK_ORDER.map(src => {
             const def = SOURCE_DEFINITIONS[src]
+            const isSelected = selectedSource === src
+            const isDimmed = selectedSource !== null && !isSelected
             return (
               <Area
                 key={src}
@@ -88,10 +92,15 @@ export function HourlyDispatchChart({ hours, storageCapacityGWh, title }: Props)
                 stackId="d"
                 fill={def.color}
                 stroke={def.color}
-                fillOpacity={0.88}
+                fillOpacity={isDimmed ? 0.06 : (isSelected ? 0.9 : 0.88)}
+                strokeOpacity={isDimmed ? 0.1 : 1}
                 strokeWidth={0.3}
                 name={def.labelShort}
                 isAnimationActive={false}
+                style={{ cursor: onSelectSource ? 'pointer' : 'default' }}
+                onClick={() => {
+                  if (onSelectSource) onSelectSource(selectedSource === src ? null : src)
+                }}
               />
             )
           })}
@@ -102,10 +111,15 @@ export function HourlyDispatchChart({ hours, storageCapacityGWh, title }: Props)
             stackId="d"
             fill={BATTERY_COLOR}
             stroke={BATTERY_COLOR}
-            fillOpacity={0.88}
+            fillOpacity={selectedSource !== null && selectedSource !== 'battery' ? 0.06 : (selectedSource === 'battery' ? 0.9 : 0.88)}
+            strokeOpacity={selectedSource !== null && selectedSource !== 'battery' ? 0.1 : 1}
             strokeWidth={0.3}
             name="Batteria"
             isAnimationActive={false}
+            style={{ cursor: onSelectSource ? 'pointer' : 'default' }}
+            onClick={() => {
+              if (onSelectSource) onSelectSource(selectedSource === 'battery' ? null : 'battery')
+            }}
           />
 
           <Line
@@ -121,27 +135,29 @@ export function HourlyDispatchChart({ hours, storageCapacityGWh, title }: Props)
       </ResponsiveContainer>
 
       {/* Color legend */}
-      <div className="flex flex-wrap gap-x-3 gap-y-1 mt-3 px-1">
-        {[...STACK_ORDER].reverse().map(src => {
-          const def = SOURCE_DEFINITIONS[src]
-          return (
-            <span key={src} className="flex items-center gap-1 text-xs text-gray-500">
-              <span className="w-2 h-2 rounded-sm inline-block" style={{ background: def.color }} />
-              {def.labelShort}
+      {!onSelectSource && (
+        <div className="flex flex-wrap gap-x-3 gap-y-1 mt-3 px-1">
+          {[...STACK_ORDER].reverse().map(src => {
+            const def = SOURCE_DEFINITIONS[src]
+            return (
+              <span key={src} className="flex items-center gap-1 text-xs text-gray-500">
+                <span className="w-2 h-2 rounded-sm inline-block" style={{ background: def.color }} />
+                {def.labelShort}
+              </span>
+            )
+          })}
+          {hasBattery && (
+            <span className="flex items-center gap-1 text-xs text-gray-500">
+              <span className="w-2 h-2 rounded-sm inline-block" style={{ background: BATTERY_COLOR }} />
+              Batteria
             </span>
-          )
-        })}
-        {hasBattery && (
+          )}
           <span className="flex items-center gap-1 text-xs text-gray-500">
-            <span className="w-2 h-2 rounded-sm inline-block" style={{ background: BATTERY_COLOR }} />
-            Batteria
+            <span className="w-4 h-0.5 inline-block" style={{ background: DEMAND_COLOR }} />
+            Domanda
           </span>
-        )}
-        <span className="flex items-center gap-1 text-xs text-gray-500">
-          <span className="w-4 h-0.5 inline-block" style={{ background: DEMAND_COLOR }} />
-          Domanda
-        </span>
-      </div>
+        </div>
+      )}
 
       {/* Battery SOC chart */}
       {hasBattery && (
