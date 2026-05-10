@@ -33,16 +33,13 @@ const INTROS: Record<number, LevelIntroConfig> = {
     badgeColor: 'bg-emerald-600',
     title: 'Stagionalità Mensile',
     description:
-      'Un bilancio annuale in pareggio può nascondere mesi di surplus estivo e mesi di pesante deficit invernale. In questo livello scopri come la variabilità mensile della produzione rinnovabile e della domanda crei squilibri che non si annullano tra loro.',
-    concepts: ['Profili mensili', 'Deficit invernale', 'Surplus estivo', 'Stagionalità solare', 'Capacity factor mensile'],
+      'Purtroppo le cose non sono così semplici come presentate nella Fase 1. Infatti non è sufficiente installare tante fonti rinnovabili per soddisfare la domanda elettrica. Esse infatti dipendono da elementi naturali, ovvero la presenza del vento e del sole, che sappiamo non essere sempre presenti. In particolare adesso ci occupiamo della problematica stagionale: il solare produce molto più d\'estate, mentre l\'eolico d\'inverno. Le potenze installe nella Fase 1 potrebbero quindi non essere sufficienti a garantire ogni mese la presenza di elettricità. ',
     gradient: 'from-emerald-500 to-teal-600',
     what: [
-      'Esplora il grafico mensile: mesi verdi = surplus, rossi = deficit',
+      'Osserva l\'andamento della domanda e delle produzioni nei diversi mesi',
       'Clicca su un mese per vedere il dettaglio completo della produzione',
-      'Osserva come il solare collassi in inverno e esploda in estate',
-      'Confronta surplus lordo e deficit lordo — non si compensano senza storage',
+      'Trova il giusto bilanciamento per raggiungere gli obiettivi e confrontalo con quello trovato nella Fase 1',
     ],
-    why: 'Il disallineamento stagionale è il problema centrale della transizione: serve storage o trasmissione. Livello 3 introduce le batterie.',
   },
   3: {
     level: 3,
@@ -50,16 +47,13 @@ const INTROS: Record<number, LevelIntroConfig> = {
     badgeColor: 'bg-amber-600',
     title: 'Risoluzione Oraria e Storage',
     description:
-      'Scendi alla granularità di un\'ora. Ogni mese ha un "giorno tipo lavorativo" simulato a 24 ore: vedi come la produzione solare crei il famoso "duck curve" a mezzogiorno e come le batterie BESS possano spostare quel surplus verso la sera.',
-    concepts: ['Duck curve', 'Profilo giornaliero', 'BESS / MegaPack', 'Picco serale', 'Stato di carica'],
+      'Aggiungiamo un altro gradino di difficoltà: il bilancio non deve valere solo per le diverse stagioni, ma in ogni momento, per ogni singola ora. Questo complica ulteriormente le cose, perchè come sappiamo bene il solo non splende sempre su di noi. Di conseguenza sarà necessario utilizzare delle batterie, per accumulare l\'energia quando è prodotta in eccesso e utilizzarla quando serve maggiormente. Per ogni mese dell\'anno viene mostrata una giornata lavorativa tipo, come al solito a te toccherà il compito di trovare un equilibrio che permetta di raggiungere gli obiettivi prefissati. Ricorda che le fonti rinnovabili sono dipendenti dalle condizioni climatiche di quella specifica giornata, perciò saranno selezionabili tre diverse ipotesi di condizioni meteo.',
     gradient: 'from-amber-500 to-orange-600',
     what: [
-      'Seleziona il mese e le condizioni meteo (ottima / media / pessima)',
-      'Osserva il grafico a 24 ore: le barre colorate sono la produzione, la linea scura è la domanda',
-      'Aggiungi batterie con il cursore BESS e vedi come il duck curve si appiattisce',
-      'Monitora lo stato di carica (SOC) della batteria nel mini-grafico sotto',
+      'Osserva l\'andamento giornaliero delle diversi fonti e dei consumi elettrici',
+      'Sperimenta l\'aggiunta di batterie e guardane il loro ciclo di carica e scarica',
+      'Prova a cambiare le condizioni meteo e osserva come cambiano le potenze richieste',
     ],
-    why: 'Le giornate pessime con poca produzione rinnovabile sono il vero collo di bottiglia: richiedono storage di lunga durata o gas di backup.',
   },
   4: {
     level: 4,
@@ -67,16 +61,13 @@ const INTROS: Record<number, LevelIntroConfig> = {
     badgeColor: 'bg-violet-600',
     title: 'Distribuzione Territoriale',
     description:
-      'L\'Italia non è un sistema uniforme: Puglia e Sicilia producono molto più di quanto consumano, mentre il Nord è strutturalmente importatore. In questo livello distribuisci le rinnovabili tra le 20 regioni e osserva come i limiti delle linee Terna determinano chi riceve energia e chi rimane in deficit.',
-    concepts: ['Zone Terna', 'Limiti di trasmissione', 'Routing Dijkstra', 'Distribuzione per CF', 'Flussi inter-regionali'],
+      'Adesso arriva la fase più difficile di tutte. L\'Italia non è un sistema uniforme: al Nord si consuma molta più elettricità mentre la presenza di vento e l\'irraggiamento è più elevato al Sud. L\'elettricità prodotta in un luogo può viaggiare, ma solo se non supera i limiti di trasmissione della linee esistenti. In questo livello distribuisci le rinnovabili tra le 20 regioni e osserva come si creano squilibri tra le diverse regioni. Stai attento però, a seconda di dove posizioni le fonti, esse produrranno più o meno elettricità ma in alcune regioni proprio non c\'è vento e non puoi installare turbine eoliche. Per ovviare a questo problema potrai migliorare anche le linee di trasmissione se lo desideri.',
     gradient: 'from-violet-500 to-purple-600',
     what: [
-      'Scegli il piano di distribuzione: attuale 2023, PNIEC, uniforme o massimizza CF',
-      'La mappa colora le regioni in verde (surplus) o rosso (deficit) dopo il routing',
-      'Aumenta il potenziamento rete per sbloccare più flussi verso Nord',
-      'Clicca su una regione per vedere domanda, produzione, import/export e profilo orario',
+      'Scegli come distribuire le rinnovabili tra le regioni',
+      'Osserva quali sono autosufficienti e quali invece rischiano di andare in deficit',
+      'Potenzia la rete per evitare di sovraccaricare una linea',
     ],
-    why: 'Il corridoio Sud→Centro è il collo di bottiglia storico dell\'elettricità italiana: senza più trasmissione, il surplus del Sud non raggiunge il Nord.',
   },
 }
 
