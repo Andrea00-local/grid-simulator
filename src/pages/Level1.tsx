@@ -9,6 +9,7 @@ import { EmissionsChart } from '@/components/charts/EmissionsChart'
 import { BalanceIndicator } from '@/components/charts/BalanceIndicator'
 import { PrintButton } from '@/components/print/PrintButton'
 import { ScenarioPrintHeader } from '@/components/print/ScenarioPrintHeader'
+import { YearSelector } from '@/components/ui/YearSelector'
 import { ITALY_CO2_BASELINE_MT } from '@/models/constants'
 
 export default function Level1() {
@@ -48,6 +49,7 @@ export default function Level1() {
           </div>
           <PrintButton className="mt-1 flex-shrink-0" />
         </div>
+        <YearSelector />
       </div>
 
       <ObjectivesPanel

@@ -7,6 +7,7 @@ import { ITALY_2023, PNIEC_2030, NET_ZERO_2050, FULL_RENEWABLE, type GridScenari
 import { LEVEL1_CONFIG } from '@/simulation/levels/level1'
 
 export type ScenarioId = 'italy2023' | 'pniec2030' | 'netzero2050' | 'fullRenewable'
+export type TargetYear = 2030 | 2040 | 2050
 
 export const SCENARIOS: Record<ScenarioId, { label: string } & GridScenario> = {
   italy2023:     { label: 'Italia 2023',      ...ITALY_2023 },
@@ -23,6 +24,7 @@ interface SimState {
   result: SimResult
   scenario: Scenario          // Level 3: weather condition
   storagePowerGW: number      // Level 3: installed battery power
+  targetYear: TargetYear      // Reference year for projections
 
   setRenewableCapacity: (source: string, gw: number) => void
   setMultipleRenewable: (updates: CapacityMap) => void
@@ -32,6 +34,7 @@ interface SimState {
   setLevelConfig: (config: LevelConfig) => void
   setScenario: (s: Scenario) => void
   setStoragePower: (gw: number) => void
+  setTargetYear: (year: TargetYear) => void
 }
 
 function buildConfig(lc: LevelConfig, rc: CapacityMap, dp: CapacityMap, demand: number): SimConfig {
@@ -45,17 +48,18 @@ function buildConfig(lc: LevelConfig, rc: CapacityMap, dp: CapacityMap, demand: 
   }
 }
 
-const init = ITALY_2023
-const initResult = run(buildConfig(LEVEL1_CONFIG, init.renewableCapacity, init.directProduction, init.demandTWh))
+// All productions start at 0 — only demand starts at the 2023 reference value
+const initResult = run(buildConfig(LEVEL1_CONFIG, {}, {}, ITALY_2023.demandTWh))
 
 export const useSimStore = create<SimState>()((set, get) => ({
   levelConfig:       LEVEL1_CONFIG,
-  renewableCapacity: { ...init.renewableCapacity },
-  directProduction:  { ...init.directProduction },
-  demandTWh:         init.demandTWh,
+  renewableCapacity: {},
+  directProduction:  {},
+  demandTWh:         ITALY_2023.demandTWh,
   result:            initResult,
   scenario:          'average' as Scenario,
   storagePowerGW:    0,
+  targetYear:        2030,
 
   setRenewableCapacity(source, gw) {
     const renewableCapacity = { ...get().renewableCapacity, [source]: gw }
@@ -96,4 +100,5 @@ export const useSimStore = create<SimState>()((set, get) => ({
 
   setScenario(s) { set({ scenario: s }) },
   setStoragePower(gw) { set({ storagePowerGW: gw }) },
+  setTargetYear(year) { set({ targetYear: year }) },
 }))

@@ -4,6 +4,7 @@ import {
 } from 'recharts'
 import { SOURCE_DEFINITIONS } from '@/models/sources'
 import { SOURCE_DETAILS } from '@/models/sourceDetails'
+import { useSimStore } from '@/store/simulationStore'
 import type { SourceKey } from '@/models/sourceDetails'
 
 interface Props {
@@ -20,6 +21,7 @@ function getColor(sourceKey: SourceKey): string {
 
 export function SourceDetailModal({ sourceKey, currentValue, isOpen, onClose }: Props) {
   const detail = SOURCE_DETAILS[sourceKey]
+  const targetYear = useSimStore(s => s.targetYear)
   if (!detail) return null
 
   const color = getColor(sourceKey)
@@ -27,15 +29,12 @@ export function SourceDetailModal({ sourceKey, currentValue, isOpen, onClose }: 
   const isTWh = detail.unit === 'TWh'
 
   // ── Growth calculation ─────────────────────────────────────────────────────
+  const yearsToTarget = targetYear - 2023
   const diff         = currentValue - italy2023Value
-  const annualGrowth = diff / 7   // years from 2023 to 2030
+  const annualGrowth = diff / yearsToTarget
   const isGrowing    = diff > 0.05
   const isShrinking  = diff < -0.05
   const isFlat       = !isGrowing && !isShrinking
-
-  // Year in which user's target would be reached (assuming linear growth from 2023)
-  // If growth matches recent pace → might be sooner or later than 2030
-  const targetYear = 2030
 
   // ── Chart data (2004 → 2050) ───────────────────────────────────────────────
   const historicalPoints = detail.historical.map(p => ({
@@ -52,18 +51,21 @@ export function SourceDetailModal({ sourceKey, currentValue, isOpen, onClose }: 
   const projectionPoints: { year: number; storico: number | null; proiezione: number | null }[] = []
 
   if (!isFlat) {
-    // 2030: user's target (large dot)
-    projectionPoints.push({ year: 2030, storico: null, proiezione: currentValue })
+    // targetYear: user's target (large dot)
+    projectionPoints.push({ year: targetYear, storico: null, proiezione: currentValue })
 
-    // 2050: extrapolate at same annual rate from 2030 onward
-    const extrapolated2050 = currentValue + annualGrowth * 20 // 20 years from 2030 to 2050
-    // Clamp at 0 for sources that reduce (coal, gas)
-    const value2050 = Math.max(0, extrapolated2050)
-    projectionPoints.push({ year: 2050, storico: null, proiezione: value2050 })
+    if (targetYear < 2050) {
+      // 2050: extrapolate at same annual rate from targetYear onward
+      const extrapolated2050 = currentValue + annualGrowth * (2050 - targetYear)
+      const value2050 = Math.max(0, extrapolated2050)
+      projectionPoints.push({ year: 2050, storico: null, proiezione: value2050 })
+    }
   } else {
     // No change: flat dotted line to 2050
-    projectionPoints.push({ year: 2030, storico: null, proiezione: italy2023Value })
-    projectionPoints.push({ year: 2050, storico: null, proiezione: italy2023Value })
+    projectionPoints.push({ year: targetYear, storico: null, proiezione: italy2023Value })
+    if (targetYear < 2050) {
+      projectionPoints.push({ year: 2050, storico: null, proiezione: italy2023Value })
+    }
   }
 
   // Merge: avoid duplicating 2023 if last historical point is already 2023
@@ -92,7 +94,7 @@ export function SourceDetailModal({ sourceKey, currentValue, isOpen, onClose }: 
     growthLine = `Per raggiungere ${currentValue.toFixed(currentValue < 10 ? 1 : 0)} ${detail.unit} entro il ${targetYear} servono +${annualGrowth.toFixed(1)} ${detail.unit}/anno`
     growthColor = 'text-green-700'
   } else {
-    growthLine = `Riduzione di ${Math.abs(diff).toFixed(1)} ${detail.unit} rispetto al 2023 (−${Math.abs(annualGrowth).toFixed(1)} ${detail.unit}/anno)`
+    growthLine = `Riduzione di ${Math.abs(diff).toFixed(1)} ${detail.unit} rispetto al 2023 (−${Math.abs(annualGrowth).toFixed(1)} ${detail.unit}/anno) entro il ${targetYear}`
     growthColor = 'text-amber-700'
   }
 
@@ -305,7 +307,7 @@ export function SourceDetailModal({ sourceKey, currentValue, isOpen, onClose }: 
                       {detail.unit}/anno
                     </span>
                     <span className="text-xs text-gray-400 ml-1">
-                      per 7 anni (2023→2030)
+                      per {yearsToTarget} anni (2023→{targetYear})
                     </span>
                   </div>
                 )}

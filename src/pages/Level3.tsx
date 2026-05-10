@@ -11,6 +11,7 @@ import { ControlsPanel } from '@/components/controls/ControlsPanel'
 import { HourlyDispatchChart } from '@/components/charts/HourlyDispatchChart'
 import { PrintButton } from '@/components/print/PrintButton'
 import { ScenarioPrintHeader } from '@/components/print/ScenarioPrintHeader'
+import { YearSelector } from '@/components/ui/YearSelector'
 import { ITALY_CO2_BASELINE_MT } from '@/models/constants'
 import type { Scenario } from '@/models/types'
 
@@ -90,6 +91,7 @@ export default function Level3() {
           </div>
           <PrintButton className="mt-1 flex-shrink-0" />
         </div>
+        <YearSelector />
       </div>
 
       <ObjectivesPanel

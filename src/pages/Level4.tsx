@@ -5,6 +5,7 @@ import { DataSources } from '@/components/ui/DataSources'
 import { ObjectivesPanel } from '@/components/ui/ObjectivesPanel'
 import { PrintButton } from '@/components/print/PrintButton'
 import { ScenarioPrintHeader } from '@/components/print/ScenarioPrintHeader'
+import { YearSelector } from '@/components/ui/YearSelector'
 import { useSimStore } from '@/store/simulationStore'
 import { LEVEL4_CONFIG } from '@/simulation/levels/level4'
 import { computeLevel4 } from '@/models/balanceRegional'
@@ -75,6 +76,7 @@ export default function Level4() {
           </div>
           <PrintButton className="mt-1 flex-shrink-0" />
         </div>
+        <YearSelector />
       </div>
 
       <ObjectivesPanel

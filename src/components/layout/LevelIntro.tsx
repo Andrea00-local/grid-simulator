@@ -6,10 +6,10 @@ interface LevelIntroConfig {
   badgeColor: string
   title: string
   description: string
-  concepts: string[]
+  concepts?: string[]
   gradient: string
   what: string[]
-  why: string
+  why?: string
 }
 
 const INTROS: Record<number, LevelIntroConfig> = {
@@ -17,18 +17,15 @@ const INTROS: Record<number, LevelIntroConfig> = {
     level: 1,
     badge: 'Livello 1',
     badgeColor: 'bg-blue-600',
-    title: 'Bilancio Nazionale Annuale',
+    title: 'Bilancio Annuale',
     description:
-      'Imposta la capacità installata per ogni fonte energetica e osserva come cambia il mix elettrico italiano. Questo è il punto di partenza: capire come le diverse fonti contribuiscono alla produzione annuale e dove si trovano surplus o deficit strutturali.',
-    concepts: ['Capacità installata', 'Capacity factor', 'Mix energetico', 'Deficit / Surplus', 'Emissioni CO₂'],
+      'Questo è il livello più semplice di tutti in cui cerchiamo di capire le basi del nostro sistema elettrico. Alla base di tutto stanno la produzione e la domanda elettrica. Ogni volta che consumiamo elettricità, accendendo una lampadina o un forno o caricando la nostra macchina elettrica, lo possiamo fare poichè da qualche parte c\'è una centrale che sta producendo quell\'elettricità che arriva fino a noi. L\'elettricità può essere prodotta in tanti modi diversi, puoi cliccare sulle fonti che trovi nella dashboard per scoprire di più su ciascuna di esse. Alcune di quelle fonti, quelle dette fossili, utilizzano appunto dei combustibili fossili per produrre elettricità e di conseguenza comportano emissione di anidride carbonica nell\'atmosfera, andando a peggiorare il cambiamento climatico in atto. L\'Italia, all\'interno degli accordi europei, si è prefissata alcuni obiettivi importanti: azzerare completamente le proprie emissioni entro il 2050. Questo però non basta, ha anche fissato alcuni obiettivi intermedi per il 2030 ed il 2040. Nella dashboard che vedrete potrete scegliere in quale anno volete operare, così da vedere riportati gli obiettivi relativi a quell\'anno. Gli obiettivi consistono in un valore di emissioni evitate e in una percentuale di energia prodotta dalle fonti rinnovabili. Ma attenzione, dovrete sempre assicurare di produrre tanta elettricità quanta ne serve, altrimenti lascerete le case al buio!',
     gradient: 'from-blue-500 to-indigo-600',
     what: [
       'Regola i cursori per ogni fonte (solare, eolico, gas, nucleare…)',
       'Osserva come cambia il grafico del mix energetico in tempo reale',
-      'Monitora il saldo annuale: sei in surplus o in deficit?',
-      'Controlla le emissioni CO₂ rispetto al 2023',
+      'Occhio agli obiettivi, riuscirai a soddisfarli tutti?',
     ],
-    why: 'Il bilancio annuale aggregato nasconde importanti variazioni stagionali — affrontate nel Livello 2.',
   },
   2: {
     level: 2,
@@ -135,22 +132,26 @@ export function LevelIntro({ level, onStart }: Props) {
           </div>
 
           {/* Concepts */}
-          <div className="mb-6">
-            <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Concetti chiave</h2>
-            <div className="flex flex-wrap gap-2">
-              {cfg.concepts.map((c) => (
-                <span key={c} className="text-xs bg-gray-100 text-gray-600 rounded-full px-3 py-1">
-                  {c}
-                </span>
-              ))}
+          {cfg.concepts && cfg.concepts.length > 0 && (
+            <div className="mb-6">
+              <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Concetti chiave</h2>
+              <div className="flex flex-wrap gap-2">
+                {cfg.concepts.map((c) => (
+                  <span key={c} className="text-xs bg-gray-100 text-gray-600 rounded-full px-3 py-1">
+                    {c}
+                  </span>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Why it matters */}
-          <div className="bg-gray-50 rounded-xl p-4 mb-6">
-            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Perché importa</p>
-            <p className="text-sm text-gray-700 leading-relaxed">{cfg.why}</p>
-          </div>
+          {cfg.why && (
+            <div className="bg-gray-50 rounded-xl p-4 mb-6">
+              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Perché importa</p>
+              <p className="text-sm text-gray-700 leading-relaxed">{cfg.why}</p>
+            </div>
+          )}
 
           {/* CTA */}
           <button
