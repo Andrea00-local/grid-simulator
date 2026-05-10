@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { X, ExternalLink, Database } from 'lucide-react'
+import { SimplificationsModal } from './SimplificationsModal'
 
 interface DataEntry {
   name: string
@@ -332,19 +333,18 @@ export function DataSources({ level }: Props) {
   return (
     <>
       {/* Trigger row */}
-      <div className="mt-8 border-t border-gray-100 pt-5">
+      <div className="mt-8 border-t border-gray-100 pt-5 flex flex-wrap items-center gap-x-8 gap-y-3">
         <button
           onClick={() => setOpen(true)}
           className="group flex items-center gap-2 text-sm text-gray-500 hover:text-gray-800 transition-colors"
         >
           <Database className="w-4 h-4 text-gray-400 group-hover:text-gray-600 flex-shrink-0" />
-          <span>
-            Vuoi sapere da dove vengono i dati utilizzati per realizzare questo simulatore?
-          </span>
+          <span>Vuoi sapere da dove vengono i dati?</span>
           <span className="text-xs text-blue-500 group-hover:text-blue-700 font-medium underline underline-offset-2 ml-1">
             Scopri le fonti →
           </span>
         </button>
+        <SimplificationsModal />
       </div>
 
       {/* Modal */}

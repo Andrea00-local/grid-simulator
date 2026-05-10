@@ -26,55 +26,76 @@ export function SourceDetailModal({ sourceKey, currentValue, isOpen, onClose }: 
   const italy2023Value = detail.italy2023.value
   const isTWh = detail.unit === 'TWh'
 
-  // ── Chart data ──────────────────────────────────────────────────────────────
+  // ── Growth calculation ─────────────────────────────────────────────────────
+  const diff         = currentValue - italy2023Value
+  const annualGrowth = diff / 7   // years from 2023 to 2030
+  const isGrowing    = diff > 0.05
+  const isShrinking  = diff < -0.05
+  const isFlat       = !isGrowing && !isShrinking
+
+  // Year in which user's target would be reached (assuming linear growth from 2023)
+  // If growth matches recent pace → might be sooner or later than 2030
+  const targetYear = 2030
+
+  // ── Chart data (2004 → 2050) ───────────────────────────────────────────────
   const historicalPoints = detail.historical.map(p => ({
     year: p.year,
-    storico: p.value,
-    proiezione: null as number | null,
+    storico:     p.value,
+    proiezione:  null as number | null,
   }))
 
-  // Anchor 2023 point
+  // Anchor at 2023
   const anchor = { year: 2023, storico: italy2023Value, proiezione: italy2023Value }
 
-  const projectionPoint =
-    currentValue !== italy2023Value
-      ? [{ year: 2030, storico: null as number | null, proiezione: currentValue }]
-      : []
+  // Projection beyond 2023: same annual rate as needed to hit user target by 2030,
+  // then held constant from 2030 to 2050 (or continued if extrapolation makes sense)
+  const projectionPoints: { year: number; storico: number | null; proiezione: number | null }[] = []
 
-  // Merge: avoid duplicating 2023 if last historical is already 2023
-  const lastHistorical = historicalPoints[historicalPoints.length - 1]
+  if (!isFlat) {
+    // 2030: user's target (large dot)
+    projectionPoints.push({ year: 2030, storico: null, proiezione: currentValue })
+
+    // 2050: extrapolate at same annual rate from 2030 onward
+    const extrapolated2050 = currentValue + annualGrowth * 20 // 20 years from 2030 to 2050
+    // Clamp at 0 for sources that reduce (coal, gas)
+    const value2050 = Math.max(0, extrapolated2050)
+    projectionPoints.push({ year: 2050, storico: null, proiezione: value2050 })
+  } else {
+    // No change: flat dotted line to 2050
+    projectionPoints.push({ year: 2030, storico: null, proiezione: italy2023Value })
+    projectionPoints.push({ year: 2050, storico: null, proiezione: italy2023Value })
+  }
+
+  // Merge: avoid duplicating 2023 if last historical point is already 2023
+  const lastHist = historicalPoints[historicalPoints.length - 1]
   const chartData =
-    lastHistorical?.year === 2023
-      ? [
-          ...historicalPoints.slice(0, -1),
-          anchor,
-          ...projectionPoint,
-        ]
-      : [
-          ...historicalPoints,
-          anchor,
-          ...projectionPoint,
-        ]
+    lastHist?.year === 2023
+      ? [...historicalPoints.slice(0, -1), anchor, ...projectionPoints]
+      : [...historicalPoints, anchor, ...projectionPoints]
 
-  // ── Growth calculation ───────────────────────────────────────────────────────
-  const diff = currentValue - italy2023Value
-  const annualGrowth = diff / 7
+  // Custom dot: only render a visible dot at the user's target year (2030)
+  function projectionDot(props: { cx?: number; cy?: number; payload?: { year: number; proiezione: number | null } }) {
+    const { cx, cy, payload } = props
+    if (payload?.year === targetYear && payload.proiezione != null) {
+      return <circle key="target-dot" cx={cx} cy={cy} r={5} fill={color} stroke="white" strokeWidth={2} />
+    }
+    return <circle key={`dot-${payload?.year}`} cx={cx} cy={cy} r={0} fill="none" />
+  }
 
-  let growthText: string
+  // ── Text summaries ─────────────────────────────────────────────────────────
+  let growthLine: string
   let growthColor: string
-  if (Math.abs(diff) < 0.05) {
-    growthText = 'Scenario attuale (nessuna crescita aggiuntiva)'
+  if (isFlat) {
+    growthLine = `Scenario attuale — nessuna variazione rispetto al 2023`
     growthColor = 'text-gray-600'
-  } else if (diff > 0) {
-    growthText = `Per raggiungere ${currentValue.toFixed(currentValue < 10 ? 1 : 0)} ${detail.unit} entro il 2030 servono +${annualGrowth.toFixed(1)} ${detail.unit}/anno per 7 anni`
-    // Amber if growth is >3× the recent pace (or very fast for TWh reductions)
+  } else if (isGrowing) {
+    growthLine = `Per raggiungere ${currentValue.toFixed(currentValue < 10 ? 1 : 0)} ${detail.unit} entro il ${targetYear} servono +${annualGrowth.toFixed(1)} ${detail.unit}/anno`
     growthColor = 'text-green-700'
   } else {
-    growthText = `Riduzione di ${Math.abs(diff).toFixed(1)} ${detail.unit} rispetto al 2023`
+    growthLine = `Riduzione di ${Math.abs(diff).toFixed(1)} ${detail.unit} rispetto al 2023 (−${Math.abs(annualGrowth).toFixed(1)} ${detail.unit}/anno)`
     growthColor = 'text-amber-700'
   }
 
-  // Special notes
   const extraNote =
     sourceKey === 'wind_offshore'
       ? 'Le prime installazioni offshore italiane sono attese dopo il 2025, con iter autorizzativi ancora in corso.'
@@ -109,10 +130,7 @@ export function SourceDetailModal({ sourceKey, currentValue, isOpen, onClose }: 
             {/* Header */}
             <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 flex-shrink-0">
               <div className="flex items-center gap-3 min-w-0">
-                <span
-                  className="w-3.5 h-3.5 rounded-full flex-shrink-0"
-                  style={{ backgroundColor: color }}
-                />
+                <span className="w-3.5 h-3.5 rounded-full flex-shrink-0" style={{ backgroundColor: color }} />
                 <div className="min-w-0">
                   <h2 className="text-lg font-bold text-gray-900 truncate">{detail.label}</h2>
                   <p className="text-xs text-gray-400 mt-0.5">Dettaglio fonte energetica</p>
@@ -133,13 +151,11 @@ export function SourceDetailModal({ sourceKey, currentValue, isOpen, onClose }: 
               {/* Description */}
               <p className="text-sm text-gray-700 leading-relaxed">{detail.description}</p>
 
-              {/* Info row: Capacity Factor | Italia 2023 */}
+              {/* Info row: CF | Italia 2023 */}
               <div className={`grid gap-3 ${showCapacityFactor ? 'grid-cols-2' : 'grid-cols-1'}`}>
                 {showCapacityFactor && detail.capacityFactor && (
                   <div className="bg-gray-50 rounded-xl p-4">
-                    <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1">
-                      Fattore di Capacità
-                    </p>
+                    <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1">Fattore di Capacità</p>
                     <p className="text-xl font-bold text-gray-900">
                       {(detail.capacityFactor.value * 100).toFixed(1)}%
                     </p>
@@ -148,17 +164,13 @@ export function SourceDetailModal({ sourceKey, currentValue, isOpen, onClose }: 
                   </div>
                 )}
                 <div className="bg-gray-50 rounded-xl p-4">
-                  <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1">
-                    Italia 2023
-                  </p>
+                  <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1">Italia 2023</p>
                   <p className="text-xl font-bold text-gray-900">
                     {italy2023Value.toFixed(italy2023Value < 10 ? 1 : 0)}{' '}
                     <span className="text-sm font-normal text-gray-500">{detail.unit}</span>
                   </p>
                   {detail.italy2023.productionTWh !== undefined && detail.unit === 'GW' && (
-                    <p className="text-xs text-gray-500 mt-0.5">
-                      ≈ {detail.italy2023.productionTWh} TWh prodotti
-                    </p>
+                    <p className="text-xs text-gray-500 mt-0.5">≈ {detail.italy2023.productionTWh} TWh prodotti</p>
                   )}
                   <p className="text-xs text-gray-400 mt-1 leading-snug">{detail.italy2023.context}</p>
                 </div>
@@ -175,9 +187,7 @@ export function SourceDetailModal({ sourceKey, currentValue, isOpen, onClose }: 
                       key={t.year + t.label}
                       className="flex flex-col items-center px-4 py-2.5 rounded-xl border border-gray-200 bg-white min-w-[90px]"
                     >
-                      <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide">
-                        {t.label}
-                      </span>
+                      <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide">{t.label}</span>
                       <span className="text-base font-bold mt-0.5" style={{ color }}>
                         {t.value.toFixed(t.value < 10 ? 1 : 0)}
                         <span className="text-xs font-normal text-gray-400 ml-0.5">{detail.unit}</span>
@@ -188,22 +198,26 @@ export function SourceDetailModal({ sourceKey, currentValue, isOpen, onClose }: 
                 </div>
               </div>
 
-              {/* Historical chart */}
+              {/* Historical + projection chart (2004–2050) */}
               <div>
-                <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">
-                  Andamento storico e proiezione
-                </h3>
+                <div className="flex items-start justify-between mb-3">
+                  <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wide">
+                    Storico e proiezione 2004–2050
+                  </h3>
+                  <span className="text-[10px] text-gray-400 italic">
+                    ● target impostato · - - proiezione
+                  </span>
+                </div>
                 <ResponsiveContainer width="100%" height={200}>
-                  <LineChart
-                    data={chartData}
-                    margin={{ top: 5, right: 16, bottom: 5, left: 0 }}
-                  >
+                  <LineChart data={chartData} margin={{ top: 5, right: 16, bottom: 5, left: 0 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                     <XAxis
                       dataKey="year"
                       tick={{ fontSize: 10 }}
-                      tickCount={6}
-                      domain={['dataMin', currentValue !== italy2023Value ? 2030 : 2023]}
+                      domain={[2004, 2050]}
+                      type="number"
+                      ticks={[2004, 2010, 2015, 2020, 2023, 2030, 2040, 2050]}
+                      tickFormatter={v => `'${String(v).slice(2)}`}
                     />
                     <YAxis
                       tick={{ fontSize: 10 }}
@@ -220,69 +234,95 @@ export function SourceDetailModal({ sourceKey, currentValue, isOpen, onClose }: 
                       formatter={(value, name) => {
                         const v = value as number | null | undefined
                         if (v == null) return ['-', String(name)]
-                        const label = name === 'storico' ? 'Storico' : 'Proiezione'
-                        return [`${v.toFixed(v < 10 ? 2 : 1)} ${detail.unit}`, label]
+                        const lbl = name === 'storico' ? 'Storico' : 'Proiezione'
+                        return [`${v.toFixed(v < 10 ? 2 : 1)} ${detail.unit}`, lbl]
                       }}
-                      labelFormatter={(year) => `Anno ${year}`}
+                      labelFormatter={year => `Anno ${year}`}
                       contentStyle={{ fontSize: 12 }}
                     />
-                    {/* Reference lines for targets */}
+                    {/* Reference lines for PNIEC + Net Zero targets */}
                     {detail.targets.map(t => (
                       <ReferenceLine
                         key={t.year + t.label}
                         y={t.value}
                         stroke={color}
                         strokeDasharray="4 4"
-                        strokeOpacity={0.5}
-                        label={{
-                          value: t.label,
-                          position: 'insideTopRight',
-                          fontSize: 9,
-                          fill: color,
-                        }}
+                        strokeOpacity={0.4}
+                        label={{ value: t.label, position: 'insideTopRight', fontSize: 9, fill: color }}
                       />
                     ))}
+                    {/* Reference line for user's current slider value */}
+                    <ReferenceLine
+                      y={currentValue}
+                      stroke={color}
+                      strokeWidth={1.5}
+                      strokeDasharray="2 2"
+                      strokeOpacity={0.6}
+                      label={{ value: 'Il tuo target', position: 'insideBottomRight', fontSize: 9, fill: color }}
+                    />
                     {/* Historical line */}
                     <Line
                       type="monotone"
                       dataKey="storico"
                       stroke={color}
-                      strokeWidth={2}
+                      strokeWidth={2.5}
                       dot={false}
                       connectNulls={false}
                       name="storico"
                     />
-                    {/* Projection line */}
-                    {currentValue !== italy2023Value && (
-                      <Line
-                        type="monotone"
-                        dataKey="proiezione"
-                        stroke={color}
-                        strokeWidth={2}
-                        strokeDasharray="5 4"
-                        strokeOpacity={0.6}
-                        dot={false}
-                        connectNulls={false}
-                        name="proiezione"
-                      />
-                    )}
+                    {/* Projection line (dashed) with dot at 2030 */}
+                    <Line
+                      type="monotone"
+                      dataKey="proiezione"
+                      stroke={color}
+                      strokeWidth={2}
+                      strokeDasharray="5 4"
+                      strokeOpacity={0.65}
+                      dot={projectionDot as unknown as boolean}
+                      connectNulls={false}
+                      name="proiezione"
+                    />
                   </LineChart>
                 </ResponsiveContainer>
               </div>
 
-              {/* Required growth section */}
-              <div className="bg-gray-50 rounded-xl p-4 space-y-2">
+              {/* Annual growth needed — visually prominent */}
+              <div className="bg-gray-50 rounded-xl p-4 space-y-3">
                 <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wide">
-                  Scenario corrente del simulatore
+                  Crescita necessaria per il tuo scenario
                 </h3>
+
+                {/* Big number */}
+                {!isFlat && (
+                  <div className="flex items-baseline gap-2">
+                    <span
+                      className="text-3xl font-bold tabular-nums"
+                      style={{ color }}
+                    >
+                      {isGrowing ? '+' : ''}{annualGrowth.toFixed(1)}
+                    </span>
+                    <span className="text-sm text-gray-500 font-medium">
+                      {detail.unit}/anno
+                    </span>
+                    <span className="text-xs text-gray-400 ml-1">
+                      per 7 anni (2023→2030)
+                    </span>
+                  </div>
+                )}
+
                 <p className={`text-sm font-medium leading-snug ${growthColor}`}>
-                  {growthText}
+                  {growthLine}
                 </p>
-                <p className="text-xs text-gray-500">
-                  Crescita recente: <span className="font-medium text-gray-700">{detail.recentGrowth}</span>
-                </p>
+
+                <div className="flex items-center gap-2 border-t border-gray-200 pt-2">
+                  <div className="w-1.5 h-1.5 rounded-full bg-gray-400 flex-shrink-0" />
+                  <p className="text-xs text-gray-500">
+                    Ritmo recente: <span className="font-medium text-gray-700">{detail.recentGrowth}</span>
+                  </p>
+                </div>
+
                 {extraNote && (
-                  <p className="text-xs text-gray-400 italic leading-snug border-t border-gray-200 pt-2 mt-2">
+                  <p className="text-xs text-gray-400 italic leading-snug border-t border-gray-200 pt-2">
                     {extraNote}
                   </p>
                 )}

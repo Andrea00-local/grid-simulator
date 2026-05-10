@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import { Zap, BarChart2, Clock, Map, ChevronRight, Lock } from 'lucide-react'
+import { SimplificationsModal } from '@/components/ui/SimplificationsModal'
 
 const LEVELS = [
   {
@@ -126,9 +127,12 @@ export default function Home() {
       </div>
 
       {/* Footer note */}
-      <p className="text-center text-xs text-gray-400 mt-12">
-        Dati di riferimento: Terna, GSE, ENTSO-E — Anno 2023 · Progetto didattico open-source
-      </p>
+      <div className="mt-12 flex flex-col items-center gap-3">
+        <SimplificationsModal />
+        <p className="text-center text-xs text-gray-400">
+          Dati di riferimento: Terna, GSE, ENTSO-E — Anno 2023 · Progetto didattico open-source
+        </p>
+      </div>
     </div>
   )
 }
