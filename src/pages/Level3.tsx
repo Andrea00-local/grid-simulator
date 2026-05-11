@@ -253,6 +253,11 @@ export default function Level3() {
             </div>
           </div>
 
+          {/* Controls immediately below main chart */}
+          <div className="print:hidden">
+            <ControlsPanel showStorage layout="horizontal" />
+          </div>
+
           {/* Daily KPIs */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {[
@@ -343,10 +348,6 @@ export default function Level3() {
               non mostrato separatamente.
             </p>
           </div>
-      </div>
-
-      <div className="mt-8 print:hidden">
-        <ControlsPanel showStorage layout="horizontal" />
       </div>
 
       <div className="print:hidden">

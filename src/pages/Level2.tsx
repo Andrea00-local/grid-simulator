@@ -148,6 +148,11 @@ export default function Level2() {
           <span className="text-xs text-gray-400 self-center ml-1">TWh/mese</span>
         </div>
 
+        {/* Controls immediately below main chart */}
+        <div className="print:hidden">
+          <ControlsPanel layout="horizontal" />
+        </div>
+
         {/* Gross balance summary */}
         <div className="gs-card p-5">
           <BalanceIndicator
@@ -173,10 +178,6 @@ export default function Level2() {
             <strong> Livello 3</strong> introduremo lo storage per valorizzare il surplus.
           </p>
         </div>
-      </div>
-
-      <div className="mt-8 print:hidden">
-        <ControlsPanel layout="horizontal" />
       </div>
 
       <div className="print:hidden">

@@ -63,6 +63,10 @@ export default function Level1() {
           <EnergyDonutChart result={result} />
         </div>
 
+        <div className="print:hidden">
+          <ControlsPanel layout="horizontal" />
+        </div>
+
         <div className="grid sm:grid-cols-2 gap-6">
           <div className="gs-card p-5">
             <EmissionsChart emissionsMt={emissionsMt} />
@@ -82,10 +86,6 @@ export default function Level1() {
             che non si eliminano tra loro senza storage.
           </p>
         </div>
-      </div>
-
-      <div className="mt-8 print:hidden">
-        <ControlsPanel layout="horizontal" />
       </div>
 
       <div className="print:hidden">
