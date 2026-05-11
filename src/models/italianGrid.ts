@@ -14,13 +14,13 @@ export interface GridScenario {
 
 export const ITALY_2023: GridScenario = {
   renewableCapacity: {
-    solar:           32.7,
-    wind_onshore:    12.1,
+    solar:           30.3,
+    wind_onshore:    12.3,
     wind_offshore:   0.0,
-    hydro_run:       8.2,
-    hydro_reservoir: 14.5,
-    biomass:         4.0,
-    geothermal:      0.9,
+    hydro_run:       8.5,
+    hydro_reservoir: 14.7,
+    biomass:         4.1,
+    geothermal:      0.8,
   },
   directProduction: {
     nuclear:  0,
