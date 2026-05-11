@@ -90,7 +90,8 @@ export const useSimStore = create<SimState>()((set, get) => ({
     const directProduction  = { ...s.directProduction }
     const demandTWh         = s.demandTWh
     const result = run(buildConfig(get().levelConfig, renewableCapacity, directProduction, demandTWh))
-    set({ renewableCapacity, directProduction, demandTWh, result })
+    const targetYear: TargetYear = id === 'pniec2030' ? 2030 : 2050
+    set({ renewableCapacity, directProduction, demandTWh, result, targetYear })
   },
 
   setLevelConfig(config) {

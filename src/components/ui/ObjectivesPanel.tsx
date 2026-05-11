@@ -2,16 +2,16 @@ import { useSimStore, type TargetYear } from '@/store/simulationStore'
 import { TargetBar } from './TargetBar'
 import { ITALY_CO2_BASELINE_MT } from '@/models/constants'
 
-const RENEWABLE_TARGETS: Record<TargetYear, { value: number; label: string }> = {
-  2030: { value: 63,  label: 'Target PNIEC 2030: 63%'      },
-  2040: { value: 85,  label: 'Target EU 2040: 85%'         },
-  2050: { value: 100, label: 'Target net-zero 2050: 100%'  },
+const RENEWABLE_TARGETS: Record<TargetYear, { value: number; label: string; noTarget?: boolean }> = {
+  2030: { value: 63,  label: 'Target PNIEC 2030: 63%'          },
+  2040: { value: 100, label: 'Nessun obiettivo specifico', noTarget: true },
+  2050: { value: 100, label: 'Nessun obiettivo specifico', noTarget: true },
 }
 
 const EMISSIONS_TARGETS: Record<TargetYear, { target: number; max: number; label: string }> = {
   2030: { target: 49.3, max: 100, label: 'Target PNIEC 2030: 49,3 MtCO₂' },
-  2040: { target:  50,  max: 100, label: 'Target EU 2040: 50 MtCO₂'       },
-  2050: { target:   0,  max:  50, label: 'Target net-zero 2050: 0 MtCO₂'  },
+  2040: { target: 12.5, max: 100, label: 'Target 2040: 12,5 MtCO₂'        },
+  2050: { target:  0,   max:  50, label: 'Target net-zero 2050: 0 MtCO₂'  },
 }
 
 interface Props {
@@ -65,6 +65,7 @@ export function ObjectivesPanel({ coverage, renewableShare, avoidedMt }: Props) 
           unita="%"
           targetLabel={renewTarget.label}
           direzione="alto-meglio"
+          noTarget={renewTarget.noTarget}
           feedbackTesti={{
             bad:  'Lontano dal target, serve più rinnovabile',
             ok:   'Sulla strada giusta',

@@ -20,6 +20,7 @@ export interface TargetBarProps {
   tooltip: string
   badThreshold?: number
   okHighThreshold?: number
+  noTarget?: boolean
 }
 
 function useCountUp(value: number, duration = 300): number {
@@ -51,7 +52,7 @@ function useCountUp(value: number, duration = 300): number {
 export function TargetBar({
   label, valore, target, min, max, unita,
   targetLabel, direzione, feedbackTesti, tooltip,
-  badThreshold, okHighThreshold,
+  badThreshold, okHighThreshold, noTarget,
 }: TargetBarProps) {
   const [showTooltip, setShowTooltip] = useState(false)
   const displayed = useCountUp(valore)
@@ -62,11 +63,13 @@ export function TargetBar({
   const tPos = Math.min(100, Math.max(0, ((target - min) / (safeMax - min)) * 100))
   const vPos = Math.min(100, Math.max(0, ((valore - min) / (safeMax - min)) * 100))
 
-  const isGood = direzione === 'alto-meglio' ? valore >= target : valore <= target
+  const isGood = !noTarget && (direzione === 'alto-meglio' ? valore >= target : valore <= target)
 
   // ── Feedback zone ─────────────────────────────────────────────────────────
   let feedbackText: string
-  if (isGood) {
+  if (noTarget) {
+    feedbackText = ''
+  } else if (isGood) {
     feedbackText = feedbackTesti.good
   } else if (direzione === 'alto-meglio') {
     const badLim = badThreshold ?? (min + (target - min) / 2)
@@ -84,7 +87,9 @@ export function TargetBar({
 
   // ── Accent colour ─────────────────────────────────────────────────────────
   let accentColor: string
-  if (isGood) {
+  if (noTarget) {
+    accentColor = '#3b82f6'
+  } else if (isGood) {
     accentColor = '#22c55e'
   } else {
     const isOk = direzione === 'alto-meglio'
@@ -95,7 +100,9 @@ export function TargetBar({
 
   // ── Gradient ──────────────────────────────────────────────────────────────
   let gradient: string
-  if (direzione === 'alto-meglio') {
+  if (noTarget) {
+    gradient = `linear-gradient(to right, #dbeafe 0%, #93c5fd 50%, #3b82f6 100%)`
+  } else if (direzione === 'alto-meglio') {
     gradient = `linear-gradient(to right,
       #dc2626 0%,
       #ef4444 ${tPos * 0.3}%,
@@ -182,29 +189,31 @@ export function TargetBar({
         <div className="h-4 rounded-full" style={{ background: gradient }} />
 
         {/* Target marker (line + triangle above) */}
-        <div
-          className="absolute inset-y-0 flex items-center"
-          style={{
-            left: `${tPos}%`,
-            transform: 'translateX(-50%)',
-            transition: 'left 500ms ease-out',
-          }}
-        >
-          {/* Downward triangle sitting above the bar */}
+        {!noTarget && (
           <div
-            className="absolute w-0 h-0"
+            className="absolute inset-y-0 flex items-center"
             style={{
-              top: -9,
-              left: '50%',
+              left: `${tPos}%`,
               transform: 'translateX(-50%)',
-              borderLeft:   '5px solid transparent',
-              borderRight:  '5px solid transparent',
-              borderTop:    '6px solid #1e293b',
+              transition: 'left 500ms ease-out',
             }}
-          />
-          {/* Vertical white line through bar */}
-          <div className="w-0.5 h-full rounded-full bg-white opacity-90" />
-        </div>
+          >
+            {/* Downward triangle sitting above the bar */}
+            <div
+              className="absolute w-0 h-0"
+              style={{
+                top: -9,
+                left: '50%',
+                transform: 'translateX(-50%)',
+                borderLeft:   '5px solid transparent',
+                borderRight:  '5px solid transparent',
+                borderTop:    '6px solid #1e293b',
+              }}
+            />
+            {/* Vertical white line through bar */}
+            <div className="w-0.5 h-full rounded-full bg-white opacity-90" />
+          </div>
+        )}
 
         {/* Value indicator ball */}
         <div
