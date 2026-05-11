@@ -1,11 +1,45 @@
+import { useState, useEffect, useRef } from 'react'
 import {
   LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid,
-  ReferenceLine, ResponsiveContainer,
+  ResponsiveContainer,
 } from 'recharts'
 import { SOURCE_DEFINITIONS } from '@/models/sources'
 import { SOURCE_DETAILS } from '@/models/sourceDetails'
 import { useSimStore } from '@/store/simulationStore'
 import type { SourceKey } from '@/models/sourceDetails'
+
+// ── Count-up hook ─────────────────────────────────────────────────────────────
+function useCountUp(value: number, duration = 300): number {
+  const [disp, setDisp] = useState(value)
+  const prevRef = useRef(value)
+  const rafRef  = useRef(0)
+
+  useEffect(() => {
+    cancelAnimationFrame(rafRef.current)
+    const start = prevRef.current
+    const end   = value
+    const t0    = performance.now()
+
+    function tick(now: number) {
+      const p     = Math.min((now - t0) / duration, 1)
+      const eased = p < 1 ? p * p * (3 - 2 * p) : 1
+      setDisp(start + (end - start) * eased)
+      if (p < 1) rafRef.current = requestAnimationFrame(tick)
+      else        prevRef.current = end
+    }
+
+    rafRef.current = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(rafRef.current)
+  }, [value, duration])
+
+  return disp
+}
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+function getColor(key: SourceKey): string {
+  if (key === 'hydro') return '#14B8A6'
+  return SOURCE_DEFINITIONS[key]?.color ?? '#6b7280'
+}
 
 interface Props {
   sourceKey: SourceKey
@@ -14,88 +48,113 @@ interface Props {
   onClose: () => void
 }
 
-function getColor(sourceKey: SourceKey): string {
-  if (sourceKey === 'hydro') return '#14B8A6'
-  return SOURCE_DEFINITIONS[sourceKey]?.color ?? '#6b7280'
-}
-
+// ── Component ─────────────────────────────────────────────────────────────────
 export function SourceDetailModal({ sourceKey, currentValue, isOpen, onClose }: Props) {
-  const detail = SOURCE_DETAILS[sourceKey]
+  const detail     = SOURCE_DETAILS[sourceKey]
   const targetYear = useSimStore(s => s.targetYear)
+
+  // Hoist all hooks above the early-return so Rules of Hooks are respected
+  const anchor2023    = detail?.italy2023.value ?? 0
+  const yearsToTarget = targetYear - 2023
+  const diff          = currentValue - anchor2023
+  const annualGrowth  = diff / yearsToTarget
+
+  const dispTarget = useCountUp(currentValue)
+  const dispGrowth = useCountUp(annualGrowth)
+
   if (!detail) return null
 
-  const color = getColor(sourceKey)
-  const italy2023Value = detail.italy2023.value
-  const isTWh = detail.unit === 'TWh'
+  const color  = getColor(sourceKey)
+  const unit   = detail.unit           // local const — keeps type narrow inside closures
+  const isGW   = unit === 'GW'
+  const dec    = isGW ? 1 : 0
+  const fmt    = (v: number) => v.toFixed(dec)
+  const fmt1   = (v: number) => v.toFixed(1)
 
-  // ── Growth calculation ─────────────────────────────────────────────────────
-  const yearsToTarget = targetYear - 2023
-  const diff         = currentValue - italy2023Value
-  const annualGrowth = diff / yearsToTarget
-  const isGrowing    = diff > 0.05
-  const isShrinking  = diff < -0.05
-  const isFlat       = !isGrowing && !isShrinking
+  // ── KPI box 1 ─────────────────────────────────────────────────────────────
+  const box1 = detail.capacityFactor
+    ? {
+        title: 'CAPACITY FACTOR',
+        main:  `${(detail.capacityFactor.value * 100).toFixed(1)}%`,
+        sub:   detail.capacityFactor.notes,
+      }
+    : {
+        title: 'TIPO PRODUZIONE',
+        main:  'Disp.',
+        sub:   'Programmabile su richiesta',
+      }
 
-  // ── Chart data (2004 → 2050) ───────────────────────────────────────────────
-  const historicalPoints = detail.historical.map(p => ({
-    year: p.year,
-    storico:     p.value,
-    proiezione:  null as number | null,
-  }))
+  // ── Growth subtitle ───────────────────────────────────────────────────────
+  const growthSub =
+    Math.abs(diff) < 0.05
+      ? 'nessuna variazione prevista'
+      : diff > 0
+      ? `media nei prossimi ${yearsToTarget} anni`
+      : 'riduzione annua media'
 
-  // Anchor at 2023
-  const anchor = { year: 2023, storico: italy2023Value, proiezione: italy2023Value }
+  const growthColor =
+    Math.abs(diff) < 0.05 ? '#6b7280' : diff > 0 ? '#22c55e' : '#ef4444'
 
-  // Projection beyond 2023: same annual rate as needed to hit user target by 2030,
-  // then held constant from 2030 to 2050 (or continued if extrapolation makes sense)
-  const projectionPoints: { year: number; storico: number | null; proiezione: number | null }[] = []
+  // ── Chart data ────────────────────────────────────────────────────────────
+  const historicalPts = detail.historical
+    .filter(p => p.year >= 2005)
+    .map(p => ({
+      year:       p.year,
+      storico:    p.value,
+      proiezione: null as number | null,
+    }))
 
-  if (!isFlat) {
-    // targetYear: user's target (large dot)
-    projectionPoints.push({ year: targetYear, storico: null, proiezione: currentValue })
+  const anchor = { year: 2023, storico: anchor2023, proiezione: anchor2023 }
+  const target = { year: targetYear, storico: null as number | null, proiezione: currentValue }
 
-    if (targetYear < 2050) {
-      // 2050: extrapolate at same annual rate from targetYear onward
-      const extrapolated2050 = currentValue + annualGrowth * (2050 - targetYear)
-      const value2050 = Math.max(0, extrapolated2050)
-      projectionPoints.push({ year: 2050, storico: null, proiezione: value2050 })
-    }
-  } else {
-    // No change: flat dotted line to 2050
-    projectionPoints.push({ year: targetYear, storico: null, proiezione: italy2023Value })
-    if (targetYear < 2050) {
-      projectionPoints.push({ year: 2050, storico: null, proiezione: italy2023Value })
-    }
-  }
-
-  // Merge: avoid duplicating 2023 if last historical point is already 2023
-  const lastHist = historicalPoints[historicalPoints.length - 1]
+  const lastHist = historicalPts[historicalPts.length - 1]
   const chartData =
     lastHist?.year === 2023
-      ? [...historicalPoints.slice(0, -1), anchor, ...projectionPoints]
-      : [...historicalPoints, anchor, ...projectionPoints]
+      ? [...historicalPts.slice(0, -1), anchor, target]
+      : [...historicalPts, anchor, target]
 
-  // Custom dot: only render a visible dot at the user's target year (2030)
-  function projectionDot(props: { cx?: number; cy?: number; payload?: { year: number; proiezione: number | null } }) {
-    const { cx, cy, payload } = props
-    if (payload?.year === targetYear && payload.proiezione != null) {
-      return <circle key="target-dot" cx={cx} cy={cy} r={5} fill={color} stroke="white" strokeWidth={2} />
-    }
-    return <circle key={`dot-${payload?.year}`} cx={cx} cy={cy} r={0} fill="none" />
+  // X ticks: always include 2005 … 2023 + targetYear
+  const xTicks = Array.from(
+    new Set([2005, 2010, 2015, 2020, 2023, targetYear]),
+  ).sort((a, b) => a - b)
+
+  const yMax = Math.max(anchor2023, currentValue, 0.1) * 1.2
+
+  // ── Custom dot renderers ──────────────────────────────────────────────────
+  type DotProps = { cx?: number; cy?: number; payload?: { year: number } }
+
+  function storiciDot({ cx = 0, cy = 0, payload }: DotProps) {
+    if (!cx || !cy || payload?.year !== 2023)
+      return <g key={`sd-${payload?.year}`} />
+    return (
+      <g key="dot-2023">
+        <circle cx={cx} cy={cy} r={5} fill={color} />
+        <text
+          x={cx} y={cy - 10}
+          textAnchor="middle" fontSize={9}
+          fill={color} fontWeight="600"
+        >
+          2023: {fmt(anchor2023)} {unit}
+        </text>
+      </g>
+    )
   }
 
-  // ── Text summaries ─────────────────────────────────────────────────────────
-  let growthLine: string
-  let growthColor: string
-  if (isFlat) {
-    growthLine = `Scenario attuale — nessuna variazione rispetto al 2023`
-    growthColor = 'text-gray-600'
-  } else if (isGrowing) {
-    growthLine = `Per raggiungere ${currentValue.toFixed(currentValue < 10 ? 1 : 0)} ${detail.unit} entro il ${targetYear} servono +${annualGrowth.toFixed(1)} ${detail.unit}/anno`
-    growthColor = 'text-green-700'
-  } else {
-    growthLine = `Riduzione di ${Math.abs(diff).toFixed(1)} ${detail.unit} rispetto al 2023 (−${Math.abs(annualGrowth).toFixed(1)} ${detail.unit}/anno) entro il ${targetYear}`
-    growthColor = 'text-amber-700'
+  function projectionDot({ cx = 0, cy = 0, payload }: DotProps) {
+    if (!cx || !cy || payload?.year !== targetYear)
+      return <g key={`pd-${payload?.year}`} />
+    return (
+      <g key={`dot-${targetYear}`}>
+        <circle cx={cx} cy={cy} r={6} fill="white" stroke={color} strokeWidth={2.5} />
+        <text
+          x={cx} y={cy - 13}
+          textAnchor="middle" fontSize={9}
+          fill={color} fontWeight="600"
+        >
+          {targetYear}: {fmt(currentValue)} {unit}
+        </text>
+      </g>
+    )
   }
 
   const extraNote =
@@ -105,11 +164,9 @@ export function SourceDetailModal({ sourceKey, currentValue, isOpen, onClose }: 
       ? 'Le ultime centrali italiane furono chiuse nel 1987–1990. Un eventuale rilancio richiederebbe 15–20 anni di costruzione.'
       : null
 
-  const showCapacityFactor = !isTWh && !!detail.capacityFactor
-
+  // ── Render ────────────────────────────────────────────────────────────────
   return (
     <>
-      {/* Backdrop */}
       {isOpen && (
         <div
           className="fixed inset-0 bg-black/30 backdrop-blur-sm z-40"
@@ -118,7 +175,6 @@ export function SourceDetailModal({ sourceKey, currentValue, isOpen, onClose }: 
         />
       )}
 
-      {/* Drawer */}
       <div
         className={`fixed inset-y-0 right-0 w-full sm:w-[520px] bg-white shadow-2xl z-50 flex flex-col
           transform transition-transform duration-300 ease-in-out
@@ -129,13 +185,20 @@ export function SourceDetailModal({ sourceKey, currentValue, isOpen, onClose }: 
       >
         {isOpen && (
           <div className="flex flex-col h-full overflow-hidden">
-            {/* Header */}
-            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 flex-shrink-0">
+
+            {/* ── Header ───────────────────────────────────────────────── */}
+            <div
+              className="flex items-center justify-between px-6 py-4 border-b border-gray-100 flex-shrink-0"
+              style={{ borderBottomColor: `${color}22` }}
+            >
               <div className="flex items-center gap-3 min-w-0">
-                <span className="w-3.5 h-3.5 rounded-full flex-shrink-0" style={{ backgroundColor: color }} />
+                <span
+                  className="w-4 h-4 rounded-full flex-shrink-0"
+                  style={{ backgroundColor: color }}
+                />
                 <div className="min-w-0">
                   <h2 className="text-lg font-bold text-gray-900 truncate">{detail.label}</h2>
-                  <p className="text-xs text-gray-400 mt-0.5">Dettaglio fonte energetica</p>
+                  <p className="text-xs text-gray-400 mt-0.5">Fonte energetica — {unit}</p>
                 </div>
               </div>
               <button
@@ -147,85 +210,120 @@ export function SourceDetailModal({ sourceKey, currentValue, isOpen, onClose }: 
               </button>
             </div>
 
-            {/* Scrollable body */}
+            {/* ── Scrollable body ──────────────────────────────────────── */}
             <div className="flex-1 overflow-y-auto px-6 py-5 space-y-6">
 
               {/* Description */}
               <p className="text-sm text-gray-700 leading-relaxed">{detail.description}</p>
 
-              {/* Info row: CF | Italia 2023 */}
-              <div className={`grid gap-3 ${showCapacityFactor ? 'grid-cols-2' : 'grid-cols-1'}`}>
-                {showCapacityFactor && detail.capacityFactor && (
-                  <div className="bg-gray-50 rounded-xl p-4">
-                    <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1">Fattore di Capacità</p>
-                    <p className="text-xl font-bold text-gray-900">
-                      {(detail.capacityFactor.value * 100).toFixed(1)}%
-                    </p>
-                    <p className="text-xs text-gray-500 mt-0.5">Range: {detail.capacityFactor.range}</p>
-                    <p className="text-xs text-gray-400 mt-1 leading-snug">{detail.capacityFactor.notes}</p>
-                  </div>
-                )}
-                <div className="bg-gray-50 rounded-xl p-4">
-                  <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1">Italia 2023</p>
-                  <p className="text-xl font-bold text-gray-900">
-                    {italy2023Value.toFixed(italy2023Value < 10 ? 1 : 0)}{' '}
-                    <span className="text-sm font-normal text-gray-500">{detail.unit}</span>
+              {/* ── 4 KPI boxes ─────────────────────────────────────────── */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+
+                {/* Box 1 — CF or type */}
+                <div className="bg-gray-50 rounded-xl p-3.5">
+                  <p className="text-[9px] font-semibold text-gray-400 uppercase tracking-wide mb-1.5">
+                    {box1.title}
                   </p>
-                  {detail.italy2023.productionTWh !== undefined && detail.unit === 'GW' && (
-                    <p className="text-xs text-gray-500 mt-0.5">≈ {detail.italy2023.productionTWh} TWh prodotti</p>
-                  )}
-                  <p className="text-xs text-gray-400 mt-1 leading-snug">{detail.italy2023.context}</p>
+                  <p className="text-xl font-bold text-gray-900 tabular-nums leading-tight">
+                    {box1.main}
+                  </p>
+                  <p className="text-[10px] text-gray-500 mt-1 leading-snug">{box1.sub}</p>
                 </div>
+
+                {/* Box 2 — Oggi 2023 */}
+                <div className="bg-gray-50 rounded-xl p-3.5">
+                  <p className="text-[9px] font-semibold text-gray-400 uppercase tracking-wide mb-1.5">
+                    ITALIA 2023
+                  </p>
+                  <p className="text-xl font-bold text-gray-900 tabular-nums leading-tight">
+                    {fmt(anchor2023)}
+                    <span className="text-xs font-normal text-gray-400 ml-0.5">{unit}</span>
+                  </p>
+                  <p className="text-[10px] text-gray-500 mt-1 leading-snug">
+                    {detail.italy2023.context}
+                  </p>
+                </div>
+
+                {/* Box 3 — Target utente (count-up) */}
+                <div
+                  className="rounded-xl p-3.5"
+                  style={{ backgroundColor: `${color}12`, border: `1.5px solid ${color}30` }}
+                >
+                  <p className="text-[9px] font-semibold uppercase tracking-wide mb-1.5" style={{ color: `${color}bb` }}>
+                    AL {targetYear}
+                  </p>
+                  <p
+                    className="text-xl font-bold tabular-nums leading-tight"
+                    style={{ color }}
+                  >
+                    {fmt(dispTarget)}
+                    <span className="text-xs font-normal text-gray-400 ml-0.5">{unit}</span>
+                  </p>
+                  <p className="text-[10px] text-gray-500 mt-1">obiettivo del tuo scenario</p>
+                </div>
+
+                {/* Box 4 — Crescita annua (count-up) */}
+                <div className="bg-gray-50 rounded-xl p-3.5">
+                  <p className="text-[9px] font-semibold text-gray-400 uppercase tracking-wide mb-1.5">
+                    {diff >= 0 ? 'DA INSTALLARE/ANNO' : 'DA RIDURRE/ANNO'}
+                  </p>
+                  <p
+                    className="text-xl font-bold tabular-nums leading-tight"
+                    style={{ color: growthColor }}
+                  >
+                    {diff > 0.05 ? '+' : ''}{fmt1(dispGrowth)}
+                    <span className="text-xs font-normal text-gray-400 ml-0.5">{unit}</span>
+                  </p>
+                  <p className="text-[10px] text-gray-500 mt-1 leading-snug">{growthSub}</p>
+                </div>
+
               </div>
 
-              {/* Targets */}
+              {/* ── Chart ───────────────────────────────────────────────── */}
               <div>
-                <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">
-                  Obiettivi e scenari
-                </h3>
-                <div className="flex flex-wrap gap-2">
-                  {detail.targets.map(t => (
-                    <div
-                      key={t.year + t.label}
-                      className="flex flex-col items-center px-4 py-2.5 rounded-xl border border-gray-200 bg-white min-w-[90px]"
-                    >
-                      <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide">{t.label}</span>
-                      <span className="text-base font-bold mt-0.5" style={{ color }}>
-                        {t.value.toFixed(t.value < 10 ? 1 : 0)}
-                        <span className="text-xs font-normal text-gray-400 ml-0.5">{detail.unit}</span>
-                      </span>
-                      <span className="text-xs text-gray-400">{t.year}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Historical + projection chart (2004–2050) */}
-              <div>
-                <div className="flex items-start justify-between mb-3">
-                  <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wide">
-                    Storico e proiezione 2004–2050
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                    Da dove veniamo, dove dobbiamo arrivare
                   </h3>
-                  <span className="text-[10px] text-gray-400 italic">
-                    ● target impostato · - - proiezione
+                  <span className="text-[10px] text-gray-400 flex items-center gap-2">
+                    <svg width="14" height="2"><line x1="0" y1="1" x2="14" y2="1" stroke={color} strokeWidth="2" /></svg>
+                    storico
+                    <svg width="14" height="2"><line x1="0" y1="1" x2="14" y2="1" stroke={color} strokeWidth="2" strokeDasharray="4 3" /></svg>
+                    proiezione
                   </span>
                 </div>
-                <ResponsiveContainer width="100%" height={200}>
-                  <LineChart data={chartData} margin={{ top: 5, right: 16, bottom: 5, left: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+
+                <ResponsiveContainer width="100%" height={220}>
+                  <LineChart
+                    data={chartData}
+                    margin={{ top: 24, right: 32, bottom: 4, left: 0 }}
+                  >
+                    <CartesianGrid
+                      strokeDasharray="3 3"
+                      vertical={false}
+                      stroke="#f1f5f9"
+                    />
                     <XAxis
                       dataKey="year"
-                      tick={{ fontSize: 10 }}
-                      domain={[2004, 2050]}
                       type="number"
-                      ticks={[2004, 2010, 2015, 2020, 2023, 2030, 2040, 2050]}
-                      tickFormatter={v => `'${String(v).slice(2)}`}
+                      domain={[2005, targetYear]}
+                      ticks={xTicks}
+                      tickFormatter={v =>
+                        v >= 2023 ? String(v) : `'${String(v).slice(2)}`
+                      }
+                      tick={{ fontSize: 10, fill: '#9ca3af' }}
+                      axisLine={false}
+                      tickLine={false}
                     />
                     <YAxis
-                      tick={{ fontSize: 10 }}
-                      width={44}
+                      domain={[0, yMax]}
+                      tick={{ fontSize: 10, fill: '#9ca3af' }}
+                      axisLine={false}
+                      tickLine={false}
+                      width={38}
+                      tickFormatter={v => String(Math.round(v))}
                       label={{
-                        value: detail.historicalLabel,
+                        value: detail.unit,
                         angle: -90,
                         position: 'insideLeft',
                         offset: 10,
@@ -234,101 +332,80 @@ export function SourceDetailModal({ sourceKey, currentValue, isOpen, onClose }: 
                     />
                     <Tooltip
                       formatter={(value, name) => {
-                        const v = value as number | null | undefined
-                        if (v == null) return ['-', String(name)]
-                        const lbl = name === 'storico' ? 'Storico' : 'Proiezione'
-                        return [`${v.toFixed(v < 10 ? 2 : 1)} ${detail.unit}`, lbl]
+                        const v = value as number | null
+                        if (v == null) return ['-', '']
+                        return [
+                          `${v.toFixed(dec)} ${unit}`,
+                          name === 'storico' ? 'Storico' : 'Proiezione',
+                        ]
                       }}
                       labelFormatter={year => `Anno ${year}`}
-                      contentStyle={{ fontSize: 12 }}
+                      contentStyle={{
+                        fontSize: 12,
+                        borderRadius: '8px',
+                        border: '1px solid #e5e7eb',
+                        boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
+                      }}
                     />
-                    {/* Reference lines for PNIEC + Net Zero targets */}
-                    {detail.targets.map(t => (
-                      <ReferenceLine
-                        key={t.year + t.label}
-                        y={t.value}
-                        stroke={color}
-                        strokeDasharray="4 4"
-                        strokeOpacity={0.4}
-                        label={{ value: t.label, position: 'insideTopRight', fontSize: 9, fill: color }}
-                      />
-                    ))}
-                    {/* Reference line for user's current slider value */}
-                    <ReferenceLine
-                      y={currentValue}
-                      stroke={color}
-                      strokeWidth={1.5}
-                      strokeDasharray="2 2"
-                      strokeOpacity={0.6}
-                      label={{ value: 'Il tuo target', position: 'insideBottomRight', fontSize: 9, fill: color }}
-                    />
-                    {/* Historical line */}
+
+                    {/* Historical solid line */}
                     <Line
                       type="monotone"
                       dataKey="storico"
                       stroke={color}
                       strokeWidth={2.5}
-                      dot={false}
+                      dot={storiciDot as unknown as boolean}
                       connectNulls={false}
                       name="storico"
+                      isAnimationActive={false}
                     />
-                    {/* Projection line (dashed) with dot at 2030 */}
+
+                    {/* Projection dashed line */}
                     <Line
-                      type="monotone"
+                      type="linear"
                       dataKey="proiezione"
                       stroke={color}
                       strokeWidth={2}
-                      strokeDasharray="5 4"
-                      strokeOpacity={0.65}
+                      strokeDasharray="6 4"
+                      strokeOpacity={0.75}
                       dot={projectionDot as unknown as boolean}
-                      connectNulls={false}
+                      connectNulls
                       name="proiezione"
+                      isAnimationActive={false}
                     />
                   </LineChart>
                 </ResponsiveContainer>
+
+                {/* Growth annotation */}
+                {Math.abs(diff) > 0.05 && (
+                  <p className="text-[11px] text-gray-500 mt-2 flex items-center gap-1.5">
+                    <svg width="18" height="2" className="flex-shrink-0">
+                      <line x1="0" y1="1" x2="18" y2="1" stroke={color} strokeWidth="2" strokeDasharray="5 3" />
+                    </svg>
+                    {diff > 0
+                      ? `+${fmt1(annualGrowth)} ${unit}/anno richiesti (2023 → ${targetYear})`
+                      : `${fmt1(annualGrowth)} ${unit}/anno — riduzione necessaria`
+                    }
+                  </p>
+                )}
               </div>
 
-              {/* Annual growth needed — visually prominent */}
-              <div className="bg-gray-50 rounded-xl p-4 space-y-3">
-                <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wide">
-                  Crescita necessaria per il tuo scenario
-                </h3>
-
-                {/* Big number */}
-                {!isFlat && (
-                  <div className="flex items-baseline gap-2">
-                    <span
-                      className="text-3xl font-bold tabular-nums"
-                      style={{ color }}
-                    >
-                      {isGrowing ? '+' : ''}{annualGrowth.toFixed(1)}
-                    </span>
-                    <span className="text-sm text-gray-500 font-medium">
-                      {detail.unit}/anno
-                    </span>
-                    <span className="text-xs text-gray-400 ml-1">
-                      per {yearsToTarget} anni (2023→{targetYear})
-                    </span>
-                  </div>
-                )}
-
-                <p className={`text-sm font-medium leading-snug ${growthColor}`}>
-                  {growthLine}
+              {/* Recent growth */}
+              <div className="flex items-center gap-2 py-2 border-t border-gray-100">
+                <div className="w-1.5 h-1.5 rounded-full bg-gray-300 flex-shrink-0" />
+                <p className="text-xs text-gray-500">
+                  Ritmo recente:{' '}
+                  <span className="font-medium text-gray-700">{detail.recentGrowth}</span>
                 </p>
-
-                <div className="flex items-center gap-2 border-t border-gray-200 pt-2">
-                  <div className="w-1.5 h-1.5 rounded-full bg-gray-400 flex-shrink-0" />
-                  <p className="text-xs text-gray-500">
-                    Ritmo recente: <span className="font-medium text-gray-700">{detail.recentGrowth}</span>
-                  </p>
-                </div>
-
-                {extraNote && (
-                  <p className="text-xs text-gray-400 italic leading-snug border-t border-gray-200 pt-2">
-                    {extraNote}
-                  </p>
-                )}
               </div>
+
+              {/* Extra note */}
+              {extraNote && (
+                <p className="text-xs text-gray-400 italic leading-relaxed border-t border-gray-100 pt-3">
+                  {extraNote}
+                </p>
+              )}
+
             </div>
           </div>
         )}
