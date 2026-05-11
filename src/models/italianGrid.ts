@@ -34,12 +34,12 @@ export const ITALY_2023: GridScenario = {
 
 export const PNIEC_2030: GridScenario = {
   renewableCapacity: {
-    solar:           79.9,
-    wind_onshore:    28.1,
-    wind_offshore:   2.0,
-    hydro_run:       8.2,
-    hydro_reservoir: 14.5,
-    biomass:         3.0,
+    solar:           79.2,
+    wind_onshore:    26.0,
+    wind_offshore:   2.1,
+    hydro_run:       8.5,
+    hydro_reservoir: 14.7,
+    biomass:         3.2,
     geothermal:      1.0,
   },
   directProduction: {
