@@ -21,7 +21,7 @@ export function DemandSlider() {
             <span className="text-xs text-gray-400 ml-1.5">({deltaLabel})</span>
           </div>
           <span className="text-sm font-mono font-medium text-gray-900 ml-2 flex-shrink-0">
-            {demandTWh} TWh
+            {Math.round(demandTWh)} TWh
           </span>
         </div>
         <Slider

@@ -18,6 +18,7 @@ export function ControlsPanel({ showStorage, layout }: Props) {
   if (layout === 'horizontal') {
     const colCount = showStorage ? 'xl:grid-cols-6' : 'xl:grid-cols-5'
     return (
+      <div className="space-y-4">
       <div className={`grid grid-cols-2 md:grid-cols-3 ${colCount} gap-4 items-start`}>
 
         {/* Demand */}
@@ -85,10 +86,12 @@ export function ControlsPanel({ showStorage, layout }: Props) {
           </div>
         )}
 
-        {/* Scenarios */}
-        <div className="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 shadow-sm p-4">
-          <ScenarioPreset />
-        </div>
+      </div>
+
+      {/* Scenarios — full-width row immediately below the grid */}
+      <div className="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 shadow-sm p-4">
+        <ScenarioPreset />
+      </div>
       </div>
     )
   }

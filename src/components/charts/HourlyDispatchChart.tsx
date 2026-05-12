@@ -20,13 +20,10 @@ function SunMoonTick({ x, y, payload }: { x?: number; y?: number; payload?: { va
   )
 }
 
-// Stack bottom → top: baseload first, then variable, then flexible (gas = shows duck curve)
-const STACK_ORDER: Source[] = [
-  'nuclear', 'coal', 'imports', 'biomass', 'geothermal',
-  'hydro_run', 'hydro_reservoir',
-  'wind_offshore', 'wind_onshore', 'solar',
-  'gas_ccgt',
-]
+// Stack bottom → top: coal, gas, imports, biomass, geo, hydro (merged), wind, solar
+const THERMAL_STACK: Source[] = ['nuclear', 'coal', 'gas_ccgt', 'imports', 'biomass', 'geothermal']
+const VARIABLE_STACK: Source[] = ['wind_offshore', 'wind_onshore', 'solar']
+const HYDRO_COLOR = '#14B8A6'
 
 const BATTERY_COLOR = '#14b8a6'
 const DEMAND_COLOR  = '#0f172a'
@@ -40,9 +37,11 @@ interface Props {
 }
 
 export function HourlyDispatchChart({ hours, storageCapacityGWh, title, selectedSource, onSelectSource }: Props) {
+  const ALL_STACK = [...THERMAL_STACK, ...VARIABLE_STACK]
   const dispatchData = hours.map(hp => {
     const pt: Record<string, number> = { hour: hp.hour }
-    for (const src of STACK_ORDER) pt[src]    = hp.production[src] / 1_000
+    for (const src of ALL_STACK) pt[src] = hp.production[src] / 1_000
+    pt['hydro']   = ((hp.production['hydro_run'] ?? 0) + (hp.production['hydro_reservoir'] ?? 0)) / 1_000
     pt['battery'] = hp.batteryDischarge / 1_000
     pt['demand']  = hp.demand           / 1_000
     return pt
@@ -80,10 +79,10 @@ export function HourlyDispatchChart({ hours, storageCapacityGWh, title, selected
             cursor={{ fill: 'rgba(0,0,0,0.04)' }}
           />
 
-          {STACK_ORDER.map(src => {
+          {/* Thermal + baseload stack (bottom) */}
+          {THERMAL_STACK.map(src => {
             const def = SOURCE_DEFINITIONS[src]
-            const isSelected = selectedSource === src ||
-              (selectedSource === 'hydro' && (src === 'hydro_run' || src === 'hydro_reservoir'))
+            const isSelected = selectedSource === src
             const isDimmed = selectedSource !== null && !isSelected
             return (
               <Area
@@ -99,9 +98,54 @@ export function HourlyDispatchChart({ hours, storageCapacityGWh, title, selected
                 name={def.labelShort}
                 isAnimationActive={false}
                 style={{ cursor: onSelectSource ? 'pointer' : 'default' }}
-                onClick={() => {
-                  if (onSelectSource) onSelectSource(selectedSource === src ? null : src)
-                }}
+                onClick={() => { if (onSelectSource) onSelectSource(selectedSource === src ? null : src) }}
+              />
+            )
+          })}
+
+          {/* Hydro merged */}
+          {(() => {
+            const isSelected = selectedSource === 'hydro'
+            const isDimmed = selectedSource !== null && !isSelected
+            return (
+              <Area
+                key="hydro"
+                type="monotone"
+                dataKey="hydro"
+                stackId="d"
+                fill={HYDRO_COLOR}
+                stroke={HYDRO_COLOR}
+                fillOpacity={isDimmed ? 0.06 : (isSelected ? 0.9 : 0.88)}
+                strokeOpacity={isDimmed ? 0.1 : 1}
+                strokeWidth={0.3}
+                name="Idroelettrico"
+                isAnimationActive={false}
+                style={{ cursor: onSelectSource ? 'pointer' : 'default' }}
+                onClick={() => { if (onSelectSource) onSelectSource(selectedSource === 'hydro' ? null : 'hydro') }}
+              />
+            )
+          })()}
+
+          {/* Variable renewables (top of stack) */}
+          {VARIABLE_STACK.map(src => {
+            const def = SOURCE_DEFINITIONS[src]
+            const isSelected = selectedSource === src
+            const isDimmed = selectedSource !== null && !isSelected
+            return (
+              <Area
+                key={src}
+                type="monotone"
+                dataKey={src}
+                stackId="d"
+                fill={def.color}
+                stroke={def.color}
+                fillOpacity={isDimmed ? 0.06 : (isSelected ? 0.9 : 0.88)}
+                strokeOpacity={isDimmed ? 0.1 : 1}
+                strokeWidth={0.3}
+                name={def.labelShort}
+                isAnimationActive={false}
+                style={{ cursor: onSelectSource ? 'pointer' : 'default' }}
+                onClick={() => { if (onSelectSource) onSelectSource(selectedSource === src ? null : src) }}
               />
             )
           })}
@@ -138,7 +182,20 @@ export function HourlyDispatchChart({ hours, storageCapacityGWh, title, selected
       {/* Color legend */}
       {!onSelectSource && (
         <div className="flex flex-wrap gap-x-3 gap-y-1 mt-3 px-1">
-          {[...STACK_ORDER].reverse().map(src => {
+          {[...VARIABLE_STACK].reverse().map(src => {
+            const def = SOURCE_DEFINITIONS[src]
+            return (
+              <span key={src} className="flex items-center gap-1 text-xs text-gray-500">
+                <span className="w-2 h-2 rounded-sm inline-block" style={{ background: def.color }} />
+                {def.labelShort}
+              </span>
+            )
+          })}
+          <span className="flex items-center gap-1 text-xs text-gray-500">
+            <span className="w-2 h-2 rounded-sm inline-block" style={{ background: HYDRO_COLOR }} />
+            Idroelettrico
+          </span>
+          {[...THERMAL_STACK].reverse().map(src => {
             const def = SOURCE_DEFINITIONS[src]
             return (
               <span key={src} className="flex items-center gap-1 text-xs text-gray-500">

@@ -78,12 +78,12 @@ export function EnergyDonutChart({ result }: Props) {
                 <Cell key={i} fill={seg.color} />
               ))}
             </Pie>
-            <Tooltip content={<CustomTooltip />} />
+            <Tooltip content={<CustomTooltip />} wrapperStyle={{ zIndex: 20 }} />
           </PieChart>
         </ResponsiveContainer>
 
         {/* Center text */}
-        <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+        <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none" style={{ zIndex: 1 }}>
           <p className="text-2xl font-bold tabular-nums text-gray-900 dark:text-slate-100">
             {totalTWh.toFixed(0)}
           </p>
