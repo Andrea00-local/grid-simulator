@@ -344,14 +344,14 @@ export const SOURCE_DETAILS: Partial<Record<SourceKey, SourceDetail>> = {
     description:
       'Le centrali a ciclo combinato (CCGT) bruciano gas naturale prima in una turbina a gas, poi recuperano il calore residuo per una turbina a vapore — raggiungendo efficienze del 55–60%. Sono molto flessibili: possono partire e spegnersi in poche ore, bilanciando le oscillazioni delle rinnovabili.',
     italy2023: {
-      value: 125,
+      value: 128,
       context: 'Prima fonte di produzione elettrica in Italia al 2023. In calo progressivo grazie alla crescita delle rinnovabili.',
     },
     targets: [
       { year: 2030, value: 60, label: 'PNIEC 2030' },
       { year: 2050, value: 12, label: 'Net Zero 2050' },
     ],
-    recentGrowth: '−11 TWh/anno (2022→2023, in calo)',
+    recentGrowth: '−8 TWh/anno (2022→2023, in calo)',
     historical: [
       { year: 2004, value: 186 },
       { year: 2005, value: 190 },
@@ -372,7 +372,7 @@ export const SOURCE_DETAILS: Partial<Record<SourceKey, SourceDetail>> = {
       { year: 2020, value: 129 },
       { year: 2021, value: 132 },
       { year: 2022, value: 136 },
-      { year: 2023, value: 125 },
+      { year: 2023, value: 128 },
     ],
     historicalLabel: 'Produzione annua (TWh)',
   },
@@ -424,14 +424,14 @@ export const SOURCE_DETAILS: Partial<Record<SourceKey, SourceDetail>> = {
     description:
       'Le centrali a carbone bruciano carbone per generare vapore ad alta pressione che fa girare turbine. Sono la fonte energetica con le maggiori emissioni di CO₂ per kWh (~800–1000 gCO₂/kWh). L\'Italia sta progressivamente chiudendo i suoi impianti: il piano di phase-out è previsto entro il 2025.',
     italy2023: {
-      value: 18,
+      value: 12,
       context: 'In forte calo rispetto al picco di ~47 TWh degli anni 2000. Obiettivo phase-out entro il 2025.',
     },
     targets: [
       { year: 2025, value: 0, label: 'Phase-out previsto' },
       { year: 2030, value: 0, label: 'PNIEC 2030' },
     ],
-    recentGrowth: '−2 TWh/anno (2022→2023, phase-out)',
+    recentGrowth: '−8 TWh/anno (2022→2023, phase-out)',
     historical: [
       { year: 2004, value: 44 },
       { year: 2005, value: 44 },
@@ -452,7 +452,7 @@ export const SOURCE_DETAILS: Partial<Record<SourceKey, SourceDetail>> = {
       { year: 2020, value: 17 },
       { year: 2021, value: 22 },
       { year: 2022, value: 20 },
-      { year: 2023, value: 18 },
+      { year: 2023, value: 12 },
     ],
     historicalLabel: 'Produzione annua (TWh)',
   },
@@ -464,14 +464,14 @@ export const SOURCE_DETAILS: Partial<Record<SourceKey, SourceDetail>> = {
     description:
       'L\'Italia importa elettricità principalmente da Francia (nucleare), Svizzera (idro) e Austria. Gli interconnector transalpini hanno una capacità di circa 25 GW. L\'importazione è storicamente conveniente ma crea dipendenza da produttori esteri.',
     italy2023: {
-      value: 14,
-      context: 'Forte riduzione rispetto agli anni precedenti (~46–49 TWh nel 2018–2022) grazie alla crescita delle rinnovabili domestiche.',
+      value: 51,
+      context: 'L\'Italia importa principalmente da Francia (nucleare), Svizzera (idro) e Austria. Nel 2023 le importazioni nette sono rimaste elevate a causa del ridotto apporto idroelettrico e dei prezzi favorevoli sul mercato europeo.',
     },
     targets: [
       { year: 2030, value: 10, label: 'PNIEC 2030' },
       { year: 2050, value: 15, label: 'Net Zero 2050' },
     ],
-    recentGrowth: 'Variabile in base al mercato europeo',
+    recentGrowth: '+2 TWh/anno (2022→2023, stabile)',
     historical: [
       { year: 2004, value: 43 },
       { year: 2005, value: 40 },
@@ -492,7 +492,7 @@ export const SOURCE_DETAILS: Partial<Record<SourceKey, SourceDetail>> = {
       { year: 2020, value: 44 },
       { year: 2021, value: 47 },
       { year: 2022, value: 49 },
-      { year: 2023, value: 14 },
+      { year: 2023, value: 51 },
     ],
     historicalLabel: 'Produzione annua (TWh)',
   },

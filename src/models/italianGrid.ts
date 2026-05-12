@@ -24,10 +24,10 @@ export const ITALY_2023: GridScenario = {
   },
   directProduction: {
     nuclear:  0,
-    gas_ccgt: 125,  // 115 CCGT + 10 OCGT merged
+    gas_ccgt: 128,
     gas_ocgt: 0,
-    coal:     18,
-    imports:  14,
+    coal:     12,
+    imports:  51,
   },
   demandTWh: 305.54,
 }
