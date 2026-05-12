@@ -165,26 +165,23 @@ export function SourceDetailModal({ sourceKey, currentValue, isOpen, onClose }: 
       : null
 
   // ── Render ────────────────────────────────────────────────────────────────
+  if (!isOpen) return null
+
   return (
     <>
-      {isOpen && (
-        <div
-          className="fixed inset-0 bg-black/30 backdrop-blur-sm z-40"
-          onClick={onClose}
-          aria-hidden="true"
-        />
-      )}
+      <div
+        className="fixed inset-0 bg-black/30 backdrop-blur-sm z-40"
+        onClick={onClose}
+        aria-hidden="true"
+      />
 
       <div
-        className={`fixed inset-y-0 right-0 w-full sm:w-[520px] bg-white shadow-2xl z-50 flex flex-col
-          transform transition-transform duration-300 ease-in-out
-          ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}
+        className="fixed inset-y-0 right-0 w-full sm:w-[520px] bg-white shadow-2xl z-50 flex flex-col"
         role="dialog"
         aria-modal="true"
         aria-label={`Dettaglio: ${detail.label}`}
       >
-        {isOpen && (
-          <div className="flex flex-col h-full overflow-hidden">
+        <div className="flex flex-col h-full overflow-hidden">
 
             {/* ── Header ───────────────────────────────────────────────── */}
             <div
@@ -408,7 +405,6 @@ export function SourceDetailModal({ sourceKey, currentValue, isOpen, onClose }: 
 
             </div>
           </div>
-        )}
       </div>
     </>
   )
