@@ -29,7 +29,7 @@ export const ITALY_2023: GridScenario = {
     coal:     18,
     imports:  14,
   },
-  demandTWh: 280,
+  demandTWh: 305.54,
 }
 
 export const PNIEC_2030: GridScenario = {

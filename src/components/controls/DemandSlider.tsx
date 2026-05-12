@@ -1,7 +1,7 @@
 import { Slider } from '@/components/ui/slider'
 import { useSimStore } from '@/store/simulationStore'
 
-const BASELINE = 280
+const BASELINE = 305.54
 
 export function DemandSlider() {
   const demandTWh = useSimStore((s) => s.demandTWh)

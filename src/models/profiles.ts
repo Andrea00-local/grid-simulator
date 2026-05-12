@@ -56,10 +56,14 @@ export const ANNUAL_CF: Partial<Record<Source, number>> = Object.fromEntries(
 ) as Partial<Record<Source, number>>
 
 // ─── Monthly demand factors ────────────────────────────────────────────────────
-/** Multipliers relative to annual average demand. Index 0 = January. */
+/** Multipliers relative to annual average demand. Index 0 = January.
+ *  Derived from 2023 monthly consumption (TWh): 25.98, 24.74, 25.94, 24.43, 24.43, 25.37,
+ *  29.71, 23.61*, 25.86, 25.42, 25.08, 24.97 — total 305.54 TWh.
+ *  (*agosto inferred from total; Ferragosto lowers industrial demand)
+ */
 export const MONTHLY_DEMAND_FACTORS = [
-  1.06, 1.00, 0.97, 0.91, 0.93, 0.96,
-  1.04, 0.94, 0.96, 0.99, 1.02, 1.08,
+  1.020, 0.972, 1.019, 0.960, 0.960, 0.996,
+  1.167, 0.927, 1.016, 0.998, 0.985, 0.981,
 ]
 
 // ─── Typical daily demand profile ─────────────────────────────────────────────
