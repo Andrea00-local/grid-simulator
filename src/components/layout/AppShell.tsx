@@ -16,7 +16,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const activeLevel = levelMatch ? parseInt(levelMatch[1]) : null
 
   return (
-    <div className="min-h-screen bg-[#FAFAF9] dark:bg-[#0F172A] flex flex-col transition-colors duration-200">
+    <div className="min-h-screen bg-[#FAFAF9] dark:bg-[#0F172A] flex flex-col transition-colors duration-200 overflow-x-hidden">
       <header className="print:hidden bg-white dark:bg-slate-900 border-b border-gray-200 dark:border-slate-700 sticky top-0 z-10 transition-colors duration-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-14 flex items-center justify-between">
           <Link
