@@ -112,7 +112,8 @@ export function MonthlyStreamChart({ periods, selectedMonth, onSelectMonth, sele
           />
           <Tooltip content={<CustomTooltip />} />
           {ALL_SOURCES.map(src => {
-            const isSelected = selectedSource === src
+            const isSelected = selectedSource === src ||
+              (selectedSource === 'hydro' && (src === 'hydro_run' || src === 'hydro_reservoir'))
             const isDimmed = selectedSource !== null && !isSelected
             return (
               <Area

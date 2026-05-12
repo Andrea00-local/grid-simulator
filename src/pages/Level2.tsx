@@ -19,7 +19,6 @@ import type { Source } from '@/models/types'
 const ALL_SOURCES: Source[] = [
   'coal', 'gas_ocgt', 'gas_ccgt', 'imports',
   'nuclear', 'biomass', 'geothermal',
-  'hydro_run', 'hydro_reservoir',
   'wind_onshore', 'wind_offshore',
   'solar',
 ]
@@ -47,18 +46,19 @@ export default function Level2() {
       ? [result.periods[selectedMonth]]
       : result.periods
 
-    return ALL_SOURCES
+    const entries = ALL_SOURCES
       .map(src => {
         const value = periodData.reduce((s, p) => s + (p.production[src] ?? 0), 0) / 1_000_000
-        return {
-          key: src,
-          label: SOURCE_DEFINITIONS[src].labelShort,
-          color: SOURCE_DEFINITIONS[src].color,
-          value,
-          unit: 'TWh',
-        }
+        return { key: src as string, label: SOURCE_DEFINITIONS[src].labelShort, color: SOURCE_DEFINITIONS[src].color, value, unit: 'TWh' }
       })
       .filter(e => e.value > 0.01)
+
+    const hydroValue = periodData.reduce(
+      (s, p) => s + (p.production['hydro_run'] ?? 0) + (p.production['hydro_reservoir'] ?? 0), 0,
+    ) / 1_000_000
+    if (hydroValue > 0.01) entries.push({ key: 'hydro', label: 'Idroelettrico', color: '#14B8A6', value: hydroValue, unit: 'TWh' })
+
+    return entries
   }, [result.periods, selectedMonth])
 
   const breakdownTitle = selectedMonth !== null ? result.periods[selectedMonth].label : 'Anno intero'
@@ -83,11 +83,14 @@ export default function Level2() {
               <span className="bg-emerald-600 text-white text-xs rounded-full px-2 py-0.5">Livello 2</span>
               Stagionalità Mensile
             </div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-slate-100">Bilancio mese per mese</h1>
-            <p className="text-gray-500 dark:text-slate-400 text-sm mt-1">
-              Il termico copre la domanda residua in proporzione — ma nei mesi con alto solare il surplus
-              non compensa il deficit invernale. Clicca su ogni mese per il dettaglio.
-            </p>
+            <div className="flex items-center gap-2">
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-slate-100">Bilancio mese per mese</h1>
+              <button
+                onClick={() => setShowIntro(true)}
+                className="w-5 h-5 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-500 text-[11px] font-bold flex items-center justify-center transition-colors flex-shrink-0"
+                aria-label="Informazioni su questo livello"
+              >?</button>
+            </div>
           </div>
           <PrintButton className="mt-1 flex-shrink-0" />
         </div>

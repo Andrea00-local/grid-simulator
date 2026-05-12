@@ -67,12 +67,14 @@ export default function Level4() {
               <span className="bg-violet-600 text-white text-xs rounded-full px-2 py-0.5">Livello 4</span>
               Distribuzione Territoriale
             </div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-slate-100">Bilancio per regione</h1>
-            <p className="text-gray-500 dark:text-slate-400 text-sm mt-1">
-              Imposta le rinnovabili nazionali, scegli come distribuirle e vedi come il
-              routing Dijkstra bilancia surplus e deficit sulle linee Terna. Clicca una regione
-              per il dettaglio.
-            </p>
+            <div className="flex items-center gap-2">
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-slate-100">Bilancio per regione</h1>
+              <button
+                onClick={() => setShowIntro(true)}
+                className="w-5 h-5 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-500 text-[11px] font-bold flex items-center justify-center transition-colors flex-shrink-0"
+                aria-label="Informazioni su questo livello"
+              >?</button>
+            </div>
           </div>
           <PrintButton className="mt-1 flex-shrink-0" />
         </div>

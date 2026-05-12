@@ -82,7 +82,8 @@ export function HourlyDispatchChart({ hours, storageCapacityGWh, title, selected
 
           {STACK_ORDER.map(src => {
             const def = SOURCE_DEFINITIONS[src]
-            const isSelected = selectedSource === src
+            const isSelected = selectedSource === src ||
+              (selectedSource === 'hydro' && (src === 'hydro_run' || src === 'hydro_reservoir'))
             const isDimmed = selectedSource !== null && !isSelected
             return (
               <Area

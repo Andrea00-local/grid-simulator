@@ -28,6 +28,7 @@
     font-family: 'Inter', system-ui, sans-serif;
     background-color: #FAFAF9;
     color: #111827;
+    overflow-x: hidden;
   }
 
   .dark body {

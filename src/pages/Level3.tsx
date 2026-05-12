@@ -19,7 +19,6 @@ import type { Scenario, Source } from '@/models/types'
 
 const STACK_ORDER_L3: Source[] = [
   'nuclear', 'coal', 'imports', 'biomass', 'geothermal',
-  'hydro_run', 'hydro_reservoir',
   'wind_offshore', 'wind_onshore', 'solar',
   'gas_ccgt',
 ]
@@ -71,7 +70,7 @@ export default function Level3() {
 
   const breakdownEntries = useMemo(() => {
     const hours = selectedDay.hours
-    const result: { key: string; label: string; color: string; value: number; unit: string }[] =
+    const entries: { key: string; label: string; color: string; value: number; unit: string }[] =
       STACK_ORDER_L3
         .map(src => ({
           key: src as string,
@@ -82,20 +81,17 @@ export default function Level3() {
         }))
         .filter(e => e.value > 0.01)
 
+    const hydroValue = hours.reduce(
+      (s, hp) => s + (hp.production['hydro_run'] ?? 0) + (hp.production['hydro_reservoir'] ?? 0), 0,
+    ) / 1_000
+    if (hydroValue > 0.01) entries.push({ key: 'hydro', label: 'Idroelettrico', color: '#14B8A6', value: hydroValue, unit: 'GWh' })
+
     if (hasBattery) {
       const battValue = hours.reduce((s, hp) => s + hp.batteryDischarge, 0) / 1_000
-      if (battValue > 0.01) {
-        result.push({
-          key: 'battery',
-          label: 'Batteria',
-          color: '#14b8a6',
-          value: battValue,
-          unit: 'GWh',
-        })
-      }
+      if (battValue > 0.01) entries.push({ key: 'battery', label: 'Batteria', color: '#14b8a6', value: battValue, unit: 'GWh' })
     }
 
-    return result
+    return entries
   }, [selectedDay, hasBattery])
 
   return (
@@ -124,11 +120,14 @@ export default function Level3() {
               <span className="bg-amber-600 text-white text-xs rounded-full px-2 py-0.5">Livello 3</span>
               Giorno Tipo Orario
             </div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-slate-100">Bilancio orario con storage</h1>
-            <p className="text-gray-500 dark:text-slate-400 text-sm mt-1">
-              Un giorno lavorativo tipo per ogni mese — scegli le condizioni meteo e installa batterie
-              per ridurre i picchi di gas. Il duck curve del solare diventa visibile ora per ora.
-            </p>
+            <div className="flex items-center gap-2">
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-slate-100">Bilancio orario con storage</h1>
+              <button
+                onClick={() => setShowIntro(true)}
+                className="w-5 h-5 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-500 text-[11px] font-bold flex items-center justify-center transition-colors flex-shrink-0"
+                aria-label="Informazioni su questo livello"
+              >?</button>
+            </div>
           </div>
           <PrintButton className="mt-1 flex-shrink-0" />
         </div>

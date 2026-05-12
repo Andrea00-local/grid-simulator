@@ -48,13 +48,12 @@ function buildConfig(lc: LevelConfig, rc: CapacityMap, dp: CapacityMap, demand: 
   }
 }
 
-// All productions start at 0 — only demand starts at the 2023 reference value
-const initResult = run(buildConfig(LEVEL1_CONFIG, {}, {}, ITALY_2023.demandTWh))
+const initResult = run(buildConfig(LEVEL1_CONFIG, { ...ITALY_2023.renewableCapacity }, { ...ITALY_2023.directProduction }, ITALY_2023.demandTWh))
 
 export const useSimStore = create<SimState>()((set, get) => ({
   levelConfig:       LEVEL1_CONFIG,
-  renewableCapacity: {},
-  directProduction:  {},
+  renewableCapacity: { ...ITALY_2023.renewableCapacity },
+  directProduction:  { ...ITALY_2023.directProduction },
   demandTWh:         ITALY_2023.demandTWh,
   result:            initResult,
   scenario:          'average' as Scenario,

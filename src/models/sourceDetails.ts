@@ -208,7 +208,7 @@ export const SOURCE_DETAILS: Partial<Record<SourceKey, SourceDetail>> = {
 
   geothermal: {
     label: 'Geotermico',
-    color: '#a855f7',
+    color: '#EA580C',
     unit: 'GW',
     description:
       'Le centrali geotermiche sfruttano il calore della terra per produrre vapore e generare elettricità. L\'Italia è pioniera mondiale: Larderello (Toscana) fu la prima centrale geotermica commerciale al mondo, inaugurata nel 1911. La produzione è praticamente costante tutto l\'anno.',
@@ -339,7 +339,7 @@ export const SOURCE_DETAILS: Partial<Record<SourceKey, SourceDetail>> = {
 
   gas_ccgt: {
     label: 'Gas naturale (CCGT)',
-    color: '#EA580C',
+    color: '#94a3b8',
     unit: 'TWh',
     description:
       'Le centrali a ciclo combinato (CCGT) bruciano gas naturale prima in una turbina a gas, poi recuperano il calore residuo per una turbina a vapore — raggiungendo efficienze del 55–60%. Sono molto flessibili: possono partire e spegnersi in poche ore, bilanciando le oscillazioni delle rinnovabili.',
@@ -459,7 +459,7 @@ export const SOURCE_DETAILS: Partial<Record<SourceKey, SourceDetail>> = {
 
   imports: {
     label: 'Importazioni nette',
-    color: '#94a3b8',
+    color: '#a855f7',
     unit: 'TWh',
     description:
       'L\'Italia importa elettricità principalmente da Francia (nucleare), Svizzera (idro) e Austria. Gli interconnector transalpini hanno una capacità di circa 25 GW. L\'importazione è storicamente conveniente ma crea dipendenza da produttori esteri.',
