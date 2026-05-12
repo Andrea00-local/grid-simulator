@@ -10,10 +10,10 @@ export const EMISSION_FACTORS: Record<Source, number> = {
   biomass:          230,   // debated, but counts per EU taxonomy
   geothermal:       38,
   nuclear:          0,     // operational (no combustion); lifecycle ~12 gCO₂/kWh
-  gas_ccgt:         370,
-  gas_ocgt:         550,
-  coal:             820,
-  imports:          200,   // rough EU mix average
+  gas_ccgt:         425,   // 0.425 MtCO₂/TWh
+  gas_ocgt:         425,   // same factor — efficiency difference captured in dispatch
+  coal:             1100,  // 1.1 MtCO₂/TWh
+  imports:          0,     // 0 MtCO₂/TWh (accounted externally)
 }
 
 /** Hours in a year */

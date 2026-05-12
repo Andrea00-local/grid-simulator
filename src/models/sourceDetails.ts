@@ -422,7 +422,7 @@ export const SOURCE_DETAILS: Partial<Record<SourceKey, SourceDetail>> = {
     color: '#475569',
     unit: 'TWh',
     description:
-      'Le centrali a carbone bruciano carbone per generare vapore ad alta pressione che fa girare turbine. Sono la fonte energetica con le maggiori emissioni di CO₂ per kWh (~800–1000 gCO₂/kWh). L\'Italia sta progressivamente chiudendo i suoi impianti: il piano di phase-out è previsto entro il 2025.',
+      'Le centrali a carbone bruciano carbone per generare vapore ad alta pressione che fa girare turbine. Sono la fonte energetica con le maggiori emissioni di CO₂ per kWh (~1100 gCO₂/kWh). L\'Italia sta progressivamente chiudendo i suoi impianti: il piano di phase-out è previsto entro il 2025.',
     italy2023: {
       value: 12,
       context: 'In forte calo rispetto al picco di ~47 TWh degli anni 2000. Obiettivo phase-out entro il 2025.',
