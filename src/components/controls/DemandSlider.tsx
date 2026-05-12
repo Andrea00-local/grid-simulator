@@ -16,9 +16,9 @@ export function DemandSlider() {
       <div className="w-3 h-3 rounded-full flex-shrink-0 bg-gray-400" />
       <div className="flex-1 min-w-0">
         <div className="flex items-center justify-between mb-1">
-          <div>
+          <div className="flex flex-col">
             <span className="text-sm text-gray-700">Domanda elettrica</span>
-            <span className="text-xs text-gray-400 ml-1.5">({deltaLabel})</span>
+            <span className="text-xs text-gray-400">({deltaLabel})</span>
           </div>
           <span className="text-sm font-mono font-medium text-gray-900 ml-2 flex-shrink-0">
             {Math.round(demandTWh)} TWh

@@ -22,7 +22,7 @@ export function BalanceIndicator({ balanceTWh, surplusTWh, deficitTWh, showGross
         <div className="space-y-3">
           <div className="rounded-xl p-4 bg-green-50 border border-green-200">
             <p className="text-xs font-semibold text-green-600 uppercase tracking-wide mb-1">
-              Energia sprecata (surplus mensili)
+              Energia in eccesso (surplus mensili)
             </p>
             <div className="text-2xl font-bold text-green-700 tabular-nums">
               +{surplusTWh!.toFixed(1)} <span className="text-sm font-normal">TWh</span>
@@ -55,7 +55,7 @@ export function BalanceIndicator({ balanceTWh, surplusTWh, deficitTWh, showGross
   return (
     <div>
       <h3 className="text-sm font-semibold text-gray-700 mb-3">
-        {isSurplus ? 'Energia sprecata' : 'Domanda non coperta'}
+        {isSurplus ? 'Energia in eccesso' : 'Domanda non coperta'}
       </h3>
       <div
         className={`rounded-xl p-5 border ${
@@ -63,8 +63,11 @@ export function BalanceIndicator({ balanceTWh, surplusTWh, deficitTWh, showGross
         }`}
       >
         <div className={`text-3xl font-bold tabular-nums ${isSurplus ? 'text-green-700' : 'text-red-600'}`}>
-          {isSurplus ? '+' : '-'}{abs.toFixed(1)} <span className="text-lg font-normal">TWh</span>
+          {isSurplus ? '+' : '−'}{abs < 0.05 ? '0' : abs.toFixed(1)} <span className="text-lg font-normal">TWh</span>
         </div>
+        {isSurplus && abs < 0.05 && (
+          <p className="text-xs text-green-500 mt-1">Produzione e domanda sostanzialmente bilanciate</p>
+        )}
         <p className={`text-sm mt-1 ${isSurplus ? 'text-green-600' : 'text-red-500'}`}>
           {isSurplus
             ? 'Produzione superiore alla domanda — energia sprecata o da esportare'

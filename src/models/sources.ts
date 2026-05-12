@@ -77,7 +77,7 @@ export const SOURCE_DEFINITIONS: Record<Source, SourceDefinition> = {
   geothermal: {
     id: 'geothermal',
     label: 'Geotermico',
-    labelShort: 'Geo',
+    labelShort: 'Geotermico',
     color: '#EA580C',
     category: 'renewable',
     emissionFactor: EMISSION_FACTORS.geothermal,
