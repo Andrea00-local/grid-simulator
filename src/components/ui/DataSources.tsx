@@ -25,11 +25,11 @@ const DATA_BY_LEVEL: Record<number, { intro: string; sections: DataSection[] }> 
         entries: [
           {
             name: 'Domanda baseline 2023',
-            value: '280 TWh',
+            value: '306 TWh',
             description:
-              'Consumo netto di energia elettrica dell\'Italia nel 2023, escluse le perdite di rete. Include settore civile, industriale e trasporti.',
+              'Consumo di energia elettrica dell\'Italia nel 2023, incluse le perdite di rete. Include settore civile, industriale e trasporti.',
             source: 'Terna — Dati statistici sull\'energia elettrica in Italia 2023',
-            sourceUrl: 'https://www.terna.it/it/sistema-elettrico/statistiche',
+            sourceUrl: 'https://dati.terna.it/',
           },
         ],
       },
@@ -38,54 +38,51 @@ const DATA_BY_LEVEL: Record<number, { intro: string; sections: DataSection[] }> 
         entries: [
           {
             name: 'Solare fotovoltaico',
-            value: '~10.5% annuo',
+            value: '~12.1% annuo',
             description:
-              'Rapporto tra energia effettivamente prodotta e quella producibile se l\'impianto lavorasse sempre a piena potenza. In Italia varia da ~3% in gennaio a ~17% in luglio per via dell\'irraggiamento.',
-            source: 'GSE — Rapporto Statistico Solare Fotovoltaico 2023',
-            sourceUrl: 'https://www.gse.it/servizi-per-te/fotovoltaico',
+              'Rapporto tra energia effettivamente prodotta e quella producibile se l\'impianto lavorasse sempre a piena potenza. In Italia varia da ~5.3% in gennaio a ~17.6% in giugno per via dell\'irraggiamento.',
+            source: 'Terna — Dati statistici sull\'energia elettrica in Italia 2023',
+            sourceUrl: 'https://dati.terna.it/',
           },
           {
             name: 'Eolico onshore',
-            value: '~24% annuo',
+            value: '~21.5% annuo',
             description:
-              'CF medio nazionale dell\'eolico a terra. Le regioni del Sud (Puglia, Sicilia, Sardegna) raggiungono CF del 28-30%, mentre il Nord scende sotto il 20%.',
-            source: 'GSE — Rapporto Statistico Eolico 2023 / ENTSO-E Transparency Platform',
-            sourceUrl: 'https://www.gse.it/servizi-per-te/energia-da-fonti-rinnovabili',
+              'CF medio nazionale dell\'eolico a terra. Varia da ~11.8% in giugno a ~30.4% in dicembre. Le regioni del Sud (Puglia, Sicilia, Sardegna) raggiungono CF superiori.',
+            source: 'Terna — Dati statistici sull\'energia elettrica in Italia 2023',
+            sourceUrl: 'https://dati.terna.it/',
           },
           {
             name: 'Eolico offshore',
-            value: '~35% annuo',
+            value: '~24.9% annuo',
             description:
               'CF stimato per impianti offshore in acque italiane (Adriatico e Stretto di Sicilia). L\'Italia non ha impianti offshore operativi al 2023; il valore è basato su dati europei.',
-            source: 'IRENA — Renewable Power Generation Costs 2023',
+            source: 'Terna — Dati statistici sull\'energia elettrica in Italia 2023',
+            sourceUrl: 'https://dati.terna.it/',
           },
           {
-            name: 'Idroelettrico (fluente)',
-            value: '~29% annuo',
+            name: 'Idroelettrico',
+            value: '~21.2% annuo',
             description:
-              'CF medio degli impianti run-of-river italiani. Fortemente stagionale: picco in primavera (scioglimento nevi) e settembre, minimo in estate.',
-            source: 'Terna — Dati statistici 2023 / RSE — Atlante Italiano',
-          },
-          {
-            name: 'Idroelettrico (serbatoio)',
-            value: '~35% annuo',
-            description:
-              'CF medio degli impianti a serbatoio e pompaggio. Più flessibile del run-of-river perché l\'acqua viene rilasciata su richiesta del mercato.',
-            source: 'Terna — Dati statistici 2023',
+              'CF medio degli impianti idroelettrici italiani (fluente e serbatoio). Fortemente stagionale: picco in maggio-giugno (scioglimento nevi alpine) con CF ~32.1%, minimo in marzo ~14.5%.',
+            source: 'Terna — Dati statistici sull\'energia elettrica in Italia 2023',
+            sourceUrl: 'https://dati.terna.it/',
           },
           {
             name: 'Geotermico',
-            value: '~85.5% annuo',
+            value: '~82.8% annuo',
             description:
               'Il geotermico italiano (concentrato in Toscana, gestito da Enel Green Power) ha un CF elevatissimo perché opera quasi in continuo. È una delle fonti più stabili del sistema.',
-            source: 'GSE — Rapporto Statistico Geotermoelettrico 2023',
+            source: 'Terna — Dati statistici sull\'energia elettrica in Italia 2023',
+            sourceUrl: 'https://dati.terna.it/',
           },
           {
             name: 'Biomasse e biogas',
-            value: '~60% annuo',
+            value: '~48.7% annuo',
             description:
               'CF medio degli impianti a biomassa solida, biogas e bioliquidi. Operano come "rinnovabili programmabili" con produzione abbastanza costante durante l\'anno.',
-            source: 'GSE — Rapporto Statistico Bioenergie 2023',
+            source: 'Terna — Dati statistici sull\'energia elettrica in Italia 2023',
+            sourceUrl: 'https://dati.terna.it/',
           },
         ],
       },
@@ -93,39 +90,32 @@ const DATA_BY_LEVEL: Record<number, { intro: string; sections: DataSection[] }> 
         title: 'Fattori di emissione CO₂',
         entries: [
           {
-            name: 'Gas naturale (CCGT)',
-            value: '400 gCO₂/kWh',
+            name: 'Gas naturale',
+            value: '425 gCO₂/kWh',
             description:
-              'Emissioni operative di un ciclo combinato a gas (Combined Cycle Gas Turbine). Include solo la combustione, non il ciclo di vita completo.',
-            source: 'ISPRA — Fattori di emissione per la produzione di elettricità 2023',
-          },
-          {
-            name: 'Gas naturale (OCGT peaker)',
-            value: '550 gCO₂/kWh',
-            description:
-              'I peaker a ciclo aperto (Open Cycle Gas Turbine) hanno efficienza inferiore ai CCGT e quindi emissioni maggiori. Vengono usati solo per i picchi.',
-            source: 'ISPRA 2023 / IPCC Guidelines',
+              'Fattore di emissione medio del gas naturale per la produzione elettrica in Italia. Include solo le emissioni di combustione diretta.',
+            source: 'ISPRA 2023 — Le emissioni di CO₂ nel settore elettrico nazionale e regionale',
           },
           {
             name: 'Carbone',
-            value: '820 gCO₂/kWh',
+            value: '1100 gCO₂/kWh',
             description:
-              'Emissioni di un impianto a carbone moderno a supercritique. Il carbone è la fonte più emissiva; l\'Italia lo utilizza ancora nella centrale di La Spezia e alcune in Sardegna.',
-            source: 'ISPRA 2023',
+              'Fattore di emissione del carbone per la produzione elettrica in Italia. È la fonte più emissiva; l\'Italia lo utilizza ancora in alcune centrali in dismissione.',
+            source: 'ISPRA 2023 — Le emissioni di CO₂ nel settore elettrico nazionale e regionale',
           },
           {
             name: 'Importazioni',
-            value: '~200 gCO₂/kWh',
+            value: '0 gCO₂/kWh',
             description:
-              'Stima delle emissioni medie del mix elettrico europeo importato dall\'Italia (principalmente da Francia, Svizzera, Slovenia). Il nucleare francese abbassa significativamente questo valore.',
-            source: 'ENTSO-E — Average CO₂ intensity of electricity 2023',
+              'Le importazioni sono contabilizzate a emissioni zero secondo la metodologia ISPRA, in quanto le emissioni vengono attribuite al paese di produzione e non al paese importatore.',
+            source: 'ISPRA 2023 — Le emissioni di CO₂ nel settore elettrico nazionale e regionale',
           },
           {
             name: 'Baseline CO₂ Italia 2023',
-            value: '82 MtCO₂',
+            value: '72 MtCO₂',
             description:
               'Emissioni totali del settore elettrico italiano nel 2023, usate come riferimento per calcolare il miglioramento o peggioramento rispetto allo scenario simulato.',
-            source: 'ISPRA — Inventario Nazionale delle Emissioni 2023',
+            source: 'ISPRA 2023 — Le emissioni di CO₂ nel settore elettrico nazionale e regionale',
           },
         ],
       },
