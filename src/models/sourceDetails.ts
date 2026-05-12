@@ -33,9 +33,9 @@ export const SOURCE_DETAILS: Partial<Record<SourceKey, SourceDetail>> = {
     description:
       'Il fotovoltaico converte direttamente la luce solare in elettricità tramite celle in silicio. La produzione varia fortemente con le stagioni: in Italia raggiunge il picco in luglio e scende quasi a zero nelle notti e nelle giornate nuvolose invernali.',
     capacityFactor: {
-      value: 0.098,
-      range: '8–14%',
-      notes: 'Media annua italiana (3.4% gen – 16.6% lug)',
+      value: 0.121,
+      range: '5–18%',
+      notes: 'Media annua italiana (5.3% gen – 17.6% giu)',
     },
     italy2023: {
       value: 30.3,
@@ -78,9 +78,9 @@ export const SOURCE_DETAILS: Partial<Record<SourceKey, SourceDetail>> = {
     description:
       'Le turbine eoliche convertono l\'energia cinetica del vento in elettricità. In Italia il vento è più forte e costante al Sud (Puglia, Calabria, Sicilia) e sui passi alpini. La produzione è massima in inverno e minima in estate.',
     capacityFactor: {
-      value: 0.206,
-      range: '14–27%',
-      notes: 'Media annua italiana (14.4% ago – 26.8% dic)',
+      value: 0.215,
+      range: '12–30%',
+      notes: 'Media annua italiana (11.8% giu – 30.4% dic)',
     },
     italy2023: {
       value: 12.3,
@@ -169,9 +169,9 @@ export const SOURCE_DETAILS: Partial<Record<SourceKey, SourceDetail>> = {
     description:
       'Le centrali idroelettriche sfruttano il dislivello dell\'acqua per far girare turbine. Le centrali a bacino (serbatoi) possono regolare la produzione quasi come un generatore termoelettrico; quelle ad acqua fluente seguono invece il regime dei fiumi. In Italia l\'idroelettrico è la principale fonte rinnovabile storica.',
     capacityFactor: {
-      value: 0.315,
-      range: '22–49%',
-      notes: 'CF run-of-river (acqua fluente); i serbatoi sono dispatchable',
+      value: 0.212,
+      range: '14–32%',
+      notes: 'Media annua italiana (14.5% mar – 32.1% giu)',
     },
     italy2023: {
       value: 23.2,
@@ -213,8 +213,8 @@ export const SOURCE_DETAILS: Partial<Record<SourceKey, SourceDetail>> = {
     description:
       'Le centrali geotermiche sfruttano il calore della terra per produrre vapore e generare elettricità. L\'Italia è pioniera mondiale: Larderello (Toscana) fu la prima centrale geotermica commerciale al mondo, inaugurata nel 1911. La produzione è praticamente costante tutto l\'anno.',
     capacityFactor: {
-      value: 0.855,
-      range: '~85%',
+      value: 0.828,
+      range: '81–84%',
       notes: 'Fattore di capacità quasi piatto — fonte baseload rinnovabile',
     },
     italy2023: {
@@ -258,9 +258,9 @@ export const SOURCE_DETAILS: Partial<Record<SourceKey, SourceDetail>> = {
     description:
       'Le centrali a biomassa bruciano materiale organico (legno, scarti agricoli, biogas da rifiuti) per generare vapore e produrre elettricità. Sono considerate a basse emissioni nette se la biomassa è rinnovabile, ma il loro impatto ambientale è dibattuto. Producono energia in modo programmabile, simile al gas.',
     capacityFactor: {
-      value: 0.60,
-      range: '~60%',
-      notes: 'Fattore flat — fonte dispatchable programmabile',
+      value: 0.487,
+      range: '44–53%',
+      notes: 'Media annua italiana (44.4% nov – 52.9% mar)',
     },
     italy2023: {
       value: 4.1,
