@@ -27,14 +27,6 @@ const HYDRO_COLOR   = '#14B8A6'
 const BATTERY_COLOR = '#0d9488'
 const DEMAND_COLOR  = '#0f172a'
 
-// Explicit color map used by tooltip and activeDot to avoid recharts v3 stacking color bleed
-const CHART_COLOR: Record<string, string> = {
-  ...Object.fromEntries(
-    ([...THERMAL_STACK, ...VARIABLE_STACK] as string[]).map(src => [src, SOURCE_DEFINITIONS[src as Source].color])
-  ),
-  hydro:   HYDRO_COLOR,
-  battery: BATTERY_COLOR,
-}
 
 /**
  * Renders an activeDot with the exact series color.

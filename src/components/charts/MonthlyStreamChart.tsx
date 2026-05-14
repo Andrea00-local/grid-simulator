@@ -25,7 +25,7 @@ interface Props {
   onSelectSource?: (s: string | null) => void
 }
 
-export function MonthlyStreamChart({ periods, selectedMonth, onSelectMonth, selectedSource, onSelectSource }: Props) {
+export function MonthlyStreamChart({ periods, selectedMonth: _selectedMonth, onSelectMonth, selectedSource, onSelectSource }: Props) {
   const { chart } = useTheme()
 
   const data = periods.map((p) => {
