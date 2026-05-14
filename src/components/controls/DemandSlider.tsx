@@ -27,7 +27,7 @@ export function DemandSlider() {
         <Slider
           min={180}
           max={500}
-          step={5}
+          step={1}
           value={[demandTWh]}
           onValueChange={([v]) => setDemand(v)}
           accentColor="#6b7280"

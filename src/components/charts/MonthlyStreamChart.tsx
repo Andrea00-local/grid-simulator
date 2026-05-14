@@ -6,13 +6,16 @@ import type { PeriodResult, Source } from '@/models/types'
 import { SOURCE_DEFINITIONS } from '@/models/sources'
 import { useTheme } from '@/contexts/ThemeContext'
 
-const ALL_SOURCES: Source[] = [
+const SOURCES_BELOW_HYDRO: Source[] = [
   'coal', 'gas_ocgt', 'gas_ccgt', 'imports',
   'nuclear', 'biomass', 'geothermal',
-  'hydro_run', 'hydro_reservoir',
+]
+const SOURCES_ABOVE_HYDRO: Source[] = [
   'wind_onshore', 'wind_offshore',
   'solar',
 ]
+const ALL_SOURCES: Source[] = [...SOURCES_BELOW_HYDRO, ...SOURCES_ABOVE_HYDRO]
+const HYDRO_COLOR = '#14B8A6'
 
 interface Props {
   periods: PeriodResult[]
@@ -33,6 +36,7 @@ export function MonthlyStreamChart({ periods, selectedMonth, onSelectMonth, sele
     for (const src of ALL_SOURCES) {
       row[src] = (p.production[src] ?? 0) / 1_000_000
     }
+    row['hydro'] = ((p.production['hydro_run'] ?? 0) + (p.production['hydro_reservoir'] ?? 0)) / 1_000_000
     return row
   })
 
@@ -57,7 +61,7 @@ export function MonthlyStreamChart({ periods, selectedMonth, onSelectMonth, sele
             <div className="flex items-center gap-1.5">
               <div className="w-2 h-2 rounded-full" style={{ backgroundColor: item.fill }} />
               <span className="text-gray-600 dark:text-slate-400 text-xs">
-                {SOURCE_DEFINITIONS[item.dataKey as Source]?.labelShort}
+                {item.dataKey === 'hydro' ? 'Idroelettrico' : SOURCE_DEFINITIONS[item.dataKey as Source]?.labelShort}
               </span>
             </div>
             <span className="text-xs font-mono dark:text-slate-200">{item.value.toFixed(1)}</span>
@@ -111,9 +115,9 @@ export function MonthlyStreamChart({ periods, selectedMonth, onSelectMonth, sele
             width={52}
           />
           <Tooltip content={<CustomTooltip />} />
-          {ALL_SOURCES.map(src => {
-            const isSelected = selectedSource === src ||
-              (selectedSource === 'hydro' && (src === 'hydro_run' || src === 'hydro_reservoir'))
+          {/* Bottom stack: fossil + nuclear + biomass + geothermal */}
+          {SOURCES_BELOW_HYDRO.map(src => {
+            const isSelected = selectedSource === src
             const isDimmed = selectedSource !== null && !isSelected
             return (
               <Area
@@ -123,15 +127,60 @@ export function MonthlyStreamChart({ periods, selectedMonth, onSelectMonth, sele
                 stackId="s"
                 fill={SOURCE_DEFINITIONS[src].color}
                 stroke={SOURCE_DEFINITIONS[src].color}
-                fillOpacity={isDimmed ? 0.06 : (selectedSource !== null && isSelected ? 0.9 : (selectedMonth === null ? 0.88 : 0.75))}
-                strokeOpacity={isDimmed ? 0.1 : (selectedSource !== null && isSelected ? 1 : 1)}
+                fillOpacity={isDimmed ? 0.06 : (isSelected ? 0.9 : 0.88)}
+                strokeOpacity={isDimmed ? 0.1 : 1}
                 strokeWidth={0}
                 name={SOURCE_DEFINITIONS[src].labelShort}
+                activeDot={{ fill: SOURCE_DEFINITIONS[src].color, stroke: 'white', r: 4, strokeWidth: 2 }}
                 isAnimationActive={false}
                 style={{ cursor: onSelectSource ? 'pointer' : 'default' }}
-                onClick={() => {
-                  if (onSelectSource) onSelectSource(selectedSource === src ? null : src)
-                }}
+                onClick={() => { if (onSelectSource) onSelectSource(selectedSource === src ? null : src) }}
+              />
+            )
+          })}
+          {/* Hydro merged (run-of-river + reservoir) */}
+          {(() => {
+            const isSelected = selectedSource === 'hydro'
+            const isDimmed = selectedSource !== null && !isSelected
+            return (
+              <Area
+                key="hydro"
+                type="monotone"
+                dataKey="hydro"
+                stackId="s"
+                fill={HYDRO_COLOR}
+                stroke={HYDRO_COLOR}
+                fillOpacity={isDimmed ? 0.06 : (isSelected ? 0.9 : 0.88)}
+                strokeOpacity={isDimmed ? 0.1 : 1}
+                strokeWidth={0}
+                name="Idroelettrico"
+                activeDot={{ fill: HYDRO_COLOR, stroke: 'white', r: 4, strokeWidth: 2 }}
+                isAnimationActive={false}
+                style={{ cursor: onSelectSource ? 'pointer' : 'default' }}
+                onClick={() => { if (onSelectSource) onSelectSource(selectedSource === 'hydro' ? null : 'hydro') }}
+              />
+            )
+          })()}
+          {/* Top stack: wind + solar */}
+          {SOURCES_ABOVE_HYDRO.map(src => {
+            const isSelected = selectedSource === src
+            const isDimmed = selectedSource !== null && !isSelected
+            return (
+              <Area
+                key={src}
+                type="monotone"
+                dataKey={src}
+                stackId="s"
+                fill={SOURCE_DEFINITIONS[src].color}
+                stroke={SOURCE_DEFINITIONS[src].color}
+                fillOpacity={isDimmed ? 0.06 : (isSelected ? 0.9 : 0.88)}
+                strokeOpacity={isDimmed ? 0.1 : 1}
+                strokeWidth={0}
+                name={SOURCE_DEFINITIONS[src].labelShort}
+                activeDot={{ fill: SOURCE_DEFINITIONS[src].color, stroke: 'white', r: 4, strokeWidth: 2 }}
+                isAnimationActive={false}
+                style={{ cursor: onSelectSource ? 'pointer' : 'default' }}
+                onClick={() => { if (onSelectSource) onSelectSource(selectedSource === src ? null : src) }}
               />
             )
           })}
@@ -157,6 +206,12 @@ export function MonthlyStreamChart({ periods, selectedMonth, onSelectMonth, sele
               {SOURCE_DEFINITIONS[src].labelShort}
             </div>
           ))}
+          {periods.some(p => ((p.production['hydro_run'] ?? 0) + (p.production['hydro_reservoir'] ?? 0)) > 50_000) && (
+            <div className="flex items-center gap-1 text-xs text-gray-500 dark:text-slate-400">
+              <div className="w-2 h-2 rounded-sm" style={{ backgroundColor: HYDRO_COLOR }} />
+              Idroelettrico
+            </div>
+          )}
           <div className="flex items-center gap-1 text-xs text-gray-500 dark:text-slate-400">
             <div className="w-4 h-0.5 bg-gray-900 dark:bg-slate-300" />
             Domanda

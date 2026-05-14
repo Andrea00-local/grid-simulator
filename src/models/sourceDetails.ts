@@ -344,7 +344,7 @@ export const SOURCE_DETAILS: Partial<Record<SourceKey, SourceDetail>> = {
     description:
       'Le centrali a ciclo combinato (CCGT) bruciano gas naturale prima in una turbina a gas, poi recuperano il calore residuo per una turbina a vapore — raggiungendo efficienze del 55–60%. Sono molto flessibili: possono partire e spegnersi in poche ore, bilanciando le oscillazioni delle rinnovabili.',
     italy2023: {
-      value: 128,
+      value: 121,
       context: 'Prima fonte di produzione elettrica in Italia al 2023. In calo progressivo grazie alla crescita delle rinnovabili.',
     },
     targets: [
@@ -372,7 +372,7 @@ export const SOURCE_DETAILS: Partial<Record<SourceKey, SourceDetail>> = {
       { year: 2020, value: 129 },
       { year: 2021, value: 132 },
       { year: 2022, value: 136 },
-      { year: 2023, value: 128 },
+      { year: 2023, value: 121 },
     ],
     historicalLabel: 'Produzione annua (TWh)',
   },

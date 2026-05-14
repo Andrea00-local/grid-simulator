@@ -7,7 +7,7 @@ import {
 import type { RegionId, Level4Result, RegionFlow } from '@/models/types'
 import { REGIONS } from '@/models/italianRegions'
 import { MONTHLY_CF, MONTHLY_DEMAND_FACTORS, MONTH_LABELS, ANNUAL_CF } from '@/models/profiles'
-import { HOURLY_SOLAR_CF, windHourlyCF, DAYS_PER_MONTH } from '@/models/hourlyProfiles'
+import { SOLAR_PROFILE, WIND_PROFILE, DAYS_PER_MONTH } from '@/models/hourlyProfiles'
 import { HOURLY_DEMAND_PROFILE } from '@/models/profiles'
 
 interface Props {
@@ -73,10 +73,9 @@ export function RegionDetail({ regionId, result, flows, onClose }: Props) {
 
   // ── Hourly data ──
   const hourlyData = Array.from({ length: 24 }, (_, h) => {
-    const solarMWh = r.solarGW * HOURLY_SOLAR_CF[hourlyMonth][h] * 1000
+    const solarMWh = r.solarGW * SOLAR_PROFILE[hourlyMonth][h] * 1000
     const windScale = windAnnualCF > 0 ? reg.windCF / windAnnualCF : 1
-    const windHourly = windHourlyCF('wind_onshore', hourlyMonth)
-    const windMWh = r.windGW * windHourly[h] * windScale * 1000
+    const windMWh = r.windGW * WIND_PROFILE[hourlyMonth][h] * windScale * 1000
     const daysInMonth = DAYS_PER_MONTH[hourlyMonth]
     const demandHourly = (demandMWh / 8760) * HOURLY_DEMAND_PROFILE[h] * (daysInMonth * 24 / (365.25 * 24 / 12))
     const hydroMWh = reg.hydroGW * hydroRunCF[hourlyMonth] * 1000

@@ -24,7 +24,7 @@ export const ITALY_2023: GridScenario = {
   },
   directProduction: {
     nuclear:  0,
-    gas_ccgt: 128,
+    gas_ccgt: 121,
     gas_ocgt: 0,
     coal:     12,
     imports:  51,

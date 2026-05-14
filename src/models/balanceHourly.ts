@@ -1,31 +1,32 @@
 /**
  * Level 3 hourly simulation.
  *
- * Dispatch order (bottom → top):
- *   nuclear, coal, imports, biomass, geothermal (flat baseload)
- *   hydro_run (flat per month)
- *   hydro_reservoir (demand-following shape)
- *   wind, solar (scenario-scaled hourly profile)
- *   gas_ccgt (fills residual demand, up to daily budget)
- *   battery (fills remaining deficit / absorbs curtailment)
+ * Dispatch logic (two-pass per day):
+ *   Pass 0 — derive per-source monthly MWh using Level 2 logic (matches monthly chart).
+ *   Pass 1 — compute renewable production per hour:
+ *     solar, wind, hydro (real Terna profiles), geothermal (flat CF)
+ *   Pass 2 — allocate dispatchable sources proportionally to hourly residual demand:
+ *     daily budget = Level 2 monthly allocation / days_in_month
+ *     each hour gets: budget × residual[h] / Σresidual
  *
- * Battery: Tesla MegaPack ratio (2.5 h duration).
- * Efficiency: 95% charge and 95% discharge (90.25% round-trip).
- * Starting SOC: 0 (conservative — fresh start each simulated day).
+ * Residual[h] = max(0, demand[h] − renewables[h]).
+ * If residual is zero in all hours, budget is split evenly (edge case).
  *
- * Annual aggregation: typical-day result × days per month × 12 months.
+ * Battery absorbs hourly surplus and fills hourly deficit after dispatch.
+ * Efficiency: 95% charge / 95% discharge (90.25% round-trip).
+ * SOC starts at 0 each simulated day (conservative).
+ *
+ * Annual result = typical-day × days per month × 12.
  */
 import type { Source, CapacityMap, HourlyPoint, DailySimResult, Level3Result, Scenario } from './types'
-import { MONTHLY_CF, HOURLY_DEMAND_PROFILE, MONTH_LABELS, MONTHLY_DEMAND_FACTORS } from './profiles'
+import { MONTH_LABELS } from './profiles'
 import { EMISSION_FACTORS } from './constants'
 import {
-  DAYS_PER_MONTH, SCENARIO_MULT, MEGAPACK_HOURS,
-  HOURLY_SOLAR_CF,
-  windHourlyCF, hydroRunHourlyCF, hydroReservoirHourlyCF,
+  DAYS_PER_MONTH, SCENARIO_MULT, MEGAPACK_HOURS, GEOTHERMAL_CF,
+  SOLAR_PROFILE, HYDRO_PROFILE, WIND_PROFILE, windOffshoreScale,
+  DEMAND_GWH_2023, DEMAND_BASELINE_TWH,
 } from './hourlyProfiles'
-
-const DEMAND_PROFILE_SUM = HOURLY_DEMAND_PROFILE.reduce((a, b) => a + b, 0)
-const MONTHLY_DEMAND_FACTOR_SUM = MONTHLY_DEMAND_FACTORS.reduce((a, b) => a + b, 0)
+import { computeMonthlyPeriods } from './balance'
 
 const CHARGE_EFF = 0.95
 const DISCHARGE_EFF = 0.95
@@ -47,8 +48,11 @@ export function computeLevel3(
   const storagePowerMWh = storagePowerGW * 1_000
   const storageCapacityMWh = storagePowerGW * MEGAPACK_HOURS * 1_000
 
+  // Pass 0: monthly allocations from Level 2 (identical to monthly chart values)
+  const monthlyPeriods = computeMonthlyPeriods(renewableCapacity, directProduction, demandTWh)
+
   const months: DailySimResult[] = Array.from({ length: 12 }, (_, m) =>
-    computeMonth(m, renewableCapacity, directProduction, demandTWh, scenario, storagePowerMWh, storageCapacityMWh),
+    computeMonth(m, renewableCapacity, demandTWh, scenario, storagePowerMWh, storageCapacityMWh, monthlyPeriods[m].production),
   )
 
   let annualDemandMWh = 0
@@ -87,73 +91,88 @@ export function computeLevel3(
 function computeMonth(
   m: number,
   renewableCapacity: CapacityMap,
-  directProduction: CapacityMap,
   demandTWh: number,
   scenario: Scenario,
   storagePowerMWh: number,
   storageCapacityMWh: number,
+  monthlyProd: Record<Source, number>,
 ): DailySimResult {
-  const monthFrac = MONTHLY_DEMAND_FACTORS[m] / MONTHLY_DEMAND_FACTOR_SUM
-  const dailyDemand = (demandTWh * 1e6 * monthFrac) / DAYS_PER_MONTH[m]
+  const demandScale = demandTWh / DEMAND_BASELINE_TWH
 
-  // Daily gas budget (allocated proportionally to demand like Level 2)
-  let gasRemaining = ((directProduction.gas_ccgt ?? 0) * 1e6 * monthFrac) / DAYS_PER_MONTH[m]
+  // ── Capacities (only for sources with real hourly profiles) ───────────────────
+  const solarGW      = renewableCapacity.solar            ?? 0
+  const windOnGW     = renewableCapacity.wind_onshore     ?? 0
+  const windOffGW    = renewableCapacity.wind_offshore    ?? 0
+  const hydroRunGW   = renewableCapacity.hydro_run        ?? 0
+  const hydroResGW   = renewableCapacity.hydro_reservoir  ?? 0
+  const hydroTotalGW = hydroRunGW + hydroResGW
+  const geoGW        = renewableCapacity.geothermal       ?? 0
 
-  // Flat baseload: nuclear, coal, imports (direct TWh → hourly MWh)
-  const nuclearH = ((directProduction.nuclear ?? 0) * 1e6 * monthFrac) / DAYS_PER_MONTH[m] / 24
-  const coalH    = ((directProduction.coal    ?? 0) * 1e6 * monthFrac) / DAYS_PER_MONTH[m] / 24
-  const importsH = ((directProduction.imports ?? 0) * 1e6 * monthFrac) / DAYS_PER_MONTH[m] / 24
+  const hydroRunFrac = hydroTotalGW > 0 ? hydroRunGW / hydroTotalGW : 0
+  const hydroResFrac = hydroTotalGW > 0 ? hydroResGW / hydroTotalGW : 0
+  const offScale     = windOffshoreScale(m)
 
-  // Flat baseload: biomass and geothermal (GW × monthly CF × 1000 = MWh/h)
-  const biomassH    = (renewableCapacity.biomass    ?? 0) * (MONTHLY_CF.biomass?.[m]    ?? 0.6)   * 1_000
-  const geothermalH = (renewableCapacity.geothermal ?? 0) * (MONTHLY_CF.geothermal?.[m] ?? 0.855) * 1_000
-
-  // Scenario multipliers
+  // ── Scenario multipliers ───────────────────────────────────────────────────────
   const scenSolar = SCENARIO_MULT.solar[scenario]
   const scenWind  = SCENARIO_MULT.wind[scenario]
   const scenHydro = SCENARIO_MULT.hydro[scenario]
 
-  // Pre-compute hourly CF arrays (avoid recomputing inside loop)
-  const solarCF    = HOURLY_SOLAR_CF[m]
-  const windOnCF   = windHourlyCF('wind_onshore',  m)
-  const windOffCF  = windHourlyCF('wind_offshore', m)
-  const hydroRunCF = hydroRunHourlyCF(m)
-  const hydroResCF = hydroReservoirHourlyCF(m)
+  // ── Daily budgets from Level 2 monthly allocations (MWh/day) ──────────────────
+  const nuclearBudget  = (monthlyProd.nuclear  ?? 0) / DAYS_PER_MONTH[m]
+  const coalBudget     = (monthlyProd.coal     ?? 0) / DAYS_PER_MONTH[m]
+  const importsBudget  = (monthlyProd.imports  ?? 0) / DAYS_PER_MONTH[m]
+  const gasCcgtBudget  = (monthlyProd.gas_ccgt ?? 0) / DAYS_PER_MONTH[m]
+  const gasOcgtBudget  = (monthlyProd.gas_ocgt ?? 0) / DAYS_PER_MONTH[m]
+  const biomassBudget  = (monthlyProd.biomass  ?? 0) / DAYS_PER_MONTH[m]
 
-  const solarGW    = renewableCapacity.solar            ?? 0
-  const windOnGW   = renewableCapacity.wind_onshore     ?? 0
-  const windOffGW  = renewableCapacity.wind_offshore    ?? 0
-  const hydroRunGW = renewableCapacity.hydro_run        ?? 0
-  const hydroResGW = renewableCapacity.hydro_reservoir  ?? 0
+  // ── Pass 1: per-hour renewable output and residual demand ─────────────────────
+  const renewH   = new Array<number>(24)
+  const demandH  = new Array<number>(24)
+  const residualH = new Array<number>(24)
+  let totalResidual = 0
 
-  let soc = 0  // battery starts empty
+  for (let h = 0; h < 24; h++) {
+    demandH[h] = DEMAND_GWH_2023[m][h] * demandScale * 1_000  // GWh → MWh
+
+    const solarMWh   = solarGW      * SOLAR_PROFILE[m][h]   * scenSolar * 1_000
+    const windOnMWh  = windOnGW     * WIND_PROFILE[m][h]    * scenWind  * 1_000
+    const windOffMWh = windOffGW    * WIND_PROFILE[m][h]    * offScale  * scenWind * 1_000
+    const hydroMWh   = hydroTotalGW * HYDRO_PROFILE[m][h]   * scenHydro * 1_000
+    const geoMWh     = geoGW        * GEOTHERMAL_CF         * 1_000
+
+    renewH[h] = solarMWh + windOnMWh + windOffMWh + hydroMWh + geoMWh
+    residualH[h] = Math.max(0, demandH[h] - renewH[h])
+    totalResidual += residualH[h]
+  }
+
+  // ── Pass 2: dispatch residual sources and battery ─────────────────────────────
+  let soc = 0
   const hours: HourlyPoint[] = []
 
   for (let h = 0; h < 24; h++) {
-    const demand = (dailyDemand * HOURLY_DEMAND_PROFILE[h]) / DEMAND_PROFILE_SUM
+    // Fraction of daily residual that falls in this hour
+    const frac = totalResidual > 0 ? residualH[h] / totalResidual : 1 / 24
 
-    // Renewable production (MWh)
-    const solarMWh    = solarGW    * solarCF[h]    * scenSolar * 1_000
-    const windOnMWh   = windOnGW   * windOnCF[h]   * scenWind  * 1_000
-    const windOffMWh  = windOffGW  * windOffCF[h]  * scenWind  * 1_000
-    const hydroRunMWh = hydroRunGW * hydroRunCF[h] * scenHydro * 1_000
-    const hydroResMWh = hydroResGW * hydroResCF[h] * scenHydro * 1_000
+    const solarMWh   = solarGW      * SOLAR_PROFILE[m][h]   * scenSolar * 1_000
+    const windOnMWh  = windOnGW     * WIND_PROFILE[m][h]    * scenWind  * 1_000
+    const windOffMWh = windOffGW    * WIND_PROFILE[m][h]    * offScale  * scenWind * 1_000
+    const hydroMWh   = hydroTotalGW * HYDRO_PROFILE[m][h]   * scenHydro * 1_000
+    const geoMWh     = geoGW        * GEOTHERMAL_CF         * 1_000
 
-    const fixedMWh = solarMWh + windOnMWh + windOffMWh + hydroRunMWh + hydroResMWh
-      + biomassH + geothermalH + nuclearH + coalH + importsH
+    const nuclearH   = nuclearBudget  * frac
+    const coalH      = coalBudget     * frac
+    const importsH   = importsBudget  * frac
+    const biomassH   = biomassBudget  * frac
+    const gasCcgtH   = gasCcgtBudget  * frac
+    const gasOcgtH   = gasOcgtBudget  * frac
 
-    // Gas: fill residual demand up to daily budget
-    const needGas = Math.max(0, demand - fixedMWh)
-    const gasH = Math.min(needGas, gasRemaining)
-    gasRemaining -= gasH
+    const totalProd = solarMWh + windOnMWh + windOffMWh + hydroMWh + geoMWh
+      + nuclearH + coalH + importsH + biomassH + gasCcgtH + gasOcgtH
+    const net = totalProd - demandH[h]
 
-    const totalProd = fixedMWh + gasH
-    const net = totalProd - demand
-
-    // Battery dispatch
+    // Battery: absorbs surplus, discharges on deficit
     let batteryDischarge = 0
     let batteryCharge = 0
-
     if (net > 0 && storageCapacityMWh > 0) {
       const charge = Math.min(net, storagePowerMWh, (storageCapacityMWh - soc) / CHARGE_EFF)
       batteryCharge = charge
@@ -173,26 +192,26 @@ function computeMonth(
         solar:           solarMWh,
         wind_onshore:    windOnMWh,
         wind_offshore:   windOffMWh,
-        hydro_run:       hydroRunMWh,
-        hydro_reservoir: hydroResMWh,
+        hydro_run:       hydroMWh * hydroRunFrac,
+        hydro_reservoir: hydroMWh * hydroResFrac,
         biomass:         biomassH,
-        geothermal:      geothermalH,
+        geothermal:      geoMWh,
         nuclear:         nuclearH,
-        gas_ccgt:        gasH,
-        gas_ocgt:        0,
+        gas_ccgt:        gasCcgtH,
+        gas_ocgt:        gasOcgtH,
         coal:            coalH,
         imports:         importsH,
       },
       batteryDischarge,
       batteryCharge,
       batterySOC: soc,
-      demand,
+      demand:     demandH[h],
       deficit,
       curtailment,
     })
   }
 
-  // ── Daily aggregates ──
+  // ── Daily aggregates ───────────────────────────────────────────────────────────
   let dailyDemandMWh = 0
   let dailyDeficitMWh = 0
   let dailySurplusMWh = 0

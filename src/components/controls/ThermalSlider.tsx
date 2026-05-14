@@ -7,7 +7,7 @@ import { SourceDetailModal } from '@/components/ui/SourceDetailModal'
 
 const TWH_RANGES: Partial<Record<Source, { min: number; max: number; step: number }>> = {
   nuclear:  { min: 0, max: 80,  step: 1 },
-  gas_ccgt: { min: 0, max: 200, step: 5 },
+  gas_ccgt: { min: 0, max: 200, step: 1 },
   gas_ocgt: { min: 0, max: 40,  step: 1 },
   coal:     { min: 0, max: 60,  step: 1 },
   imports:  { min: 0, max: 50,  step: 1 },

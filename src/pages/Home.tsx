@@ -6,10 +6,9 @@ const LEVELS = [
   {
     n: 1,
     icon: BarChart2,
-    title: 'Bilancio Nazionale Annuale',
+    title: 'Bilancio annuale',
     description:
-      'Regola la capacità installata per fonte (GW) e osserva come cambia il mix energetico, la quota rinnovabile e le emissioni CO₂ della rete italiana.',
-    concepts: ['Capacità installata', 'Capacity factor', 'Mix energetico', 'Deficit/surplus'],
+      'Regola le fonti energetiche e osserva come cambia il mix energetico, la quota rinnovabile e le emissioni CO₂ della rete italiana.',
     available: true,
     to: '/level1',
     gradient: 'from-blue-500 to-indigo-600',
@@ -17,10 +16,9 @@ const LEVELS = [
   {
     n: 2,
     icon: Clock,
-    title: 'Stagionalità Mensile',
+    title: 'Stagionalità mensile',
     description:
       'Il sole non splende allo stesso modo tutto l\'anno. Scopri come la variabilità mensile della produzione rinnovabile e della domanda crei squilibri stagionali.',
-    concepts: ['Profili mensili', 'Deficit invernale', 'Surplus estivo', 'Stagionalità solare'],
     available: true,
     to: '/level2',
     gradient: 'from-emerald-500 to-teal-600',
@@ -28,10 +26,9 @@ const LEVELS = [
   {
     n: 3,
     icon: Zap,
-    title: 'Risoluzione Oraria e Storage',
+    title: 'Giornata tipo',
     description:
-      'Profili giornalieri tipo a 24 ore. Affronta il "duck curve" del fotovoltaico e introduce batterie e pompaggio per bilanciare domanda e offerta ora per ora.',
-    concepts: ['Duck curve', 'Picco serale', 'Storage BESS', 'Pompaggio'],
+      'Affronta il problema di equilibrare ogni singola ora, cambiando il tuo mix o introducendo batterie per bilanciare domanda e offerta.',
     available: true,
     to: '/level3',
     gradient: 'from-amber-500 to-orange-600',
@@ -39,10 +36,9 @@ const LEVELS = [
   {
     n: 4,
     icon: Map,
-    title: 'Zone di Mercato e Trasmissione',
+    title: 'Distribuzione territoriale',
     description:
-      'La rete elettrica italiana è divisa in 6 zone (Terna). I limiti di trasmissione inter-zonale creano congestioni e differenziali di prezzo. Gestiscili.',
-    concepts: ['Zone Terna', 'Congestioni', 'Prezzi zonali', 'NTC'],
+      'Le rinnovabili non sono presenti in tutta Italia. Gestisci la trasmissione di energia tra una regione e l\'altra, per avere un bilanciamento non solo temporale ma anche geografico.',
     available: true,
     to: '/level4',
     gradient: 'from-purple-500 to-pink-600',
@@ -98,15 +94,7 @@ export default function Home() {
                   {!lvl.available && <Lock className="w-4 h-4 text-gray-300 flex-shrink-0 mt-1" />}
                 </div>
 
-                <p className="text-sm text-gray-600 mb-4 leading-relaxed">{lvl.description}</p>
-
-                <div className="flex flex-wrap gap-1.5 mb-5">
-                  {lvl.concepts.map((c) => (
-                    <span key={c} className="text-xs bg-gray-100 text-gray-600 rounded-full px-2.5 py-0.5">
-                      {c}
-                    </span>
-                  ))}
-                </div>
+                <p className="text-sm text-gray-600 mb-5 leading-relaxed">{lvl.description}</p>
 
                 {lvl.available ? (
                   <Link

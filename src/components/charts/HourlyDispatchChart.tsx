@@ -23,10 +23,35 @@ function SunMoonTick({ x, y, payload }: { x?: number; y?: number; payload?: { va
 // Stack bottom → top: coal, gas, imports, biomass, geo, hydro (merged), wind, solar
 const THERMAL_STACK: Source[] = ['nuclear', 'coal', 'gas_ccgt', 'imports', 'biomass', 'geothermal']
 const VARIABLE_STACK: Source[] = ['wind_offshore', 'wind_onshore', 'solar']
-const HYDRO_COLOR = '#14B8A6'
-
-const BATTERY_COLOR = '#14b8a6'
+const HYDRO_COLOR   = '#14B8A6'
+const BATTERY_COLOR = '#0d9488'
 const DEMAND_COLOR  = '#0f172a'
+
+// Explicit color map used by tooltip and activeDot to avoid recharts v3 stacking color bleed
+const CHART_COLOR: Record<string, string> = {
+  ...Object.fromEntries(
+    ([...THERMAL_STACK, ...VARIABLE_STACK] as string[]).map(src => [src, SOURCE_DEFINITIONS[src as Source].color])
+  ),
+  hydro:   HYDRO_COLOR,
+  battery: BATTERY_COLOR,
+}
+
+/**
+ * Renders an activeDot with the exact series color.
+ * Returns null when the segment value is 0 so zero-height stacked areas
+ * don't render a dot at the same position as the area below them,
+ * which would cover the correct dot (recharts v3 renders all activeDots
+ * at the same z-index; DOM order determines what's visible on top).
+ */
+function makeDot(color: string) {
+  return (props: { cx?: number; cy?: number; value?: number | number[] }) => {
+    const seg = Array.isArray(props.value)
+      ? (props.value[1] ?? 0) - (props.value[0] ?? 0)
+      : (props.value ?? 0)
+    if (seg < 0.001) return null
+    return <circle cx={props.cx} cy={props.cy} r={4} fill={color} stroke="white" strokeWidth={2} />
+  }
+}
 
 interface Props {
   hours: HourlyPoint[]
@@ -96,6 +121,7 @@ export function HourlyDispatchChart({ hours, storageCapacityGWh, title, selected
                 strokeOpacity={isDimmed ? 0.1 : 1}
                 strokeWidth={0.3}
                 name={def.labelShort}
+                activeDot={makeDot(def.color)}
                 isAnimationActive={false}
                 style={{ cursor: onSelectSource ? 'pointer' : 'default' }}
                 onClick={() => { if (onSelectSource) onSelectSource(selectedSource === src ? null : src) }}
@@ -119,6 +145,7 @@ export function HourlyDispatchChart({ hours, storageCapacityGWh, title, selected
                 strokeOpacity={isDimmed ? 0.1 : 1}
                 strokeWidth={0.3}
                 name="Idroelettrico"
+                activeDot={makeDot(HYDRO_COLOR)}
                 isAnimationActive={false}
                 style={{ cursor: onSelectSource ? 'pointer' : 'default' }}
                 onClick={() => { if (onSelectSource) onSelectSource(selectedSource === 'hydro' ? null : 'hydro') }}
@@ -143,6 +170,7 @@ export function HourlyDispatchChart({ hours, storageCapacityGWh, title, selected
                 strokeOpacity={isDimmed ? 0.1 : 1}
                 strokeWidth={0.3}
                 name={def.labelShort}
+                activeDot={makeDot(def.color)}
                 isAnimationActive={false}
                 style={{ cursor: onSelectSource ? 'pointer' : 'default' }}
                 onClick={() => { if (onSelectSource) onSelectSource(selectedSource === src ? null : src) }}
@@ -160,6 +188,7 @@ export function HourlyDispatchChart({ hours, storageCapacityGWh, title, selected
             strokeOpacity={selectedSource !== null && selectedSource !== 'battery' ? 0.1 : 1}
             strokeWidth={0.3}
             name="Batteria"
+            activeDot={makeDot(BATTERY_COLOR)}
             isAnimationActive={false}
             style={{ cursor: onSelectSource ? 'pointer' : 'default' }}
             onClick={() => {

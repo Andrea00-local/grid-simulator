@@ -36,7 +36,7 @@ export const SOURCE_DEFINITIONS: Record<Source, SourceDefinition> = {
     dispatchable: false,
     sliderMin: 0,
     sliderMax: 30,
-    sliderStep: 0.5,
+    sliderStep: 1,
   },
   hydro_run: {
     id: 'hydro_run',
@@ -48,7 +48,7 @@ export const SOURCE_DEFINITIONS: Record<Source, SourceDefinition> = {
     dispatchable: false,
     sliderMin: 0,
     sliderMax: 20,
-    sliderStep: 0.5,
+    sliderStep: 1,
   },
   hydro_reservoir: {
     id: 'hydro_reservoir',
@@ -60,7 +60,7 @@ export const SOURCE_DEFINITIONS: Record<Source, SourceDefinition> = {
     dispatchable: true,  // can be modulated
     sliderMin: 0,
     sliderMax: 25,
-    sliderStep: 0.5,
+    sliderStep: 1,
   },
   biomass: {
     id: 'biomass',
@@ -72,7 +72,7 @@ export const SOURCE_DEFINITIONS: Record<Source, SourceDefinition> = {
     dispatchable: true,
     sliderMin: 0,
     sliderMax: 10,
-    sliderStep: 0.5,
+    sliderStep: 1,
   },
   geothermal: {
     id: 'geothermal',
@@ -84,7 +84,7 @@ export const SOURCE_DEFINITIONS: Record<Source, SourceDefinition> = {
     dispatchable: false,
     sliderMin: 0,
     sliderMax: 5,
-    sliderStep: 0.1,
+    sliderStep: 1,
   },
   nuclear: {
     id: 'nuclear',
@@ -96,7 +96,7 @@ export const SOURCE_DEFINITIONS: Record<Source, SourceDefinition> = {
     dispatchable: false,  // baseload, must-run
     sliderMin: 0,
     sliderMax: 20,
-    sliderStep: 0.5,
+    sliderStep: 1,
   },
   gas_ccgt: {
     id: 'gas_ccgt',
@@ -132,7 +132,7 @@ export const SOURCE_DEFINITIONS: Record<Source, SourceDefinition> = {
     dispatchable: true,
     sliderMin: 0,
     sliderMax: 15,
-    sliderStep: 0.5,
+    sliderStep: 1,
   },
   imports: {
     id: 'imports',
@@ -144,7 +144,7 @@ export const SOURCE_DEFINITIONS: Record<Source, SourceDefinition> = {
     dispatchable: true,
     sliderMin: 0,
     sliderMax: 15,
-    sliderStep: 0.5,
+    sliderStep: 1,
   },
 }
 

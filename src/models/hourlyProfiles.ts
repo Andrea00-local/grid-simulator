@@ -1,89 +1,147 @@
 /**
- * Hourly profiles for Level 3 simulation.
+ * Hourly production profiles for Level 3 simulation.
+ * Source: Terna hourly statistics 2023 (dati.terna.it).
  *
- * Solar: Gaussian curve per month (width = season daylight length).
- * Wind: slight night-peak shape, scaled by monthly CF.
- * Hydro-run: flat per month.
- * Hydro-reservoir: demand-following shape, scaled by own monthly CF.
- * All profiles scaled so that their 24-hour average equals the monthly CF.
+ * All profile matrices are indexed [month][hour] (month 0=Jan, hour 0=00:00).
+ * Values represent capacity factors (fraction of installed GW produced each hour).
+ * Production formula: installedGW × profile[month][hour] × 1000 = MWh/h
  */
 import type { Scenario } from './types'
 import { MONTHLY_CF } from './profiles'
 
-// ─── Tesla MegaPack ratio ──────────────────────────────────────────────────────
-/** Energy-to-power ratio (hours). MegaPack 2: ~3.9 MWh / 1.5 MW ≈ 2.6 h → rounded 2.5 */
+// ─── Calendar & storage constants ─────────────────────────────────────────────
 export const MEGAPACK_HOURS = 2.5
-
-// ─── Calendar ─────────────────────────────────────────────────────────────────
 export const DAYS_PER_MONTH = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
 
-// ─── Scenario multipliers ─────────────────────────────────────────────────────
+// ─── Scenario multipliers (applied to variable sources) ───────────────────────
 export const SCENARIO_MULT: Record<'solar' | 'wind' | 'hydro', Record<Scenario, number>> = {
-  solar: { bad: 0.20, average: 1.0, good: 1.60 },
-  wind:  { bad: 0.20, average: 1.0, good: 1.80 },
+  solar: { bad: 0.25, average: 1.0, good: 1.40 },
+  wind:  { bad: 0.30, average: 1.0, good: 1.60 },
   hydro: { bad: 0.70, average: 1.0, good: 1.20 },
 }
 
-// ─── Solar ────────────────────────────────────────────────────────────────────
-// Gaussian sigma (h) controls daylight width; wider in summer.
-const SOLAR_PEAK_HOUR = 12.5
-const SOLAR_SIGMA = [1.8, 2.0, 2.4, 2.7, 3.0, 3.2, 3.2, 3.0, 2.6, 2.2, 1.9, 1.7]
+// ─── Geothermal: near-constant output across all hours/months ─────────────────
+export const GEOTHERMAL_CF = 0.77
 
-/** 12×24 matrix: hourly CF for solar in each month. Average over 24h = monthly CF. */
-export const HOURLY_SOLAR_CF: number[][] = SOLAR_SIGMA.map((sigma, m) => {
-  const cf = MONTHLY_CF.solar![m]
-  const raw = Array.from({ length: 24 }, (_, h) =>
-    Math.exp(-0.5 * ((h - SOLAR_PEAK_HOUR) / sigma) ** 2),
-  )
-  const sum = raw.reduce((a, b) => a + b, 0)
-  return raw.map(v => (v * cf * 24) / sum)
+// ─── Solar: [month][hour] capacity factors ────────────────────────────────────
+export const SOLAR_PROFILE: number[][] = [
+  // Jan
+  [0,0,0,0,0,0,0,0,0.03,0.09,0.13,0.14,0.15,0.14,0.11,0.06,0.01,0,0,0,0,0,0,0],
+  // Feb
+  [0,0,0,0,0,0,0,0.01,0.07,0.15,0.19,0.22,0.23,0.22,0.19,0.14,0.06,0.01,0,0,0,0,0,0],
+  // Mar
+  [0,0,0,0,0,0,0,0.05,0.13,0.20,0.25,0.28,0.29,0.28,0.25,0.21,0.13,0.05,0.01,0,0,0,0,0],
+  // Apr
+  [0,0,0,0,0,0,0,0.04,0.12,0.20,0.26,0.30,0.32,0.32,0.30,0.27,0.22,0.15,0.06,0.01,0,0,0,0],
+  // May
+  [0,0,0,0,0,0,0.01,0.06,0.13,0.19,0.24,0.27,0.29,0.29,0.27,0.24,0.20,0.14,0.07,0.02,0,0,0,0],
+  // Jun
+  [0,0,0,0,0,0,0.02,0.08,0.16,0.23,0.28,0.32,0.34,0.34,0.32,0.29,0.24,0.18,0.10,0.03,0,0,0,0],
+  // Jul
+  [0,0,0,0,0,0,0.01,0.07,0.15,0.23,0.28,0.32,0.34,0.35,0.34,0.31,0.27,0.20,0.11,0.03,0,0,0,0],
+  // Aug
+  [0,0,0,0,0,0,0,0.05,0.14,0.23,0.29,0.33,0.35,0.35,0.34,0.31,0.26,0.19,0.09,0.02,0,0,0,0],
+  // Sep
+  [0,0,0,0,0,0,0,0.02,0.10,0.20,0.26,0.29,0.31,0.31,0.30,0.26,0.21,0.12,0.03,0,0,0,0,0],
+  // Oct
+  [0,0,0,0,0,0,0,0.01,0.06,0.14,0.20,0.23,0.25,0.25,0.23,0.19,0.12,0.05,0,0,0,0,0,0],
+  // Nov
+  [0,0,0,0,0,0,0,0.02,0.08,0.14,0.18,0.20,0.20,0.18,0.13,0.06,0.01,0,0,0,0,0,0,0],
+  // Dec
+  [0,0,0,0,0,0,0,0,0.04,0.10,0.14,0.16,0.18,0.15,0.11,0.05,0,0,0,0,0,0,0,0],
+]
+
+// ─── Hydro (combined run-of-river + reservoir): [month][hour] ─────────────────
+export const HYDRO_PROFILE: number[][] = [
+  // Jan
+  [0.10,0.09,0.09,0.09,0.09,0.09,0.11,0.17,0.27,0.26,0.21,0.18,0.16,0.14,0.15,0.16,0.21,0.29,0.32,0.30,0.23,0.17,0.13,0.11],
+  // Feb
+  [0.08,0.08,0.07,0.07,0.07,0.07,0.12,0.23,0.32,0.26,0.20,0.15,0.11,0.11,0.11,0.12,0.16,0.25,0.37,0.36,0.26,0.17,0.12,0.10],
+  // Mar
+  [0.08,0.07,0.07,0.07,0.07,0.08,0.11,0.19,0.25,0.20,0.15,0.12,0.10,0.09,0.09,0.10,0.13,0.19,0.29,0.38,0.29,0.19,0.13,0.10],
+  // Apr
+  [0.09,0.08,0.08,0.08,0.08,0.08,0.12,0.23,0.29,0.21,0.13,0.12,0.10,0.09,0.09,0.10,0.11,0.12,0.18,0.31,0.38,0.29,0.16,0.12],
+  // May
+  [0.23,0.22,0.21,0.21,0.20,0.21,0.26,0.33,0.36,0.34,0.29,0.26,0.22,0.21,0.22,0.23,0.24,0.27,0.32,0.41,0.45,0.40,0.31,0.26],
+  // Jun
+  [0.30,0.27,0.25,0.25,0.25,0.25,0.30,0.37,0.39,0.37,0.32,0.30,0.26,0.25,0.26,0.27,0.29,0.32,0.37,0.46,0.49,0.46,0.40,0.34],
+  // Jul
+  [0.23,0.21,0.20,0.19,0.18,0.18,0.22,0.29,0.32,0.31,0.27,0.24,0.21,0.20,0.22,0.23,0.25,0.30,0.36,0.46,0.48,0.45,0.38,0.30],
+  // Aug
+  [0.22,0.20,0.18,0.17,0.17,0.17,0.21,0.27,0.30,0.26,0.22,0.19,0.17,0.17,0.17,0.18,0.20,0.25,0.35,0.47,0.50,0.45,0.34,0.26],
+  // Sep
+  [0.17,0.15,0.14,0.14,0.14,0.14,0.19,0.24,0.27,0.24,0.20,0.17,0.15,0.14,0.15,0.16,0.17,0.21,0.28,0.36,0.35,0.26,0.21,0.18],
+  // Oct
+  [0.14,0.13,0.13,0.12,0.13,0.13,0.18,0.24,0.27,0.24,0.19,0.16,0.14,0.14,0.14,0.15,0.18,0.23,0.30,0.35,0.27,0.20,0.17,0.16],
+  // Nov
+  [0.18,0.17,0.16,0.16,0.16,0.16,0.19,0.25,0.29,0.26,0.22,0.20,0.18,0.18,0.20,0.23,0.28,0.33,0.34,0.32,0.26,0.22,0.19,0.16],
+  // Dec
+  [0.13,0.12,0.12,0.11,0.12,0.12,0.14,0.20,0.25,0.23,0.19,0.17,0.15,0.15,0.16,0.20,0.26,0.32,0.30,0.29,0.23,0.19,0.18,0.14],
+]
+
+// ─── Wind: [month][hour] capacity factors ─────────────────────────────────────
+// Represents the Italian onshore wind fleet hourly shape.
+// Offshore is scaled to its higher monthly CF using WIND_MONTHLY_AVG below.
+export const WIND_PROFILE: number[][] = [
+  // Jan
+  [0.25,0.24,0.23,0.22,0.22,0.22,0.23,0.23,0.23,0.22,0.23,0.24,0.26,0.27,0.27,0.27,0.27,0.27,0.27,0.26,0.26,0.26,0.26,0.25],
+  // Feb
+  [0.21,0.21,0.22,0.22,0.22,0.22,0.21,0.21,0.20,0.20,0.20,0.21,0.22,0.23,0.24,0.24,0.24,0.24,0.23,0.23,0.23,0.22,0.22,0.21],
+  // Mar
+  [0.27,0.26,0.26,0.26,0.26,0.26,0.26,0.25,0.25,0.26,0.27,0.28,0.29,0.30,0.31,0.31,0.32,0.32,0.30,0.30,0.29,0.29,0.28,0.28],
+  // Apr
+  [0.25,0.24,0.25,0.24,0.24,0.24,0.23,0.22,0.21,0.21,0.22,0.23,0.24,0.25,0.27,0.28,0.29,0.29,0.27,0.25,0.25,0.24,0.24,0.23],
+  // May
+  [0.15,0.15,0.15,0.15,0.15,0.15,0.16,0.15,0.14,0.15,0.16,0.17,0.18,0.19,0.20,0.20,0.20,0.20,0.19,0.17,0.17,0.16,0.15,0.15],
+  // Jun
+  [0.11,0.11,0.11,0.11,0.11,0.11,0.11,0.10,0.09,0.09,0.10,0.10,0.11,0.12,0.14,0.16,0.17,0.16,0.15,0.12,0.11,0.11,0.10,0.11],
+  // Jul
+  [0.14,0.14,0.14,0.14,0.14,0.14,0.14,0.13,0.11,0.11,0.11,0.12,0.13,0.15,0.17,0.19,0.20,0.20,0.18,0.16,0.15,0.15,0.14,0.14],
+  // Aug
+  [0.17,0.17,0.17,0.17,0.17,0.17,0.17,0.15,0.14,0.15,0.16,0.17,0.19,0.21,0.23,0.26,0.27,0.27,0.25,0.21,0.19,0.17,0.17,0.17],
+  // Sep
+  [0.17,0.17,0.18,0.18,0.18,0.18,0.17,0.16,0.16,0.16,0.17,0.18,0.19,0.21,0.22,0.23,0.24,0.23,0.21,0.19,0.18,0.17,0.17,0.17],
+  // Oct
+  [0.20,0.20,0.20,0.19,0.19,0.18,0.18,0.18,0.17,0.16,0.17,0.18,0.20,0.22,0.23,0.25,0.25,0.24,0.22,0.22,0.21,0.21,0.21,0.21],
+  // Nov
+  [0.34,0.34,0.33,0.32,0.31,0.31,0.31,0.31,0.30,0.30,0.32,0.33,0.35,0.36,0.37,0.37,0.36,0.35,0.34,0.34,0.34,0.35,0.35,0.35],
+  // Dec
+  [0.28,0.29,0.28,0.28,0.28,0.27,0.26,0.26,0.25,0.24,0.24,0.25,0.26,0.28,0.28,0.26,0.25,0.26,0.26,0.27,0.27,0.26,0.26,0.26],
+]
+
+/** Monthly average of WIND_PROFILE (24h mean per month). Used to scale offshore. */
+export const WIND_MONTHLY_AVG: number[] = WIND_PROFILE.map(
+  row => row.reduce((a, b) => a + b, 0) / 24,
+)
+
+/**
+ * Returns the hourly CF scale factor for offshore wind in month m.
+ * Preserves WIND_PROFILE shape but adjusts magnitude to match offshore CF.
+ */
+export function windOffshoreScale(m: number): number {
+  const offCF = MONTHLY_CF.wind_offshore?.[m] ?? 0.249
+  return offCF / WIND_MONTHLY_AVG[m]
+}
+
+// ─── Demand baseline: GWh per hour, representative day of each month ──────────
+// Monthly totals from Terna 2023; daily shape from typical Italian load curve.
+// Scale by (userDemandTWh / DEMAND_BASELINE_TWH) when demand changes.
+export const DEMAND_BASELINE_TWH = 305.54
+
+const _MONTHLY_GWH = [
+  25_980, 24_740, 25_940, 24_430, 24_430, 25_370,
+  29_710, 23_610, 25_860, 25_420, 25_080, 24_970,
+]
+const _HOURLY_SHAPE = [
+  0.72, 0.68, 0.65, 0.63, 0.62, 0.65,
+  0.72, 0.84, 0.96, 1.04, 1.08, 1.10,
+  1.10, 1.08, 1.06, 1.04, 1.02, 1.05,
+  1.12, 1.14, 1.10, 1.02, 0.92, 0.80,
+]
+const _SHAPE_SUM = _HOURLY_SHAPE.reduce((a, b) => a + b, 0)
+
+/** GWh per hour for a representative day of month m, at 2023 baseline (305.54 TWh). */
+export const DEMAND_GWH_2023: number[][] = _MONTHLY_GWH.map((monthGWh, m) => {
+  const dailyGWh = monthGWh / DAYS_PER_MONTH[m]
+  return _HOURLY_SHAPE.map(s => (dailyGWh * s) / _SHAPE_SUM)
 })
-
-// ─── Wind ─────────────────────────────────────────────────────────────────────
-// Slightly stronger at night (offshore thermal gradient), weaker at noon.
-const WIND_SHAPE_RAW = [
-  1.12, 1.15, 1.14, 1.10, 1.06, 1.03, 0.98, 0.93,
-  0.89, 0.87, 0.85, 0.85, 0.87, 0.89, 0.91, 0.93,
-  0.95, 0.98, 1.00, 1.03, 1.05, 1.07, 1.09, 1.11,
-]
-const WIND_SHAPE_SUM = WIND_SHAPE_RAW.reduce((a, b) => a + b, 0)
-const WIND_SHAPE_NORM = WIND_SHAPE_RAW.map(v => (v * 24) / WIND_SHAPE_SUM) // avg = 1
-
-/** Hourly CF array for wind (on/offshore) in month m. */
-export function windHourlyCF(
-  src: 'wind_onshore' | 'wind_offshore',
-  m: number,
-): number[] {
-  const cf = MONTHLY_CF[src]![m]
-  return WIND_SHAPE_NORM.map(v => v * cf)
-}
-
-// ─── Hydro run-of-river ───────────────────────────────────────────────────────
-/** Flat hourly CF for hydro_run in month m. */
-export function hydroRunHourlyCF(m: number): number[] {
-  const cf = MONTHLY_CF.hydro_run![m]
-  return Array(24).fill(cf)
-}
-
-// ─── Hydro reservoir ──────────────────────────────────────────────────────────
-// Monthly CFs for reservoir hydro (not in profiles.ts — defined here).
-// Higher in spring (snowmelt), managed for winter demand peaks, lower in late summer.
-export const HYDRO_RESERVOIR_MONTHLY_CF = [
-  0.30, 0.30, 0.38, 0.45, 0.48, 0.40,
-  0.30, 0.25, 0.27, 0.32, 0.35, 0.38,
-]
-
-// Dispatch-following shape: peaks with morning and evening demand.
-const HYDRO_RES_SHAPE_RAW = [
-  0.70, 0.68, 0.67, 0.67, 0.68, 0.72, 0.80, 0.92,
-  1.02, 1.08, 1.10, 1.05, 0.98, 0.95, 0.95, 0.97,
-  1.00, 1.05, 1.12, 1.15, 1.12, 1.06, 0.93, 0.80,
-]
-const HYDRO_RES_SHAPE_SUM = HYDRO_RES_SHAPE_RAW.reduce((a, b) => a + b, 0)
-const HYDRO_RES_SHAPE_NORM = HYDRO_RES_SHAPE_RAW.map(v => (v * 24) / HYDRO_RES_SHAPE_SUM)
-
-/** Hourly CF array for hydro_reservoir in month m. */
-export function hydroReservoirHourlyCF(m: number): number[] {
-  const cf = HYDRO_RESERVOIR_MONTHLY_CF[m]
-  return HYDRO_RES_SHAPE_NORM.map(v => v * cf)
-}
