@@ -1,26 +1,12 @@
 import { useState } from 'react'
-import { X, FlaskConical, CheckCircle2, XCircle } from 'lucide-react'
-
-const INCLUDED = [
-  'Bilancio energetico annuale, mensile e orario tra produzione e domanda',
-  'Capacity factor tipici italiani (mensili e per regione)',
-  'Emissioni CO₂ operative per fonte (fattori ISPRA)',
-  'Storage BESS: carica/scarica oraria con efficienza round-trip ~90%',
-  'Distribuzione regionale e routing semplificato (Dijkstra) sulle linee Terna',
-  'Stagionalità solare, eolica e idroelettrica (profili mensili da dati storici)',
-]
+import { X, FlaskConical, XCircle } from 'lucide-react'
 
 const NOT_INCLUDED = [
-  'Mercato elettrico e prezzi (PUN, MGP, dispacciamento economico)',
-  'Variabilità meteorologica pluriennale (siccità, El Niño)',
-  'Perdite di rete (~7% della produzione) e potenza reattiva',
-  'Stabilità di frequenza e tensione (servizi ancillari)',
-  'Tempi reali di costruzione e iter autorizzativi (5-10 anni per eolico offshore)',
-  'Costi di investimento, LCOE e profittabilità degli impianti',
-  'Demand response, smart grid e flessibilità industriale',
-  'Storage di lungo periodo (idrogeno, pompaggio stagionale)',
-  'Emissioni di ciclo di vita (upstream, costruzione impianti)',
-  'Effetti di rete (congestioni interne alle zone Terna)',
+  'Componente economica. Ciascuna fonte ha costi differenti ma qui non sono presenti considerazioni economiche.',
+  'Variabilità meteorologica. È presente il giorno con le condizioni meteo avverse, ma ci possono essere ulteriori eventi non considerati, come siccità che incidono anche sull\'idroelettrico.',
+  'Stabilità di rete. Qui si considera il bilancio ogni ora, ma in una rete reale lo si fa ad ogni secondo, per mantenere la frequenza e la tensione sempre stabile.',
+  'Congestioni. La rete reale porta elettricità a milioni di utenti da milioni di punti di produzione, ed è quindi molto più complessa e può dare origine anche a congestioni locali.',
+  'Emissioni complessive. Si è utilizzata la metodologia di ISPRA per misurare le emissioni, ma questa considera solo quelle derivanti da combustione diretta, tralasciando quindi quelle derivanti dall\'elettricità importata o indirettamente per le fonti rinnovabili.',
 ]
 
 interface Props {
@@ -66,7 +52,7 @@ export function SimplificationsModal({ trigger }: Props) {
                 <p className="text-sm text-gray-500 mt-1 leading-relaxed">
                   Questo simulatore è stato progettato per <strong>capire i meccanismi chiave</strong> della
                   transizione energetica, non per replicare la complessità del sistema elettrico reale.
-                  Ecco cosa modella e cosa non modella.
+                  Ecco cosa non modella.
                 </p>
               </div>
               <button
@@ -78,30 +64,12 @@ export function SimplificationsModal({ trigger }: Props) {
             </div>
 
             <div className="p-6 space-y-6 max-h-[70vh] overflow-y-auto">
-              {/* What IS modelled */}
-              <div>
-                <div className="flex items-center gap-2 mb-3">
-                  <CheckCircle2 className="w-4 h-4 text-green-600 flex-shrink-0" />
-                  <h3 className="text-sm font-semibold text-green-700 uppercase tracking-wide">
-                    Cosa modella questo simulatore
-                  </h3>
-                </div>
-                <div className="space-y-2">
-                  {INCLUDED.map(item => (
-                    <div key={item} className="flex items-start gap-2 text-sm text-gray-700 bg-green-50 rounded-lg px-3 py-2">
-                      <span className="text-green-500 mt-0.5 flex-shrink-0">✓</span>
-                      {item}
-                    </div>
-                  ))}
-                </div>
-              </div>
-
               {/* What is NOT modelled */}
               <div>
                 <div className="flex items-center gap-2 mb-3">
                   <XCircle className="w-4 h-4 text-red-500 flex-shrink-0" />
                   <h3 className="text-sm font-semibold text-red-600 uppercase tracking-wide">
-                    Cosa NON modella (semplificazioni principali)
+                    Semplificazioni principali
                   </h3>
                 </div>
                 <div className="space-y-2">
@@ -118,20 +86,13 @@ export function SimplificationsModal({ trigger }: Props) {
               <div className="rounded-xl border border-blue-100 bg-blue-50 p-4">
                 <h3 className="text-sm font-semibold text-blue-800 mb-2">Perché è utile comunque?</h3>
                 <p className="text-xs text-blue-700 leading-relaxed">
-                  Nonostante le semplificazioni, questo modello permette di capire <strong>gli ordini di grandezza</strong>
-                  delle sfide della transizione: quanti GW servono, quanto pesa la stagionalità, come funziona
-                  lo storage, perché la rete di trasmissione è un collo di bottiglia. Questi meccanismi sono
-                  reali e i numeri sono calibrati su dati ufficiali (Terna, GSE, PNIEC 2023). Per approfondire
-                  i modelli reali, si utilizzano strumenti come <em>PyPSA</em>, <em>PLEXOS</em> o i modelli
-                  ENTSO-E Ten-Year Network Development Plan (TYNDP).
+                  Nonostante le semplificazioni, questo modello permette di capire{' '}
+                  <strong>gli ordini di grandezza</strong> delle sfide della transizione: quanti GW servono,
+                  quanto pesa la stagionalità, come funziona lo storage, perché la rete di trasmissione è
+                  un collo di bottiglia. Questi meccanismi sono reali e i numeri sono calibrati su dati
+                  ufficiali, anche se non sempre precisi al millimetro. Per approfondire i modelli reali,
+                  si utilizzano strumenti molto più complessi come <em>PyPSA</em> o EnergyScope.
                 </p>
-              </div>
-
-              <div className="rounded-xl border border-gray-100 bg-gray-50 p-4 text-xs text-gray-500 leading-relaxed">
-                <strong>Fonti dati:</strong> Terna (capacità installata, profili di carico, NTC),
-                GSE (statistiche FER, capacity factor), ISPRA (fattori di emissione), ENTSO-E (dati europei),
-                MASE/PNIEC 2023 (obiettivi), IRENA (costi), JRC/PVGIS (irraggiamento). Tutti i dati
-                si riferiscono all'anno 2023 ove non diversamente specificato.
               </div>
             </div>
           </div>
