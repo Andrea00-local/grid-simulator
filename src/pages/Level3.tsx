@@ -261,36 +261,6 @@ export default function Level3() {
           </div>
 
 
-          {/* Annualization note */}
-          <div className="gs-card p-5 print:hidden">
-            <h3 className="text-sm font-semibold text-gray-700 mb-3">Proiezione annuale (giorno tipo × giorni)</h3>
-            <div className="grid grid-cols-3 gap-4">
-              {level3.months.map((day, i) => {
-                const DAYS = [31,28,31,30,31,30,31,31,30,31,30,31]
-                const monthDeficit = day.dailyDeficitMWh * DAYS[i] / 1_000
-                const monthSurplus = day.dailySurplusMWh * DAYS[i] / 1_000
-                return (
-                  <button
-                    key={i}
-                    onClick={() => setSelectedMonth(i)}
-                    className={`text-left p-2.5 rounded-lg border text-xs transition-all ${
-                      selectedMonth === i
-                        ? 'border-gray-900 bg-gray-900 text-white'
-                        : monthDeficit > 0.5
-                        ? 'border-red-200 bg-red-50 text-red-800'
-                        : 'border-gray-100 bg-gray-50 text-gray-700 hover:border-gray-200'
-                    }`}
-                  >
-                    <div className="font-semibold">{day.monthLabel}</div>
-                    <div className="mt-0.5 opacity-75">
-                      {monthDeficit > 0.5 ? `-${monthDeficit.toFixed(0)} GWh` : `+${monthSurplus.toFixed(0)} GWh`}
-                    </div>
-                  </button>
-                )
-              })}
-            </div>
-          </div>
-
           {/* Educational callout */}
           <div className="gs-callout-amber p-4">
             <h3 className="text-sm font-semibold text-amber-800 mb-1">Il duck curve e lo storage</h3>
