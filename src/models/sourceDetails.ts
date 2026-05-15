@@ -123,9 +123,9 @@ export const SOURCE_DETAILS: Partial<Record<SourceKey, SourceDetail>> = {
     description:
       'L\'eolico offshore installa turbine in mare aperto, dove il vento è più forte e più costante rispetto alla terraferma. L\'Italia ha zero installazioni offshore al 2023, ma il PNIEC prevede i primi impianti nel Mediterraneo entro il 2030.',
     capacityFactor: {
-      value: 0.249,
-      range: '17–33%',
-      notes: 'Stima per il Mediterraneo (17% ago – 33% dic)',
+      value: 0.305,
+      range: '12–47%',
+      notes: 'Media annua italiana (11.8% giu – 47.2% nov)',
     },
     italy2023: {
       value: 0,
