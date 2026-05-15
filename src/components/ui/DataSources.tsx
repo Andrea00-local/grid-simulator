@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { X, ExternalLink, Database } from 'lucide-react'
 import { SimplificationsModal } from './SimplificationsModal'
+import { ModelExplanationModal } from './ModelExplanationModal'
 
 interface DataEntry {
   name: string
@@ -316,6 +317,7 @@ export function DataSources({ level }: Props) {
           </span>
         </button>
         <SimplificationsModal />
+        <ModelExplanationModal />
       </div>
 
       {/* Modal */}
