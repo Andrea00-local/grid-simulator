@@ -78,7 +78,7 @@ export function ControlsPanel({ showStorage, layout }: Props) {
         {/* Battery storage — Level 3 only */}
         {showStorage && (
           <div className="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 shadow-sm p-4">
-            <h2 className="text-sm font-semibold text-gray-700 dark:text-slate-300 mb-1">Stoccaggio (BESS)</h2>
+            <h2 className="text-sm font-semibold text-gray-700 dark:text-slate-300 mb-1">Stoccaggio</h2>
             <p className="text-xs text-gray-400 dark:text-slate-500 mb-3">
               Potenza installata / capacità di stoccaggio
             </p>
@@ -156,7 +156,7 @@ export function ControlsPanel({ showStorage, layout }: Props) {
       {/* Battery storage — Level 3 only */}
       {showStorage && (
         <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
-          <h2 className="text-sm font-semibold text-gray-700 mb-1">Stoccaggio (BESS)</h2>
+          <h2 className="text-sm font-semibold text-gray-700 mb-1">Stoccaggio</h2>
           <p className="text-xs text-gray-400 mb-3">
             Potenza installata in GW — capacità calcolata col rapporto MegaPack (2.5 h)
           </p>

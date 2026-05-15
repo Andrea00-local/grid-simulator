@@ -18,7 +18,7 @@ export function StorageSlider() {
             className="w-2 h-2 rounded-sm flex-shrink-0"
             style={{ background: STORAGE_COLOR }}
           />
-          <span className="text-xs font-medium text-gray-700">Batterie (BESS)</span>
+          <span className="text-xs font-medium text-gray-700">Batterie</span>
         </div>
         <div className="text-right">
           <span className="text-xs font-semibold text-gray-800 tabular-nums">
