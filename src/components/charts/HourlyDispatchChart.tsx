@@ -89,7 +89,7 @@ export function HourlyDispatchChart({ hours, storageCapacityGWh, title, selected
             width={38}
             tick={{ fontSize: 11 }}
             tickFormatter={v => v.toFixed(0)}
-            label={{ value: 'GW', angle: -90, position: 'insideLeft', fontSize: 11, dx: 10 }}
+            label={{ value: 'GW', position: 'insideTopLeft', fontSize: 10, fill: '#9ca3af', dy: 14 }}
           />
           <Tooltip
             content={<DispatchTooltip />}

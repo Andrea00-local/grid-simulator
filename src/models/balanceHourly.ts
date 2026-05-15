@@ -145,8 +145,35 @@ function computeMonth(
     totalResidual += residualH[h]
   }
 
+  // ── Battery warm-up: find steady-state initial SOC ────────────────────────────
+  // If production >> demand mid-day, the battery is still charged at day-end.
+  // Running a dry pass gives the end-of-day SOC, which we use as the start SOC
+  // so the battery can also cover the morning hours of the "typical day".
+  let initialSOC = 0
+  if (storageCapacityMWh > 0) {
+    let warmSOC = 0
+    for (let h = 0; h < 24; h++) {
+      const frac = totalResidual > 0 ? residualH[h] / totalResidual : 1 / 24
+      const solarMWh   = solarGW      * solarProfile[m][h]    * 1_000
+      const windOnMWh  = windOnGW     * WIND_PROFILE[m][h]    * scenWind  * 1_000
+      const windOffMWh = windOffGW    * WIND_PROFILE[m][h]    * offScale  * scenWind * 1_000
+      const hydroMWh   = hydroTotalGW * HYDRO_PROFILE[m][h]   * scenHydro * 1_000
+      const geoMWh     = geoGW        * GEOTHERMAL_CF         * 1_000
+      const thermalH   = (nuclearBudget + coalBudget + importsBudget + biomassBudget + gasCcgtBudget + gasOcgtBudget) * frac
+      const net = solarMWh + windOnMWh + windOffMWh + hydroMWh + geoMWh + thermalH - demandH[h]
+      if (net > 0) {
+        const charge = Math.min(net, storagePowerMWh, (storageCapacityMWh - warmSOC) / CHARGE_EFF)
+        warmSOC += charge * CHARGE_EFF
+      } else if (net < 0) {
+        const discharge = Math.min(-net, storagePowerMWh, warmSOC * DISCHARGE_EFF)
+        warmSOC -= discharge / DISCHARGE_EFF
+      }
+    }
+    initialSOC = warmSOC
+  }
+
   // ── Pass 2: dispatch residual sources and battery ─────────────────────────────
-  let soc = 0
+  let soc = initialSOC
   const hours: HourlyPoint[] = []
 
   for (let h = 0; h < 24; h++) {

@@ -32,7 +32,7 @@ export function StorageSlider() {
 
       <RadixSlider.Root
         min={0}
-        max={50}
+        max={200}
         step={1}
         value={[storagePowerGW]}
         onValueChange={([v]) => setStoragePower(v)}
