@@ -1,5 +1,6 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useSimStore } from '@/store/simulationStore'
+import { LEVEL1_CONFIG } from '@/simulation/levels/level1'
 import { LevelIntro } from '@/components/layout/LevelIntro'
 import { DataSources } from '@/components/ui/DataSources'
 import { ObjectivesPanel } from '@/components/ui/ObjectivesPanel'
@@ -14,7 +15,10 @@ import { ITALY_CO2_BASELINE_MT } from '@/models/constants'
 
 export default function Level1() {
   const [showIntro, setShowIntro] = useState(true)
+  const setLevelConfig = useSimStore(s => s.setLevelConfig)
   const result = useSimStore((s) => s.result)
+
+  useEffect(() => { setLevelConfig(LEVEL1_CONFIG) }, [setLevelConfig])
 
   const balanceTWh  = result.totalBalance / 1_000_000
   const emissionsMt = result.totalEmissionsMt
