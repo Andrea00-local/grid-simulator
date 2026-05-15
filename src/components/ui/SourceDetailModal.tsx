@@ -84,14 +84,6 @@ export function SourceDetailModal({ sourceKey, currentValue, isOpen, onClose }: 
         sub:   'Programmabile su richiesta',
       }
 
-  // ── Growth subtitle ───────────────────────────────────────────────────────
-  const growthSub =
-    Math.abs(diff) < 0.05
-      ? 'nessuna variazione prevista'
-      : diff > 0
-      ? `media nei prossimi ${yearsToTarget} anni`
-      : 'riduzione annua media'
-
   const growthColor =
     Math.abs(diff) < 0.05 ? '#6b7280' : diff > 0 ? '#22c55e' : '#ef4444'
 
@@ -224,7 +216,6 @@ export function SourceDetailModal({ sourceKey, currentValue, isOpen, onClose }: 
                   <p className="text-xl font-bold text-gray-900 tabular-nums leading-tight">
                     {box1.main}
                   </p>
-                  <p className="text-[10px] text-gray-500 mt-1 leading-snug">{box1.sub}</p>
                 </div>
 
                 {/* Box 2 — Oggi 2023 */}
@@ -235,9 +226,6 @@ export function SourceDetailModal({ sourceKey, currentValue, isOpen, onClose }: 
                   <p className="text-xl font-bold text-gray-900 tabular-nums leading-tight">
                     {fmt(anchor2023)}
                     <span className="text-xs font-normal text-gray-400 ml-0.5">{unit}</span>
-                  </p>
-                  <p className="text-[10px] text-gray-500 mt-1 leading-snug">
-                    {detail.italy2023.context}
                   </p>
                 </div>
 
@@ -256,7 +244,6 @@ export function SourceDetailModal({ sourceKey, currentValue, isOpen, onClose }: 
                     {fmt(dispTarget)}
                     <span className="text-xs font-normal text-gray-400 ml-0.5">{unit}</span>
                   </p>
-                  <p className="text-[10px] text-gray-500 mt-1">obiettivo del tuo scenario</p>
                 </div>
 
                 {/* Box 4 — Crescita annua (count-up) */}
@@ -271,7 +258,6 @@ export function SourceDetailModal({ sourceKey, currentValue, isOpen, onClose }: 
                     {diff > 0.05 ? '+' : ''}{fmt1(dispGrowth)}
                     <span className="text-xs font-normal text-gray-400 ml-0.5">{unit}</span>
                   </p>
-                  <p className="text-[10px] text-gray-500 mt-1 leading-snug">{growthSub}</p>
                 </div>
 
               </div>

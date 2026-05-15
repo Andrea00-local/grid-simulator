@@ -51,9 +51,7 @@ export function StorageSlider() {
       </RadixSlider.Root>
 
       <p className="text-xs text-gray-400 mt-1.5">
-        {storagePowerGW > 0
-          ? `Capacità: ${capacityGWh.toFixed(0)} GWh — rapporto Tesla MegaPack 2 (2.5 h)`
-          : 'Nessuna batteria installata — trascina per aggiungere'}
+        Potenza installata / capacità di stoccaggio
       </p>
     </div>
   )
