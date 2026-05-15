@@ -7,8 +7,8 @@ export const EMISSION_FACTORS: Record<Source, number> = {
   wind_offshore:    0,
   hydro_run:        0,
   hydro_reservoir:  0,
-  biomass:          230,   // debated, but counts per EU taxonomy
-  geothermal:       38,
+  biomass:          0,
+  geothermal:       0,
   nuclear:          0,     // operational (no combustion); lifecycle ~12 gCO₂/kWh
   gas_ccgt:         425,   // 0.425 MtCO₂/TWh
   gas_ocgt:         425,   // same factor — efficiency difference captured in dispatch
