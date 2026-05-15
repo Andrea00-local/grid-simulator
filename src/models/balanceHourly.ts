@@ -23,7 +23,7 @@ import { MONTH_LABELS } from './profiles'
 import { EMISSION_FACTORS } from './constants'
 import {
   DAYS_PER_MONTH, SCENARIO_MULT, MEGAPACK_HOURS, GEOTHERMAL_CF,
-  SOLAR_PROFILE, HYDRO_PROFILE, WIND_PROFILE, windOffshoreScale,
+  SOLAR_PROFILES, HYDRO_PROFILE, WIND_PROFILE, windOffshoreScale,
   DEMAND_GWH_2023, DEMAND_BASELINE_TWH,
 } from './hourlyProfiles'
 import { computeMonthlyPeriods } from './balance'
@@ -113,7 +113,7 @@ function computeMonth(
   const offScale     = windOffshoreScale(m)
 
   // ── Scenario multipliers ───────────────────────────────────────────────────────
-  const scenSolar = SCENARIO_MULT.solar[scenario]
+  const solarProfile = SOLAR_PROFILES[scenario]
   const scenWind  = SCENARIO_MULT.wind[scenario]
   const scenHydro = SCENARIO_MULT.hydro[scenario]
 
@@ -134,7 +134,7 @@ function computeMonth(
   for (let h = 0; h < 24; h++) {
     demandH[h] = DEMAND_GWH_2023[m][h] * demandScale * 1_000  // GWh → MWh
 
-    const solarMWh   = solarGW      * SOLAR_PROFILE[m][h]   * scenSolar * 1_000
+    const solarMWh   = solarGW      * solarProfile[m][h]    * 1_000
     const windOnMWh  = windOnGW     * WIND_PROFILE[m][h]    * scenWind  * 1_000
     const windOffMWh = windOffGW    * WIND_PROFILE[m][h]    * offScale  * scenWind * 1_000
     const hydroMWh   = hydroTotalGW * HYDRO_PROFILE[m][h]   * scenHydro * 1_000
@@ -153,7 +153,7 @@ function computeMonth(
     // Fraction of daily residual that falls in this hour
     const frac = totalResidual > 0 ? residualH[h] / totalResidual : 1 / 24
 
-    const solarMWh   = solarGW      * SOLAR_PROFILE[m][h]   * scenSolar * 1_000
+    const solarMWh   = solarGW      * solarProfile[m][h]    * 1_000
     const windOnMWh  = windOnGW     * WIND_PROFILE[m][h]    * scenWind  * 1_000
     const windOffMWh = windOffGW    * WIND_PROFILE[m][h]    * offScale  * scenWind * 1_000
     const hydroMWh   = hydroTotalGW * HYDRO_PROFILE[m][h]   * scenHydro * 1_000
