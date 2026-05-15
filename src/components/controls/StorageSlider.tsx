@@ -50,9 +50,6 @@ export function StorageSlider() {
         />
       </RadixSlider.Root>
 
-      <p className="text-xs text-gray-400 mt-1.5">
-        Potenza installata / capacità di stoccaggio
-      </p>
     </div>
   )
 }

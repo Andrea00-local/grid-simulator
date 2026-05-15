@@ -80,7 +80,7 @@ export function ControlsPanel({ showStorage, layout }: Props) {
           <div className="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 shadow-sm p-4">
             <h2 className="text-sm font-semibold text-gray-700 dark:text-slate-300 mb-1">Stoccaggio (BESS)</h2>
             <p className="text-xs text-gray-400 dark:text-slate-500 mb-3">
-              Potenza installata in GW — capacità calcolata col rapporto MegaPack (2.5 h)
+              Potenza installata / capacità di stoccaggio
             </p>
             <StorageSlider />
           </div>
