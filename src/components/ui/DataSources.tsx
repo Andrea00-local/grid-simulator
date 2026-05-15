@@ -6,7 +6,7 @@ interface DataEntry {
   name: string
   value?: string
   description: string
-  source: string
+  source?: string
   sourceUrl?: string
 }
 
@@ -27,7 +27,7 @@ const DATA_BY_LEVEL: Record<number, { intro: string; sections: DataSection[] }> 
             name: 'Domanda baseline 2023',
             value: '306 TWh',
             description:
-              'Consumo di energia elettrica dell\'Italia nel 2023, incluse le perdite di rete. Include settore civile, industriale e trasporti.',
+              'Consumo di energia elettrica dell\'Italia nel 2023, incluse le perdite di rete.',
             source: 'Terna — Dati statistici sull\'energia elettrica in Italia 2023',
             sourceUrl: 'https://dati.terna.it/',
           },
@@ -40,7 +40,7 @@ const DATA_BY_LEVEL: Record<number, { intro: string; sections: DataSection[] }> 
             name: 'Solare fotovoltaico',
             value: '~12.1% annuo',
             description:
-              'Rapporto tra energia effettivamente prodotta e quella producibile se l\'impianto lavorasse sempre a piena potenza. In Italia varia da ~5.3% in gennaio a ~17.6% in giugno per via dell\'irraggiamento.',
+              'Rapporto tra energia effettivamente prodotta e quella producibile se l\'impianto lavorasse sempre a piena potenza.',
             source: 'Terna — Dati statistici sull\'energia elettrica in Italia 2023',
             sourceUrl: 'https://dati.terna.it/',
           },
@@ -48,23 +48,22 @@ const DATA_BY_LEVEL: Record<number, { intro: string; sections: DataSection[] }> 
             name: 'Eolico onshore',
             value: '~21.5% annuo',
             description:
-              'CF medio nazionale dell\'eolico a terra. Varia da ~11.8% in giugno a ~30.4% in dicembre. Le regioni del Sud (Puglia, Sicilia, Sardegna) raggiungono CF superiori.',
+              'CF medio nazionale dell\'eolico a terra.',
             source: 'Terna — Dati statistici sull\'energia elettrica in Italia 2023',
             sourceUrl: 'https://dati.terna.it/',
           },
           {
             name: 'Eolico offshore',
-            value: '~24.9% annuo',
+            value: '~30.5% annuo',
             description:
-              'CF stimato per impianti offshore in acque italiane (Adriatico e Stretto di Sicilia). L\'Italia non ha impianti offshore operativi al 2023; il valore è basato su dati europei.',
-            source: 'Terna — Dati statistici sull\'energia elettrica in Italia 2023',
-            sourceUrl: 'https://dati.terna.it/',
+              'Non esistono dati reali, per cui il CF può essere solo stimato. In generale però sarà superiore rispetto a quello dell\'eolico di terra.',
+            source: 'Floating Offshore Wind Farms in Italy beyond 2030 and beyond 2060: Preliminary Results of a Techno-Economic Assessment',
           },
           {
             name: 'Idroelettrico',
             value: '~21.2% annuo',
             description:
-              'CF medio degli impianti idroelettrici italiani (fluente e serbatoio). Fortemente stagionale: picco in maggio-giugno (scioglimento nevi alpine) con CF ~32.1%, minimo in marzo ~14.5%.',
+              'CF medio degli impianti idroelettrici italiani (fluente e serbatoio).',
             source: 'Terna — Dati statistici sull\'energia elettrica in Italia 2023',
             sourceUrl: 'https://dati.terna.it/',
           },
@@ -72,7 +71,7 @@ const DATA_BY_LEVEL: Record<number, { intro: string; sections: DataSection[] }> 
             name: 'Geotermico',
             value: '~82.8% annuo',
             description:
-              'Il geotermico italiano (concentrato in Toscana, gestito da Enel Green Power) ha un CF elevatissimo perché opera quasi in continuo. È una delle fonti più stabili del sistema.',
+              'Il geotermico italiano ha un CF elevatissimo perché opera quasi in continuo.',
             source: 'Terna — Dati statistici sull\'energia elettrica in Italia 2023',
             sourceUrl: 'https://dati.terna.it/',
           },
@@ -80,7 +79,7 @@ const DATA_BY_LEVEL: Record<number, { intro: string; sections: DataSection[] }> 
             name: 'Biomasse e biogas',
             value: '~48.7% annuo',
             description:
-              'CF medio degli impianti a biomassa solida, biogas e bioliquidi. Operano come "rinnovabili programmabili" con produzione abbastanza costante durante l\'anno.',
+              'CF medio degli impianti a biomassa solida, biogas e bioliquidi.',
             source: 'Terna — Dati statistici sull\'energia elettrica in Italia 2023',
             sourceUrl: 'https://dati.terna.it/',
           },
@@ -89,6 +88,13 @@ const DATA_BY_LEVEL: Record<number, { intro: string; sections: DataSection[] }> 
       {
         title: 'Fattori di emissione CO₂',
         entries: [
+          {
+            name: 'Rinnovabili',
+            value: '0 gCO₂/kWh',
+            description:
+              'Anche le rinnovabili comportano emissioni per via della costruzione delle tecnologie necessarie a produre elettricità. Tuttavia sono molto inferiori rispetto a quelle dei combustibili fossili ed ISPRA non le considera quando stima le emissioni della rete elettrica.',
+            source: 'ISPRA 2023 — Le emissioni di CO₂ nel settore elettrico nazionale e regionale',
+          },
           {
             name: 'Gas naturale',
             value: '425 gCO₂/kWh',
@@ -112,7 +118,7 @@ const DATA_BY_LEVEL: Record<number, { intro: string; sections: DataSection[] }> 
           },
           {
             name: 'Baseline CO₂ Italia 2023',
-            value: '72 MtCO₂',
+            value: '65 MtCO₂',
             description:
               'Emissioni totali del settore elettrico italiano nel 2023, usate come riferimento per calcolare il miglioramento o peggioramento rispetto allo scenario simulato.',
             source: 'ISPRA 2023 — Le emissioni di CO₂ nel settore elettrico nazionale e regionale',
@@ -123,44 +129,29 @@ const DATA_BY_LEVEL: Record<number, { intro: string; sections: DataSection[] }> 
   },
   2: {
     intro:
-      'Il Livello 2 mostra come la produzione e la domanda varino mese per mese. I profili mensili sono derivati da dati storici reali dell\'ultimo decennio.',
+      'Il Livello 2 mostra come la produzione e la domanda varino mese per mese. I profili mensili sono derivati da dati storici reali del 2023.',
     sections: [
       {
-        title: 'Profili mensili di produzione',
+        title: 'Produzione mensile',
         entries: [
           {
-            name: 'Capacity factor solare mensile',
-            value: '3.4% (Gen) → 16.6% (Lug)',
+            name: 'Andamento mensile produzione',
             description:
-              'L\'irraggiamento solare in Italia segue una curva fortemente stagionale. In luglio si produce circa 5 volte di più che in gennaio. I valori sono medie nazionali; il Sud Italia ha CF superiori del 15-20% rispetto al Nord.',
-            source: 'GSE — Atlante Solare Italiano / PVGIS European Commission',
-            sourceUrl: 'https://re.jrc.ec.europa.eu/pvg_tools/it/',
-          },
-          {
-            name: 'Capacity factor eolico mensile',
-            value: '14.4% (Lug) → 26.8% (Dic)',
-            description:
-              'Il vento in Italia è più forte in inverno e in primavera. Il CF estivo cala significativamente perché il Mar Mediterraneo in estate produce gradienti termici minori. Questo crea una complementarità parziale con il solare.',
-            source: 'ENTSO-E Transparency Platform — Wind Generation 2018-2023',
-          },
-          {
-            name: 'Capacity factor idroelettrico mensile',
-            value: '22% (Gen) → 49% (Mag)',
-            description:
-              'Il picco idroelettrico avviene in aprile-maggio per lo scioglimento delle nevi alpine. Il minimo estivo (luglio-agosto) può creare stress sul sistema quando il solare non è sufficiente e le precipitazioni sono scarse.',
-            source: 'Terna — Dati mensili produzione idroelettrica 2013-2023',
+              'Per tutte le fonti rinnovabili l\'andamento mensile è stato ricavato dall\'anno 2023, utilizzando i dati Terna.',
+            source: 'Terna — Dati statistici sull\'energia elettrica in Italia 2023',
+            sourceUrl: 'https://dati.terna.it/',
           },
         ],
       },
       {
-        title: 'Profilo mensile della domanda',
+        title: 'Domanda mensile',
         entries: [
           {
-            name: 'Fattori di modulazione mensile',
-            value: '±10% rispetto alla media',
+            name: 'Andamento mensile domanda',
             description:
-              'La domanda è più alta in dicembre (+8%) per il riscaldamento elettrico e l\'illuminazione, e in luglio (+4%) per il condizionamento. Il minimo si registra ad agosto (-6%) per la chiusura delle industrie. Questi fattori sono moltiplicativi sulla domanda annuale impostata.',
-            source: 'Terna — Profili di carico storici 2018-2023',
+              'Anche per la domanda elettrica l\'andamento mensile è stato ricavato dall\'anno 2023, utilizzando i dati Terna.',
+            source: 'Terna — Dati statistici sull\'energia elettrica in Italia 2023',
+            sourceUrl: 'https://dati.terna.it/',
           },
         ],
       },
@@ -168,68 +159,58 @@ const DATA_BY_LEVEL: Record<number, { intro: string; sections: DataSection[] }> 
   },
   3: {
     intro:
-      'Il Livello 3 simula un giorno tipo lavorativo a risoluzione oraria. I profili sono costruiti a partire da dati fisici di irraggiamento e misurazioni storiche di rete.',
+      'Il Livello 3 simula un giorno tipo a risoluzione oraria. I profili sono costruiti a partire da dati storici reali del 2023.',
     sections: [
       {
-        title: 'Profilo solare orario',
+        title: 'Produzione oraria',
         entries: [
           {
-            name: 'Modello gaussiano di irraggiamento',
-            value: 'Picco a 12:30, σ da 1.7h (Dic) a 3.2h (Giu)',
+            name: 'Andamento orario produzione',
             description:
-              'La produzione solare segue approssimativamente una curva gaussiana centrata a mezzogiorno. La larghezza (σ) varia stagionalmente perché in estate il sole è sopra l\'orizzonte per più ore. I valori di σ sono calibrati sui dati PVGIS per latitudine media italiana (42°N).',
-            source: 'Joint Research Centre (JRC) — PVGIS Tool / NASA POWER Data',
-            sourceUrl: 'https://re.jrc.ec.europa.eu/pvg_tools/it/',
+              'Per tutte le fonti rinnovabili l\'andamento orario è stato ricavato dall\'anno 2023, utilizzando i dati Terna per ricavare la giornata tipo.',
+            source: 'Terna — Dati statistici sull\'energia elettrica in Italia 2023',
+            sourceUrl: 'https://dati.terna.it/',
           },
         ],
       },
       {
-        title: 'Profilo di domanda orario',
+        title: 'Domanda oraria',
         entries: [
           {
-            name: 'Profilo giorno lavorativo tipico',
-            value: 'Min a 04:00 (62%), picchi a 11:00 e 19:00 (114%)',
+            name: 'Andamento orario domanda',
             description:
-              'Il profilo di carico orario italiano mostra un minimo notturno, una risalita mattutina, un plateau a mezzogiorno, e un secondo picco serale tra le 19:00 e le 21:00. Questo doppio picco crea il famoso "duck curve" quando il solare copre il plateau di mezzogiorno ma non i picchi.',
-            source: 'Terna — Profili di prelievo standard 2022-2023',
+              'Anche per la domanda elettrica l\'andamento orario è stato ricavato dall\'anno 2023, utilizzando i dati Terna.',
+            source: 'Terna — Dati statistici sull\'energia elettrica in Italia 2023',
+            sourceUrl: 'https://dati.terna.it/',
           },
         ],
       },
       {
-        title: 'Batterie BESS (MegaPack)',
+        title: 'Condizioni meteorologiche',
+        entries: [
+          {
+            name: 'Condizioni meteorologiche',
+            description:
+              'Per definire la giornata peggiore e quella migliore è stato utilizzato per ciascun mese il giorno in cui la somma delle produzioni eoliche e fotovoltaiche è stata rispettivamente più bassa e più alta.',
+            source: 'Terna — Dati statistici sull\'energia elettrica in Italia 2023',
+            sourceUrl: 'https://dati.terna.it/',
+          },
+        ],
+      },
+      {
+        title: 'Batterie BESS',
         entries: [
           {
             name: 'Rapporto energia/potenza',
-            value: '2.5 ore (MegaPack 2)',
+            value: '2.5 ore',
             description:
-              'Il Tesla MegaPack 2 ha una capacità di ~3.9 MWh per unità da 1.5 MW, ovvero circa 2.6 ore di autonomia (arrotondato a 2.5h nel modello). Questo è il prodotto BESS più diffuso a livello mondiale per installazioni utility-scale.',
-            source: 'Tesla Energy — MegaPack 2 Product Specifications',
+              'È stato utilizzato un rapporto tra potenza di picco e energia accumulabile pari a 2,5, valore simile a molte tecnologie oggi sul mercato.',
           },
           {
             name: 'Efficienza di carica/scarica',
             value: '95% per ciclo',
             description:
-              'Il ciclo completo (carica + scarica) di un sistema BESS moderno ha un\'efficienza round-trip del 90-92%. Nel modello si usa 95% per ogni direzione (carica o scarica singola) per semplicità, risultando in ~90% round-trip.',
-            source: 'NREL — Utility-Scale Battery Storage Technology Assessment 2023',
-          },
-        ],
-      },
-      {
-        title: 'Scenari meteorologici',
-        entries: [
-          {
-            name: '"Giornata pessima"',
-            value: 'Solare ×0.20, Eolico ×0.20',
-            description:
-              'Approssima il 10° percentile della distribuzione di produzione giornaliera. Corrisponde a un giorno di cielo coperto con vento debole — evento che si verifica circa 36 giorni/anno.',
-            source: 'Elaborazione su dati ENTSO-E / Terna — percentili produzione FER 2018-2023',
-          },
-          {
-            name: '"Giornata ottima"',
-            value: 'Solare ×1.60, Eolico ×1.80',
-            description:
-              'Approssima il 90° percentile. Giornata soleggiata e ventosa: solare al picco stagionale, eolico sostenuto. Circa 36 giorni/anno si avvicina a questo scenario.',
-            source: 'Elaborazione su dati ENTSO-E / Terna — percentili produzione FER 2018-2023',
+              'Il ciclo completo (carica + scarica) di un sistema BESS moderno ha un\'efficienza round-trip intorno al 90%, che è stato il valore considerato.',
           },
         ],
       },
@@ -390,22 +371,24 @@ export function DataSources({ level }: Props) {
                         <p className="text-xs text-gray-600 leading-relaxed mb-2">
                           {entry.description}
                         </p>
-                        <div className="flex items-center gap-1 text-xs text-gray-400">
-                          <span className="font-medium text-gray-500">Fonte:</span>
-                          {entry.sourceUrl ? (
-                            <a
-                              href={entry.sourceUrl}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-blue-500 hover:text-blue-700 flex items-center gap-0.5 underline underline-offset-2"
-                            >
-                              {entry.source}
-                              <ExternalLink className="w-3 h-3 flex-shrink-0" />
-                            </a>
-                          ) : (
-                            <span>{entry.source}</span>
-                          )}
-                        </div>
+                        {entry.source && (
+                          <div className="flex items-center gap-1 text-xs text-gray-400">
+                            <span className="font-medium text-gray-500">Fonte:</span>
+                            {entry.sourceUrl ? (
+                              <a
+                                href={entry.sourceUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-blue-500 hover:text-blue-700 flex items-center gap-0.5 underline underline-offset-2"
+                              >
+                                {entry.source}
+                                <ExternalLink className="w-3 h-3 flex-shrink-0" />
+                              </a>
+                            ) : (
+                              <span>{entry.source}</span>
+                            )}
+                          </div>
+                        )}
                       </div>
                     ))}
                   </div>
