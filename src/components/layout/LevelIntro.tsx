@@ -5,7 +5,7 @@ interface LevelIntroConfig {
   badge: string
   badgeColor: string
   title: string
-  description: string
+  description: React.ReactNode
   concepts?: string[]
   gradient: string
   what: string[]
@@ -18,8 +18,29 @@ const INTROS: Record<number, LevelIntroConfig> = {
     badge: 'Livello 1',
     badgeColor: 'bg-blue-600',
     title: 'Bilancio Annuale',
-    description:
-      'Questo è il livello più semplice di tutti in cui cerchiamo di capire le basi del nostro sistema elettrico. Alla base di tutto stanno la produzione e la domanda elettrica. Ogni volta che consumiamo elettricità, accendendo una lampadina o un forno o caricando la nostra macchina elettrica, lo possiamo fare poichè da qualche parte c\'è una centrale che sta producendo quell\'elettricità che arriva fino a noi. L\'elettricità può essere prodotta in tanti modi diversi, puoi cliccare sulle fonti che trovi nella dashboard per scoprire di più su ciascuna di esse. Alcune di quelle fonti, quelle dette fossili, utilizzano appunto dei combustibili fossili per produrre elettricità e di conseguenza comportano emissione di anidride carbonica nell\'atmosfera, andando a peggiorare il cambiamento climatico in atto. L\'Italia, all\'interno degli accordi europei, si è prefissata alcuni obiettivi importanti: azzerare completamente le proprie emissioni entro il 2050. Questo però non basta, ha anche fissato alcuni obiettivi intermedi per il 2030 ed il 2040. Nella dashboard che vedrete potrete scegliere in quale anno volete operare, così da vedere riportati gli obiettivi relativi a quell\'anno. Gli obiettivi consistono in un valore di emissioni evitate e in una percentuale di energia prodotta dalle fonti rinnovabili. Ma attenzione, dovrete sempre assicurare di produrre tanta elettricità quanta ne serve, altrimenti lascerete le case al buio!',
+    description: (
+      <>
+        Questo è il livello più semplice di tutti in cui cerchiamo di capire le basi del nostro
+        sistema elettrico. Alla base di tutto stanno la <strong>produzione</strong> e la{' '}
+        <strong>domanda elettrica</strong>. Ogni volta che consumiamo elettricità, accendendo una
+        lampadina o un forno o caricando la nostra macchina elettrica, lo possiamo fare poiché da
+        qualche parte c'è una centrale che sta producendo quell'elettricità che arriva fino a noi.
+        L'elettricità può essere prodotta in tanti modi diversi, puoi cliccare sulle fonti che
+        trovi nella dashboard per scoprire di più su ciascuna di esse. Alcune di quelle fonti,
+        quelle dette <strong>fonti fossili</strong>, utilizzano appunto dei combustibili fossili
+        per produrre elettricità e di conseguenza comportano <strong>emissioni di anidride
+        carbonica</strong> nell'atmosfera, andando a peggiorare il{' '}
+        <strong>cambiamento climatico</strong> in atto. L'Italia, all'interno degli accordi
+        europei, si è prefissata alcuni obiettivi importanti: azzerare completamente le proprie
+        emissioni entro il <strong>2050</strong>. Questo però non basta, ha anche fissato alcuni
+        obiettivi intermedi per il <strong>2030</strong> ed il <strong>2040</strong>. Nella
+        dashboard che vedrete potrete scegliere in quale anno volete operare, così da vedere
+        riportati gli obiettivi relativi a quell'anno. Gli obiettivi consistono in un valore di{' '}
+        <strong>emissioni evitate</strong> e in una <strong>percentuale di energia prodotta
+        dalle fonti rinnovabili</strong>. Ma attenzione, dovrete sempre assicurare di produrre
+        tanta elettricità quanta ne serve, altrimenti lascerete le case al buio!
+      </>
+    ),
     gradient: 'from-blue-500 to-indigo-600',
     what: [
       'Regola i cursori per ogni fonte (solare, eolico, gas, nucleare…)',
@@ -32,8 +53,18 @@ const INTROS: Record<number, LevelIntroConfig> = {
     badge: 'Livello 2',
     badgeColor: 'bg-emerald-600',
     title: 'Stagionalità Mensile',
-    description:
-      'Purtroppo le cose non sono così semplici come presentate nella Fase 1. Infatti non è sufficiente installare tante fonti rinnovabili per soddisfare la domanda elettrica. Esse infatti dipendono da elementi naturali, ovvero la presenza del vento e del sole, che sappiamo non essere sempre presenti. In particolare adesso ci occupiamo della problematica stagionale: il solare produce molto più d\'estate, mentre l\'eolico d\'inverno. Le potenze installe nella Fase 1 potrebbero quindi non essere sufficienti a garantire ogni mese la presenza di elettricità. ',
+    description: (
+      <>
+        Purtroppo le cose non sono così semplici come presentate nella Fase 1. Infatti non è
+        sufficiente installare tante <strong>fonti rinnovabili</strong> per soddisfare la domanda
+        elettrica. Esse infatti dipendono da elementi naturali, ovvero la presenza del{' '}
+        <strong>vento</strong> e del <strong>sole</strong>, che sappiamo non essere sempre
+        presenti. In particolare adesso ci occupiamo della problematica{' '}
+        <strong>stagionale</strong>: il <strong>solare</strong> produce molto più d'estate,
+        mentre l'<strong>eolico</strong> d'inverno. Le potenze installate nella Fase 1 potrebbero
+        quindi non essere sufficienti a garantire ogni mese la presenza di elettricità.
+      </>
+    ),
     gradient: 'from-emerald-500 to-teal-600',
     what: [
       'Osserva l\'andamento della domanda e delle produzioni nei diversi mesi',
@@ -46,8 +77,20 @@ const INTROS: Record<number, LevelIntroConfig> = {
     badge: 'Livello 3',
     badgeColor: 'bg-amber-600',
     title: 'Risoluzione Oraria e Storage',
-    description:
-      'Aggiungiamo un altro gradino di difficoltà: il bilancio non deve valere solo per le diverse stagioni, ma in ogni momento, per ogni singola ora. Questo complica ulteriormente le cose, perchè come sappiamo bene il solo non splende sempre su di noi. Di conseguenza sarà necessario utilizzare delle batterie, per accumulare l\'energia quando è prodotta in eccesso e utilizzarla quando serve maggiormente. Per ogni mese dell\'anno viene mostrata una giornata lavorativa tipo, come al solito a te toccherà il compito di trovare un equilibrio che permetta di raggiungere gli obiettivi prefissati. Ricorda che le fonti rinnovabili sono dipendenti dalle condizioni climatiche di quella specifica giornata, perciò saranno selezionabili tre diverse ipotesi di condizioni meteo.',
+    description: (
+      <>
+        Aggiungiamo un altro gradino di difficoltà: il bilancio non deve valere solo per le
+        diverse stagioni, ma in <strong>ogni singola ora</strong>. Questo complica ulteriormente
+        le cose, perché come sappiamo bene il sole non splende sempre su di noi. Di conseguenza
+        sarà necessario utilizzare delle <strong>batterie</strong>, per{' '}
+        <strong>accumulare l'energia</strong> quando è prodotta in eccesso e utilizzarla quando
+        serve maggiormente. Per ogni mese dell'anno viene mostrata una{' '}
+        <strong>giornata lavorativa tipo</strong>, come al solito a te toccherà il compito di
+        trovare un equilibrio che permetta di raggiungere gli obiettivi prefissati. Ricorda che
+        le fonti rinnovabili sono dipendenti dalle <strong>condizioni meteo</strong> di quella
+        specifica giornata, perciò saranno selezionabili tre diverse ipotesi di condizioni meteo.
+      </>
+    ),
     gradient: 'from-amber-500 to-orange-600',
     what: [
       'Osserva l\'andamento giornaliero delle diversi fonti e dei consumi elettrici',
@@ -60,8 +103,20 @@ const INTROS: Record<number, LevelIntroConfig> = {
     badge: 'Livello 4',
     badgeColor: 'bg-violet-600',
     title: 'Distribuzione Territoriale',
-    description:
-      'Adesso arriva la fase più difficile di tutte. L\'Italia non è un sistema uniforme: al Nord si consuma molta più elettricità mentre la presenza di vento e l\'irraggiamento è più elevato al Sud. L\'elettricità prodotta in un luogo può viaggiare, ma solo se non supera i limiti di trasmissione della linee esistenti. In questo livello distribuisci le rinnovabili tra le 20 regioni e osserva come si creano squilibri tra le diverse regioni. Stai attento però, a seconda di dove posizioni le fonti, esse produrranno più o meno elettricità ma in alcune regioni proprio non c\'è vento e non puoi installare turbine eoliche. Per ovviare a questo problema potrai migliorare anche le linee di trasmissione se lo desideri.',
+    description: (
+      <>
+        Adesso arriva la fase più difficile di tutte. L'Italia non è un sistema uniforme: al{' '}
+        <strong>Nord</strong> si consuma molta più elettricità mentre la presenza di vento e
+        l'irraggiamento è più elevato al <strong>Sud</strong>. L'elettricità prodotta in un
+        luogo può viaggiare, ma solo se non supera i <strong>limiti di trasmissione</strong>{' '}
+        delle linee esistenti. In questo livello distribuisci le rinnovabili tra le{' '}
+        <strong>20 regioni</strong> e osserva come si creano <strong>squilibri</strong> tra le
+        diverse regioni. Stai attento però, a seconda di dove posizioni le fonti, esse
+        produrranno più o meno elettricità ma in alcune regioni proprio non c'è vento e non puoi
+        installare turbine eoliche. Per ovviare a questo problema potrai migliorare anche le{' '}
+        <strong>linee di trasmissione</strong> se lo desideri.
+      </>
+    ),
     gradient: 'from-violet-500 to-purple-600',
     what: [
       'Scegli come distribuire le rinnovabili tra le regioni',

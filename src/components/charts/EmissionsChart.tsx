@@ -22,7 +22,9 @@ export function EmissionsChart({ emissionsMt }: Props) {
     return (
       <div className="gs-card p-3 text-sm">
         <p className="font-semibold text-gray-900 dark:text-slate-100">{d.label}</p>
-        <p className="text-gray-600 dark:text-slate-400">{d.value.toFixed(1)} MtCO₂</p>
+        <p className="text-gray-600 dark:text-slate-400">
+          {d.label === 'La tua scelta' ? Math.round(d.value) : d.value.toFixed(1)} MtCO₂
+        </p>
       </div>
     )
   }
