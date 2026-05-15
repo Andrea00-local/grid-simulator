@@ -23,7 +23,7 @@ import { MONTH_LABELS } from './profiles'
 import { EMISSION_FACTORS } from './constants'
 import {
   DAYS_PER_MONTH, SCENARIO_MULT, MEGAPACK_HOURS, GEOTHERMAL_CF,
-  SOLAR_PROFILES, HYDRO_PROFILE, WIND_PROFILE, windOffshoreScale,
+  SOLAR_PROFILES, HYDRO_PROFILE, WIND_PROFILE, WIND_OFFSHORE_PROFILES,
   DEMAND_GWH_2023, DEMAND_BASELINE_TWH,
 } from './hourlyProfiles'
 import { computeMonthlyPeriods } from './balance'
@@ -110,10 +110,9 @@ function computeMonth(
 
   const hydroRunFrac = hydroTotalGW > 0 ? hydroRunGW / hydroTotalGW : 0
   const hydroResFrac = hydroTotalGW > 0 ? hydroResGW / hydroTotalGW : 0
-  const offScale     = windOffshoreScale(m)
-
   // ── Scenario multipliers ───────────────────────────────────────────────────────
-  const solarProfile = SOLAR_PROFILES[scenario]
+  const solarProfile    = SOLAR_PROFILES[scenario]
+  const offshoreProfile = WIND_OFFSHORE_PROFILES[scenario]
   const scenWind  = SCENARIO_MULT.wind[scenario]
   const scenHydro = SCENARIO_MULT.hydro[scenario]
 
@@ -136,7 +135,7 @@ function computeMonth(
 
     const solarMWh   = solarGW      * solarProfile[m][h]    * 1_000
     const windOnMWh  = windOnGW     * WIND_PROFILE[m][h]    * scenWind  * 1_000
-    const windOffMWh = windOffGW    * WIND_PROFILE[m][h]    * offScale  * scenWind * 1_000
+    const windOffMWh = windOffGW    * offshoreProfile[m][h]                          * 1_000
     const hydroMWh   = hydroTotalGW * HYDRO_PROFILE[m][h]   * scenHydro * 1_000
     const geoMWh     = geoGW        * GEOTHERMAL_CF         * 1_000
 
@@ -156,7 +155,7 @@ function computeMonth(
       const frac = totalResidual > 0 ? residualH[h] / totalResidual : 1 / 24
       const solarMWh   = solarGW      * solarProfile[m][h]    * 1_000
       const windOnMWh  = windOnGW     * WIND_PROFILE[m][h]    * scenWind  * 1_000
-      const windOffMWh = windOffGW    * WIND_PROFILE[m][h]    * offScale  * scenWind * 1_000
+      const windOffMWh = windOffGW    * offshoreProfile[m][h]                          * 1_000
       const hydroMWh   = hydroTotalGW * HYDRO_PROFILE[m][h]   * scenHydro * 1_000
       const geoMWh     = geoGW        * GEOTHERMAL_CF         * 1_000
       const thermalH   = (nuclearBudget + coalBudget + importsBudget + biomassBudget + gasCcgtBudget + gasOcgtBudget) * frac
@@ -182,7 +181,7 @@ function computeMonth(
 
     const solarMWh   = solarGW      * solarProfile[m][h]    * 1_000
     const windOnMWh  = windOnGW     * WIND_PROFILE[m][h]    * scenWind  * 1_000
-    const windOffMWh = windOffGW    * WIND_PROFILE[m][h]    * offScale  * scenWind * 1_000
+    const windOffMWh = windOffGW    * offshoreProfile[m][h]                          * 1_000
     const hydroMWh   = hydroTotalGW * HYDRO_PROFILE[m][h]   * scenHydro * 1_000
     const geoMWh     = geoGW        * GEOTHERMAL_CF         * 1_000
 

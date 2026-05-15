@@ -46,20 +46,20 @@ export function computeAnnualPeriod(
   const hydroRunGW   = renewableCapacity.hydro_run        ?? 0
   const hydroResGW   = renewableCapacity.hydro_reservoir  ?? 0
   const geoGW        = renewableCapacity.geothermal       ?? 0
-  const totalWindGW  = windOnGW + windOffGW
   const totalHydroGW = hydroRunGW + hydroResGW
 
-  const annualSolar   = MONTHLY_PRODUCTIVITY.solar.reduce((s, p) => s + p, 0)
-  const annualWind    = MONTHLY_PRODUCTIVITY.wind.reduce((s, p) => s + p, 0)
-  const annualHydro   = MONTHLY_PRODUCTIVITY.hydro.reduce((s, p) => s + p, 0)
-  const annualGeo     = MONTHLY_PRODUCTIVITY.geothermal.reduce((s, p) => s + p, 0)
+  const annualSolar      = MONTHLY_PRODUCTIVITY.solar.reduce((s, p) => s + p, 0)
+  const annualWindOn     = MONTHLY_PRODUCTIVITY.wind_onshore.reduce((s, p) => s + p, 0)
+  const annualWindOff    = MONTHLY_PRODUCTIVITY.wind_offshore.reduce((s, p) => s + p, 0)
+  const annualHydro      = MONTHLY_PRODUCTIVITY.hydro.reduce((s, p) => s + p, 0)
+  const annualGeo        = MONTHLY_PRODUCTIVITY.geothermal.reduce((s, p) => s + p, 0)
 
-  production.solar            = solarGW   * annualSolar * 1_000_000
-  production.wind_onshore     = totalWindGW  > 0 ? totalWindGW  * annualWind  * 1_000_000 * (windOnGW  / totalWindGW)  : 0
-  production.wind_offshore    = totalWindGW  > 0 ? totalWindGW  * annualWind  * 1_000_000 * (windOffGW / totalWindGW)  : 0
+  production.solar            = solarGW      * annualSolar   * 1_000_000
+  production.wind_onshore     = windOnGW     * annualWindOn  * 1_000_000
+  production.wind_offshore    = windOffGW    * annualWindOff * 1_000_000
   production.hydro_run        = totalHydroGW > 0 ? totalHydroGW * annualHydro * 1_000_000 * (hydroRunGW / totalHydroGW) : 0
   production.hydro_reservoir  = totalHydroGW > 0 ? totalHydroGW * annualHydro * 1_000_000 * (hydroResGW / totalHydroGW) : 0
-  production.geothermal       = geoGW     * annualGeo  * 1_000_000
+  production.geothermal       = geoGW        * annualGeo    * 1_000_000
 
   // Biomass: annual production from GW × annual CF (treated as dispatchable at annual level)
   production.biomass = (renewableCapacity.biomass ?? 0) * BIOMASS_ANNUAL_CF * HOURS_PER_YEAR * 1_000
@@ -96,22 +96,20 @@ export function computeMonthlyPeriods(
   const hydroRunGW   = renewableCapacity.hydro_run        ?? 0
   const hydroResGW   = renewableCapacity.hydro_reservoir  ?? 0
   const geoGW        = renewableCapacity.geothermal       ?? 0
-  const totalWindGW  = windOnGW + windOffGW
   const totalHydroGW = hydroRunGW + hydroResGW
 
-  const windOnFrac  = totalWindGW  > 0 ? windOnGW  / totalWindGW  : 0
-  const windOffFrac = totalWindGW  > 0 ? windOffGW / totalWindGW  : 0
   const hydroRunFrac = totalHydroGW > 0 ? hydroRunGW / totalHydroGW : 0
   const hydroResFrac = totalHydroGW > 0 ? hydroResGW / totalHydroGW : 0
 
   // ── Step 1: renewable production per month (MWh) ──────────────────────────────
   // Formula: GW × productivity_TWh_per_GW × 1_000_000 MWh/TWh
   const renewByMonth: number[] = MONTH_LABELS.map((_, m) => {
-    const solar = solarGW      * MONTHLY_PRODUCTIVITY.solar[m]      * 1_000_000
-    const wind  = totalWindGW  * MONTHLY_PRODUCTIVITY.wind[m]       * 1_000_000
-    const hydro = totalHydroGW * MONTHLY_PRODUCTIVITY.hydro[m]      * 1_000_000
-    const geo   = geoGW        * MONTHLY_PRODUCTIVITY.geothermal[m] * 1_000_000
-    return solar + wind + hydro + geo
+    const solar   = solarGW      * MONTHLY_PRODUCTIVITY.solar[m]          * 1_000_000
+    const windOn  = windOnGW     * MONTHLY_PRODUCTIVITY.wind_onshore[m]   * 1_000_000
+    const windOff = windOffGW    * MONTHLY_PRODUCTIVITY.wind_offshore[m]  * 1_000_000
+    const hydro   = totalHydroGW * MONTHLY_PRODUCTIVITY.hydro[m]          * 1_000_000
+    const geo     = geoGW        * MONTHLY_PRODUCTIVITY.geothermal[m]     * 1_000_000
+    return solar + windOn + windOff + hydro + geo
   })
 
   // ── Step 2: monthly demand ─────────────────────────────────────────────────────
@@ -152,15 +150,14 @@ export function computeMonthlyPeriods(
     const production: Partial<Record<Source, number>> = {}
     const budget = thermalBudget[m]
 
-    // Renewables (split combined wind/hydro by GW fraction)
-    const windMWh  = totalWindGW  * MONTHLY_PRODUCTIVITY.wind[m]       * 1_000_000
-    const hydroMWh = totalHydroGW * MONTHLY_PRODUCTIVITY.hydro[m]      * 1_000_000
-    production.solar           = solarGW * MONTHLY_PRODUCTIVITY.solar[m]      * 1_000_000
-    production.wind_onshore    = windMWh  * windOnFrac
-    production.wind_offshore   = windMWh  * windOffFrac
-    production.hydro_run       = hydroMWh * hydroRunFrac
-    production.hydro_reservoir = hydroMWh * hydroResFrac
-    production.geothermal      = geoGW    * MONTHLY_PRODUCTIVITY.geothermal[m] * 1_000_000
+    // Renewables — onshore/offshore wind now use separate monthly productivity
+    const hydroMWh = totalHydroGW * MONTHLY_PRODUCTIVITY.hydro[m] * 1_000_000
+    production.solar           = solarGW   * MONTHLY_PRODUCTIVITY.solar[m]         * 1_000_000
+    production.wind_onshore    = windOnGW  * MONTHLY_PRODUCTIVITY.wind_onshore[m]  * 1_000_000
+    production.wind_offshore   = windOffGW * MONTHLY_PRODUCTIVITY.wind_offshore[m] * 1_000_000
+    production.hydro_run       = hydroMWh  * hydroRunFrac
+    production.hydro_reservoir = hydroMWh  * hydroResFrac
+    production.geothermal      = geoGW     * MONTHLY_PRODUCTIVITY.geothermal[m]    * 1_000_000
 
     // Dispatchable sources (including biomass)
     for (const src of DIRECT_SOURCES) {

@@ -12,24 +12,26 @@ import type { Source } from './types'
 
 // ─── Monthly productivity (TWh / GW / month) ──────────────────────────────────
 // Values from Terna 2023 statistics.  Hydro = run-of-river + reservoir combined.
-// Wind = onshore + offshore combined (same per-GW value for both types).
+// wind_onshore / wind_offshore have separate productivity tables.
 // Biomass is NOT here — it is treated as a dispatchable source in balance.ts.
-export const MONTHLY_PRODUCTIVITY: Record<'solar' | 'wind' | 'hydro' | 'geothermal', number[]> = {
+export const MONTHLY_PRODUCTIVITY: Record<'solar' | 'wind' | 'wind_onshore' | 'wind_offshore' | 'hydro' | 'geothermal', number[]> = {
   //                  Gen   Feb   Mar   Apr   Mag   Giu   Lug   Ago   Set   Ott   Nov   Dic
-  solar:      [0.04, 0.06, 0.09, 0.10, 0.10, 0.12, 0.13, 0.12, 0.10, 0.07, 0.05, 0.04],
-  wind:       [0.19, 0.15, 0.21, 0.18, 0.13, 0.08, 0.11, 0.14, 0.14, 0.15, 0.24, 0.24],
-  hydro:      [0.13, 0.11, 0.11, 0.11, 0.20, 0.23, 0.20, 0.19, 0.14, 0.14, 0.16, 0.14],
-  geothermal: [0.62, 0.62, 0.64, 0.64, 0.65, 0.63, 0.64, 0.64, 0.64, 0.65, 0.64, 0.64],
+  solar:         [0.04, 0.06, 0.09, 0.10, 0.10, 0.12, 0.13, 0.12, 0.10, 0.07, 0.05, 0.04],
+  wind:          [0.19, 0.15, 0.21, 0.18, 0.13, 0.08, 0.11, 0.14, 0.14, 0.15, 0.24, 0.24],
+  wind_onshore:  [0.19, 0.15, 0.21, 0.18, 0.13, 0.08, 0.11, 0.14, 0.14, 0.15, 0.24, 0.24],
+  wind_offshore: [0.26, 0.21, 0.29, 0.25, 0.17, 0.12, 0.15, 0.20, 0.19, 0.21, 0.34, 0.28],
+  hydro:         [0.13, 0.11, 0.11, 0.11, 0.20, 0.23, 0.20, 0.19, 0.14, 0.14, 0.16, 0.14],
+  geothermal:    [0.62, 0.62, 0.64, 0.64, 0.65, 0.63, 0.64, 0.64, 0.64, 0.65, 0.64, 0.64],
 }
 
 // ─── Derived: monthly capacity factors (for backward compat) ──────────────────
 // Uses the 730 h/month convention consistent with balance.ts.
-// wind_onshore = wind_offshore = wind; hydro_run = hydro_reservoir = hydro.
+// hydro_run = hydro_reservoir = hydro.
 const H = 730
 export const MONTHLY_CF: Partial<Record<Source, number[]>> = {
   solar:           MONTHLY_PRODUCTIVITY.solar.map(p => p * 1000 / H),
-  wind_onshore:    MONTHLY_PRODUCTIVITY.wind.map(p => p * 1000 / H),
-  wind_offshore:   MONTHLY_PRODUCTIVITY.wind.map(p => p * 1000 / H),
+  wind_onshore:    MONTHLY_PRODUCTIVITY.wind_onshore.map(p => p * 1000 / H),
+  wind_offshore:   MONTHLY_PRODUCTIVITY.wind_offshore.map(p => p * 1000 / H),
   hydro_run:       MONTHLY_PRODUCTIVITY.hydro.map(p => p * 1000 / H),
   hydro_reservoir: MONTHLY_PRODUCTIVITY.hydro.map(p => p * 1000 / H),
   geothermal:      MONTHLY_PRODUCTIVITY.geothermal.map(p => p * 1000 / H),
