@@ -4,7 +4,8 @@ import { SOURCE_DEFINITIONS } from '@/models/sources'
 
 const GROUPS: { label: string; sources: Source[] }[] = [
   { label: 'Solare',   sources: ['solar'] },
-  { label: 'Eolico',   sources: ['wind_onshore', 'wind_offshore'] },
+  { label: 'Eolico',      sources: ['wind_onshore']  },
+  { label: 'Eolico off.', sources: ['wind_offshore'] },
   { label: 'Idro',     sources: ['hydro_run', 'hydro_reservoir'] },
   { label: 'Geo',      sources: ['geothermal'] },
   { label: 'Biomasse', sources: ['biomass'] },

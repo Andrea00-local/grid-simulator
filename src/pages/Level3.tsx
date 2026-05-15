@@ -260,41 +260,6 @@ export default function Level3() {
             <ControlsPanel showStorage layout="horizontal" />
           </div>
 
-          {/* Daily KPIs */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            {[
-              {
-                label: 'Domanda giornaliera',
-                value: `${(selectedDay.dailyDemandMWh / 1_000).toFixed(0)} GWh`,
-                sub: `≈ ${(selectedDay.dailyDemandMWh / 1_000 / 24).toFixed(1)} GW media`,
-              },
-              {
-                label: 'Rinnovabili oggi',
-                value: `${(selectedDay.renewableShareDay * 100).toFixed(1)}%`,
-                sub: `${(selectedDay.dailyRenewMWh / 1_000).toFixed(0)} GWh`,
-              },
-              {
-                label: 'Gas usato oggi',
-                value: `${(selectedDay.hours.reduce((s, h) => s + h.production.gas_ccgt, 0) / 1_000).toFixed(1)} GWh`,
-                sub: `${selectedDay.emissionsTonnes.toFixed(0)} tCO₂ oggi`,
-              },
-              {
-                label: 'Batteria ciclata',
-                value: storagePowerGW > 0
-                  ? `${(selectedDay.dailyBatteryCycledMWh / 1_000).toFixed(1)} GWh`
-                  : '—',
-                sub: storagePowerGW > 0
-                  ? `SOC finale: ${(selectedDay.hours[23].batterySOC / 1_000).toFixed(1)} GWh`
-                  : 'Nessuna batteria',
-              },
-            ].map(({ label, value, sub }) => (
-              <div key={label} className="gs-card p-4">
-                <p className="text-xs text-gray-400 mb-1">{label}</p>
-                <p className="text-base font-bold text-gray-800">{value}</p>
-                <p className="text-xs text-gray-500 mt-0.5">{sub}</p>
-              </div>
-            ))}
-          </div>
 
           {/* Annualization note */}
           <div className="gs-card p-5 print:hidden">
