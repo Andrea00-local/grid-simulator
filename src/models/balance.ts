@@ -6,8 +6,11 @@
  * by GW fraction to populate the per-source PeriodResult fields.
  *
  * Dispatchable sources (nuclear, thermal, imports, biomass) are allocated
- * proportionally to monthly residual demand (demand − renewable production),
- * capped at the residual so thermal never creates a monthly surplus.
+ * proportionally to monthly residual demand (demand − renewable production).
+ * The full annual budget is distributed without capping — months with high
+ * residual receive more, but production is never truncated to fit the residual.
+ * If all months are covered by renewables (totalResidual == 0), the budget
+ * is spread equally across months.
  * Biomass is treated as dispatchable: its annual production is derived from
  * installed GW × annual capacity factor, then distributed monthly like
  * nuclear/gas/coal/imports.
@@ -127,10 +130,12 @@ export function computeMonthlyPeriods(
     0,
   ) + biomassAnnualMWh
 
-  // ── Step 5: monthly dispatchable budget — proportional to residual, capped ────
+  // ── Step 5: monthly dispatchable budget — proportional to residual, uncapped ───
+  // Full annual thermal is distributed proportionally; if renewables cover all
+  // demand every month (totalResidual == 0), split equally across months.
   const thermalBudget: number[] = residualByMonth.map((res) => {
-    if (totalResidual <= 0) return 0
-    return Math.min(totalDispatchableMWh * (res / totalResidual), res)
+    if (totalResidual <= 0) return totalDispatchableMWh / 12
+    return totalDispatchableMWh * (res / totalResidual)
   })
 
   // ── Step 6: share of budget per source ────────────────────────────────────────
@@ -171,7 +176,7 @@ export function computeMonthlyPeriods(
       production: production as Record<Source, number>,
       demand: demandByMonth[m],
       balance,
-      curtailment: Math.max(0, renewByMonth[m] - demandByMonth[m]),
+      curtailment: Math.max(0, balance),
       emissions: 0,
     }
   })
