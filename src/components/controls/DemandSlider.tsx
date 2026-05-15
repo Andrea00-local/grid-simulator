@@ -32,10 +32,6 @@ export function DemandSlider() {
           onValueChange={([v]) => setDemand(v)}
           accentColor="#6b7280"
         />
-        <div className="flex justify-between text-xs text-gray-300 mt-0.5">
-          <span>180 TWh</span>
-          <span>500 TWh</span>
-        </div>
       </div>
     </div>
   )
