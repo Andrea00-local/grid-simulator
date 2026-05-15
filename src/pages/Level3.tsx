@@ -188,7 +188,8 @@ export default function Level3() {
           <div className="flex flex-wrap gap-2 print:hidden">
             {level3.months.map((day, i) => {
               const netGWh = (day.dailyBatteryCycledMWh + day.dailyProductionMWh - day.dailyDemandMWh) / 1_000
-              const hasDeficit = day.dailyDeficitMWh > 0.5
+              const withinMargin = day.dailyDeficitMWh > 0 && day.dailyDeficitMWh < day.dailyDemandMWh * 0.01
+              const hasDeficit = day.dailyDeficitMWh > 0.5 && !withinMargin
               const isSelected = selectedMonth === i
               return (
                 <button
@@ -208,8 +209,10 @@ export default function Level3() {
                       -{(day.dailyDeficitMWh / 1_000).toFixed(1)}
                     </span>
                   )}
-                  {!hasDeficit && netGWh > 0.1 && (
-                    <span className="ml-1 opacity-75">+{netGWh.toFixed(1)}</span>
+                  {!hasDeficit && (withinMargin || netGWh > 0.1) && (
+                    <span className="ml-1 opacity-75">
+                      {withinMargin ? '0' : `+${netGWh.toFixed(1)}`}
+                    </span>
                   )}
                 </button>
               )

@@ -104,6 +104,37 @@ export default function Level2() {
       />
 
       <div className="space-y-6">
+        {/* Month pills — above chart */}
+        <div className="flex flex-wrap gap-2 print:hidden">
+          {result.periods.map((p, i) => {
+            const rawBal = p.balance / 1_000_000
+            const demandTWh = p.demand / 1_000_000
+            const withinMargin = rawBal < 0 && Math.abs(rawBal) < demandTWh * 0.01
+            const bal = withinMargin ? 0 : rawBal
+            const isSurplus = bal >= 0
+            const isSelected = selectedMonth === i
+            return (
+              <button
+                key={i}
+                onClick={() => setSelectedMonth(isSelected ? null : i)}
+                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all border ${
+                  isSelected
+                    ? 'bg-gray-900 text-white border-gray-900'
+                    : isSurplus
+                    ? 'bg-green-50 text-green-700 border-green-200 hover:bg-green-100'
+                    : 'bg-red-50 text-red-700 border-red-200 hover:bg-red-100'
+                }`}
+              >
+                {p.label}
+                <span className="ml-1.5 opacity-75">
+                  {bal === 0 ? '0' : `${isSurplus ? '+' : ''}${bal.toFixed(1)}`}
+                </span>
+              </button>
+            )
+          })}
+          <span className="text-xs text-gray-400 self-center ml-1">TWh/mese</span>
+        </div>
+
         {/* Monthly stream chart with breakdown panel */}
         <div className="gs-card p-5">
           <div className="grid grid-cols-[1fr,220px] gap-4 items-start">
@@ -121,34 +152,6 @@ export default function Level2() {
               title={breakdownTitle}
             />
           </div>
-        </div>
-
-        {/* Month pills */}
-        <div className="flex flex-wrap gap-2 print:hidden">
-          {result.periods.map((p, i) => {
-            const bal = p.balance / 1_000_000
-            const isSurplus = bal >= 0
-            const isSelected = selectedMonth === i
-            return (
-              <button
-                key={i}
-                onClick={() => setSelectedMonth(isSelected ? null : i)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all border ${
-                  isSelected
-                    ? 'bg-gray-900 text-white border-gray-900'
-                    : isSurplus
-                    ? 'bg-green-50 text-green-700 border-green-200 hover:bg-green-100'
-                    : 'bg-red-50 text-red-700 border-red-200 hover:bg-red-100'
-                }`}
-              >
-                {p.label}
-                <span className="ml-1.5 opacity-75">
-                  {isSurplus ? '+' : ''}{bal.toFixed(1)}
-                </span>
-              </button>
-            )
-          })}
-          <span className="text-xs text-gray-400 self-center ml-1">TWh/mese</span>
         </div>
 
         {/* Controls immediately below main chart */}

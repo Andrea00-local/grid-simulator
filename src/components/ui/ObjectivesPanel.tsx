@@ -38,19 +38,17 @@ export function ObjectivesPanel({ coverage, renewableShare, avoidedMt }: Props) 
         <TargetBar
           label="Sicurezza"
           valore={coveragePct}
-          target={100}
+          target={99}
           min={0}
           max={100}
           unita="%"
           targetLabel="Obiettivo: 100% — domanda coperta"
           direzione="alto-meglio"
-          badThreshold={60}
-          okHighThreshold={85}
+          badThreshold={95}
           feedbackTesti={{
-            bad:    'Rischio blackout: produzione insufficiente',
-            ok:     "Copertura parziale, dipendi dall'import",
-            okHigh: 'Buona copertura, quasi al sicuro',
-            good:   '✓ Domanda completamente coperta',
+            bad:  'Rischio blackout: produzione insufficiente',
+            ok:   'Copertura parziale, quasi al sicuro',
+            good: '✓ Domanda completamente coperta',
           }}
           tooltip="Misura quanta domanda elettrica nazionale è coperta dalla tua produzione. Sotto il 100% devi importare o rischi blackout."
         />

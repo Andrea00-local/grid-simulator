@@ -11,7 +11,7 @@ export const SOURCE_DEFINITIONS: Record<Source, SourceDefinition> = {
     emissionFactor: EMISSION_FACTORS.solar,
     dispatchable: false,
     sliderMin: 0,
-    sliderMax: 120,
+    sliderMax: 300,
     sliderStep: 1,
   },
   wind_onshore: {
@@ -23,7 +23,7 @@ export const SOURCE_DEFINITIONS: Record<Source, SourceDefinition> = {
     emissionFactor: EMISSION_FACTORS.wind_onshore,
     dispatchable: false,
     sliderMin: 0,
-    sliderMax: 60,
+    sliderMax: 100,
     sliderStep: 1,
   },
   wind_offshore: {
@@ -35,7 +35,7 @@ export const SOURCE_DEFINITIONS: Record<Source, SourceDefinition> = {
     emissionFactor: EMISSION_FACTORS.wind_offshore,
     dispatchable: false,
     sliderMin: 0,
-    sliderMax: 30,
+    sliderMax: 100,
     sliderStep: 1,
   },
   hydro_run: {
