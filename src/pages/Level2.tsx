@@ -174,16 +174,6 @@ export default function Level2() {
           <EmissionsChart emissionsMt={emissionsMt} />
         </div>
 
-        <div className="gs-callout-emerald p-4">
-          <h3 className="text-sm font-semibold text-emerald-800 mb-1">Il punto chiave del Livello 2</h3>
-          <p className="text-xs text-emerald-700 leading-relaxed">
-            Il bilancio annuale netto può essere zero, ma nascondere <strong>surplus estivi</strong> (solare
-            in eccesso) e <strong>deficit invernali</strong> (solare basso + domanda alta) che non si
-            eliminano tra loro. La differenza tra surplus lordo e deficit lordo è la quantità di storage
-            inter-stagionale che servirebbe per coprire il fabbisogno senza combustibili fossili. Al
-            <strong> Livello 3</strong> introduremo lo storage per valorizzare il surplus.
-          </p>
-        </div>
       </div>
 
       <div className="print:hidden">

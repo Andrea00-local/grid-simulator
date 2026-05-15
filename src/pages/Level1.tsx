@@ -83,16 +83,6 @@ export default function Level1() {
           </div>
         </div>
 
-        <div className="gs-callout-blue p-4">
-          <h3 className="text-sm font-semibold text-blue-800 mb-1">Come funziona il modello</h3>
-          <p className="text-xs text-blue-700 leading-relaxed">
-            Le <strong>rinnovabili</strong> producono in base al capacity factor (solare ~10%, eolico ~22%).
-            Il <strong>termico e il nucleare</strong> producono esattamente i TWh impostati.
-            Se produzione &lt; domanda il deficit è esplicito. Al <strong>Livello 2</strong> vedrai come
-            questo bilancio nasconde squilibri mensili — mesi con surplus estivi e deficit invernali
-            che non si eliminano tra loro senza storage.
-          </p>
-        </div>
       </div>
 
       <div className="print:hidden">

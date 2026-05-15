@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { LevelIntro } from '@/components/layout/LevelIntro'
 import { DataSources } from '@/components/ui/DataSources'
 import { ObjectivesPanel } from '@/components/ui/ObjectivesPanel'
-import { Zap, BatteryCharging } from 'lucide-react'
+import { BatteryCharging } from 'lucide-react'
 import { useSimStore } from '@/store/simulationStore'
 import { LEVEL3_CONFIG } from '@/simulation/levels/level3'
 import { computeLevel3 } from '@/models/balanceHourly'
@@ -261,30 +261,6 @@ export default function Level3() {
           </div>
 
 
-          {/* Educational callout */}
-          <div className="gs-callout-amber p-4">
-            <h3 className="text-sm font-semibold text-amber-800 mb-1">Il duck curve e lo storage</h3>
-            <p className="text-xs text-amber-700 leading-relaxed">
-              Nei mesi estivi il <strong>solare crea un surplus a mezzogiorno</strong> che spinge il gas
-              verso zero — poi la domanda serale fa risalire il gas bruscamente:{' '}
-              <em>questa è la "curva d'anatra"</em>.{' '}
-              Aggiungendo <strong>batterie BESS</strong>, il surplus solare viene immagazzinato e
-              scaricato la sera: il gas scala meno, le emissioni calano e il sistema è più stabile.
-              Con più rinnovabili e meno gas, le giornate pessime (bassa produzione) diventano
-              il collo di bottiglia — il vero caso d'uso per <strong>storage di lunga durata</strong>.
-            </p>
-          </div>
-
-          {/* Zap note on missing gas_ocgt */}
-          <div className="flex items-start gap-2 rounded-xl border border-gray-100 bg-gray-50 p-4">
-            <Zap className="w-4 h-4 text-gray-400 flex-shrink-0 mt-0.5" />
-            <p className="text-xs text-gray-500">
-              Il modello usa il gas come fonte flessibile di ultimo ricorso. Nei mesi con molto solare
-              il gas potrebbe raggiungere zero nelle ore centrali — visibile quando l'area arancione
-              scompare sotto la curva di domanda. Il gas OCGT (peaker) è incluso nel totale gas ma
-              non mostrato separatamente.
-            </p>
-          </div>
       </div>
 
       <div className="print:hidden">

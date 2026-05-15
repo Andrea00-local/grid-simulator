@@ -9,7 +9,7 @@ const RENEWABLE_TARGETS: Record<TargetYear, { value: number; label: string; noTa
 }
 
 const EMISSIONS_TARGETS: Record<TargetYear, { target: number; max: number; label: string }> = {
-  2030: { target: 49.3, max: 100, label: 'Target PNIEC 2030: 49,3 MtCO₂' },
+  2030: { target: 49, max: 100, label: 'Target PNIEC 2030: 49 MtCO₂' },
   2040: { target: 12.5, max: 100, label: 'Target 2040: 12,5 MtCO₂'        },
   2050: { target:  0,   max:  50, label: 'Target net-zero 2050: 0 MtCO₂'  },
 }

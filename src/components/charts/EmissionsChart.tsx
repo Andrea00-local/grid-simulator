@@ -12,7 +12,7 @@ export function EmissionsChart({ emissionsMt }: Props) {
   const data = [
     { label: 'La tua scelta', value: emissionsMt },
     { label: 'Baseline 2023', value: ITALY_CO2_BASELINE_MT },
-    { label: 'Target 2030',   value: 35 },
+    { label: 'Target 2030',   value: 49 },
     { label: 'Net Zero',      value: 0 },
   ]
 

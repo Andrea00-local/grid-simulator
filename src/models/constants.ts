@@ -23,7 +23,7 @@ export const HOURS_PER_YEAR = 8_760
 export const ITALY_DEMAND_TWH = 280
 
 /** Italy 2023 CO₂ baseline from power sector (MtCO₂) — computed from ITALY_2023 scenario */
-export const ITALY_CO2_BASELINE_MT = 72
+export const ITALY_CO2_BASELINE_MT = 65
 
 /** Net-zero target for power sector (MtCO₂) */
 export const NET_ZERO_TARGET_MT = 0
