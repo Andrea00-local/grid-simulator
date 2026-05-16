@@ -131,7 +131,49 @@ export type RegionId =
 // Terna 7-zone market model
 export type MarketZoneId = 'nord' | 'cnord' | 'csud' | 'sud' | 'cal' | 'sic' | 'sar'
 
-export type DistributionPlan = 'uniform' | 'current2023' | 'pniec2030' | 'maximizeCF'
+export type DistributionPlan = 'attuale' | 'moltoNord' | 'moltoSud' | 'equilibrato'
+
+export interface ZoneHourlyPoint {
+  hour: number
+  solar: number
+  wind: number
+  hydro: number
+  biomass: number
+  geothermal: number
+  nuclear: number
+  gas: number
+  coal: number
+  imports: number
+  regionalImport: number   // positive = imported from other zones, negative = exported
+  batteryDischarge: number
+  batteryCharge: number
+  batterySOC: number
+  demand: number
+  deficit: number
+  curtailment: number
+}
+
+export interface ZoneDailyResult {
+  monthIndex: number
+  monthLabel: string
+  hours: ZoneHourlyPoint[]
+  solarMWh: number
+  windMWh: number
+  hydroMWh: number
+  biomassMWh: number
+  geothermalMWh: number
+  nuclearMWh: number
+  gasMWh: number
+  coalMWh: number
+  importsMWh: number
+  regionalImportMWh: number
+  batteryChargeMWh: number
+  batteryDischargeMWh: number
+  demandMWh: number
+  deficitMWh: number
+  curtailmentMWh: number
+  emissionsTonnes: number
+}
 
 export interface MarketZoneResult {
   zoneId: MarketZoneId
@@ -157,6 +199,7 @@ export interface MarketZoneFlow {
 
 export interface Level4Result {
   zones: Record<MarketZoneId, MarketZoneResult>
+  zoneMonths: Record<MarketZoneId, ZoneDailyResult[]>
   flows: MarketZoneFlow[]
   annualDeficitTWh: number
   annualSurplusTWh: number

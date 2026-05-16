@@ -1,10 +1,10 @@
 import type { MarketZoneId, RegionId, DistributionPlan } from './types'
 
 export const PLAN_LABELS: Record<DistributionPlan, string> = {
-  uniform:     'Uniforme (pro capite)',
-  current2023: 'Attuale 2023',
-  pniec2030:   'PNIEC 2030',
-  maximizeCF:  'Massimizza CF',
+  attuale:    'Attuale (2023)',
+  moltoNord:  'Molto a Nord',
+  moltoSud:   'Molto a Sud',
+  equilibrato:'Equilibrato',
 }
 
 export interface MarketZoneData {
@@ -68,43 +68,37 @@ export const REGION_TO_ZONE: Record<RegionId, MarketZoneId> = {
   sic: 'sic',
 }
 
+// Zone distribution weights [nord, cnord, csud, sud, cal, sic, sar] — placeholder values
+// The user will provide updated numbers; these follow the ZONE_IDS order.
+const DISTRIBUTION_WEIGHTS: Record<DistributionPlan, { solar: number[]; wind: number[] }> = {
+  attuale: {
+    solar: [0.443, 0.096, 0.144, 0.197, 0.029, 0.053, 0.038],
+    wind:  [0.074, 0.039, 0.195, 0.331, 0.078, 0.175, 0.107],
+  },
+  moltoNord: {
+    solar: [0.500, 0.200, 0.120, 0.090, 0.030, 0.040, 0.020],
+    wind:  [0.350, 0.200, 0.180, 0.140, 0.050, 0.050, 0.030],
+  },
+  moltoSud: {
+    solar: [0.050, 0.050, 0.150, 0.250, 0.150, 0.200, 0.150],
+    wind:  [0.040, 0.040, 0.180, 0.280, 0.160, 0.170, 0.130],
+  },
+  equilibrato: {
+    solar: [0.200, 0.130, 0.170, 0.180, 0.100, 0.120, 0.100],
+    wind:  [0.140, 0.100, 0.200, 0.220, 0.130, 0.120, 0.090],
+  },
+}
+
 export function allocateToZones(
   totalSolarGW: number,
   totalWindGW: number,
   plan: DistributionPlan,
 ): Record<MarketZoneId, { solar: number; wind: number }> {
-  const zones = ZONE_IDS.map(id => ZONES[id])
-
-  let solarWeights: Record<MarketZoneId, number>
-  let windWeights: Record<MarketZoneId, number>
-
-  if (plan === 'uniform') {
-    const totalPop = zones.reduce((s, z) => s + z.populationM, 0)
-    solarWeights = Object.fromEntries(zones.map(z => [z.id, z.populationM / totalPop])) as Record<MarketZoneId, number>
-    windWeights = { ...solarWeights }
-  } else if (plan === 'current2023') {
-    const totalSolar23 = zones.reduce((s, z) => s + z.current2023SolarGW, 0)
-    const totalWind23 = zones.reduce((s, z) => s + z.current2023WindGW, 0)
-    solarWeights = Object.fromEntries(zones.map(z => [z.id, z.current2023SolarGW / totalSolar23])) as Record<MarketZoneId, number>
-    windWeights = Object.fromEntries(zones.map(z => [z.id, z.current2023WindGW / totalWind23])) as Record<MarketZoneId, number>
-  } else if (plan === 'pniec2030') {
-    const totalSolar23 = zones.reduce((s, z) => s + z.current2023SolarGW, 0)
-    const totalWind23 = zones.reduce((s, z) => s + z.current2023WindGW, 0)
-    const totalSolarCF = zones.reduce((s, z) => s + z.solarCF, 0)
-    const totalWindCF = zones.reduce((s, z) => s + z.windCF, 0)
-    solarWeights = Object.fromEntries(zones.map(z => [z.id, 0.5 * z.current2023SolarGW / totalSolar23 + 0.5 * z.solarCF / totalSolarCF])) as Record<MarketZoneId, number>
-    windWeights = Object.fromEntries(zones.map(z => [z.id, 0.5 * z.current2023WindGW / totalWind23 + 0.5 * z.windCF / totalWindCF])) as Record<MarketZoneId, number>
-  } else { // maximizeCF
-    const totalSolarCF = zones.reduce((s, z) => s + z.solarCF, 0)
-    const totalWindCF = zones.reduce((s, z) => s + z.windCF, 0)
-    solarWeights = Object.fromEntries(zones.map(z => [z.id, z.solarCF / totalSolarCF])) as Record<MarketZoneId, number>
-    windWeights = Object.fromEntries(zones.map(z => [z.id, z.windCF / totalWindCF])) as Record<MarketZoneId, number>
-  }
-
+  const w = DISTRIBUTION_WEIGHTS[plan]
   return Object.fromEntries(
-    zones.map(z => [z.id, {
-      solar: totalSolarGW * solarWeights[z.id],
-      wind:  totalWindGW  * windWeights[z.id],
+    ZONE_IDS.map((id, i) => [id, {
+      solar: totalSolarGW * w.solar[i],
+      wind:  totalWindGW  * w.wind[i],
     }])
   ) as Record<MarketZoneId, { solar: number; wind: number }>
 }

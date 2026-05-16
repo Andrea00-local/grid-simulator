@@ -14,10 +14,11 @@ import { ItalyGeoMap } from '@/components/map/ItalyGeoMap'
 import { ZoneDetail } from '@/components/map/ZoneDetail'
 import { ControlsPanel } from '@/components/controls/ControlsPanel'
 import { ITALY_CO2_BASELINE_MT } from '@/models/constants'
+import { MEGAPACK_HOURS } from '@/models/hourlyProfiles'
 import * as RadixSlider from '@radix-ui/react-slider'
 import type { MarketZoneId, DistributionPlan } from '@/models/types'
 
-const PLANS: DistributionPlan[] = ['uniform', 'current2023', 'pniec2030', 'maximizeCF']
+const PLANS: DistributionPlan[] = ['attuale', 'moltoNord', 'moltoSud', 'equilibrato']
 
 export default function Level4() {
   const [showIntro, setShowIntro] = useState(true)
@@ -26,17 +27,20 @@ export default function Level4() {
   const directProduction  = useSimStore(s => s.directProduction)
   const demandTWh         = useSimStore(s => s.demandTWh)
 
-  const [plan, setPlan]         = useState<DistributionPlan>('current2023')
+  const storagePowerGW = useSimStore(s => s.storagePowerGW)
+
+  const [plan, setPlan]         = useState<DistributionPlan>('attuale')
   const [txBoost, setTxBoost]   = useState(1.0)
   const [selected, setSelected] = useState<MarketZoneId | null>(null)
 
   useEffect(() => { setLevelConfig(LEVEL4_CONFIG) }, [setLevelConfig])
 
   const level4 = useMemo(
-    () => computeLevel4(renewableCapacity, directProduction, demandTWh, plan, txBoost),
-    [renewableCapacity, directProduction, demandTWh, plan, txBoost],
+    () => computeLevel4(renewableCapacity, directProduction, demandTWh, plan, txBoost, storagePowerGW),
+    [renewableCapacity, directProduction, demandTWh, plan, txBoost, storagePowerGW],
   )
 
+  const storageCapacityGWh = storagePowerGW * MEGAPACK_HOURS
   const coverage  = Math.max(0, 1 - level4.annualDeficitTWh / demandTWh)
   const avoidedMt = ITALY_CO2_BASELINE_MT - level4.emissionsMtAnnual
 
@@ -54,8 +58,8 @@ export default function Level4() {
         extraParams={[
           { label: 'Piano distribuzione', value: PLAN_LABELS[plan] },
           { label: 'Potenziamento rete', value: `${txBoost.toFixed(1)}×` },
+          { label: 'Batteria', value: storageCapacityGWh > 0 ? `${storageCapacityGWh.toFixed(0)} GWh` : 'Nessuna' },
           { label: 'Zone in deficit', value: `${level4.zonesWithDeficit.length} / 7` },
-          { label: 'Surplus non instradabile', value: `${level4.annualSurplusTWh.toFixed(1)} TWh` },
         ]}
       />
 
@@ -229,7 +233,7 @@ export default function Level4() {
       </div>
 
       <div className="mt-5 print:hidden">
-        <ControlsPanel layout="horizontal" />
+        <ControlsPanel layout="horizontal" showStorage />
       </div>
 
       <div className="print:hidden">

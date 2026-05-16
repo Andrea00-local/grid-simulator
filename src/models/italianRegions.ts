@@ -1,4 +1,4 @@
-import type { RegionId, DistributionPlan } from './types'
+import type { RegionId } from './types'
 
 export interface RegionData {
   id: RegionId
@@ -65,53 +65,3 @@ export const TRANSMISSION_LINKS: [RegionId, RegionId, number][] = [
   ['sar','laz',0.5],  // secondary cable
 ]
 
-export const PLAN_LABELS: Record<DistributionPlan, string> = {
-  uniform:     'Uniforme (pro capite)',
-  current2023: 'Attuale 2023',
-  pniec2030:   'PNIEC 2030',
-  maximizeCF:  'Massimizza CF',
-}
-
-/** Allocate national solar/wind GW to regions based on distribution plan */
-export function allocateToRegions(
-  totalSolarGW: number,
-  totalWindGW: number,
-  plan: DistributionPlan,
-): Record<RegionId, {solar: number; wind: number}> {
-  const regions = REGION_IDS.map(id => REGIONS[id])
-
-  let solarWeights: Record<RegionId, number>
-  let windWeights: Record<RegionId, number>
-
-  if (plan === 'uniform') {
-    const totalPop = regions.reduce((s, r) => s + r.populationM, 0)
-    solarWeights = Object.fromEntries(regions.map(r => [r.id, r.populationM / totalPop])) as Record<RegionId, number>
-    windWeights = { ...solarWeights }
-  } else if (plan === 'current2023') {
-    const totalSolar23 = regions.reduce((s, r) => s + r.current2023SolarGW, 0)
-    const totalWind23 = regions.reduce((s, r) => s + r.current2023WindGW, 0)
-    solarWeights = Object.fromEntries(regions.map(r => [r.id, r.current2023SolarGW / totalSolar23])) as Record<RegionId, number>
-    windWeights = Object.fromEntries(regions.map(r => [r.id, r.current2023WindGW / totalWind23])) as Record<RegionId, number>
-  } else if (plan === 'pniec2030') {
-    // PNIEC scales up solar in south more aggressively, wind in south/islands
-    // Use a blend: 50% current distribution + 50% CF-weighted
-    const totalSolar23 = regions.reduce((s, r) => s + r.current2023SolarGW, 0)
-    const totalWind23 = regions.reduce((s, r) => s + r.current2023WindGW, 0)
-    const totalSolarCF = regions.reduce((s, r) => s + r.solarCF, 0)
-    const totalWindCF = regions.reduce((s, r) => s + r.windCF, 0)
-    solarWeights = Object.fromEntries(regions.map(r => [r.id, 0.5 * r.current2023SolarGW / totalSolar23 + 0.5 * r.solarCF / totalSolarCF])) as Record<RegionId, number>
-    windWeights = Object.fromEntries(regions.map(r => [r.id, 0.5 * r.current2023WindGW / totalWind23 + 0.5 * r.windCF / totalWindCF])) as Record<RegionId, number>
-  } else { // maximizeCF
-    const totalSolarCF = regions.reduce((s, r) => s + r.solarCF, 0)
-    const totalWindCF = regions.reduce((s, r) => s + r.windCF, 0)
-    solarWeights = Object.fromEntries(regions.map(r => [r.id, r.solarCF / totalSolarCF])) as Record<RegionId, number>
-    windWeights = Object.fromEntries(regions.map(r => [r.id, r.windCF / totalWindCF])) as Record<RegionId, number>
-  }
-
-  return Object.fromEntries(
-    regions.map(r => [r.id, {
-      solar: totalSolarGW * solarWeights[r.id],
-      wind:  totalWindGW  * windWeights[r.id],
-    }])
-  ) as Record<RegionId, {solar: number; wind: number}>
-}
