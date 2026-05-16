@@ -1,16 +1,15 @@
-import type { RegionId, Level4Result } from '@/models/types'
-import { REGIONS, REGION_IDS, TRANSMISSION_LINKS } from '@/models/italianRegions'
+import type { MarketZoneId, RegionId, Level4Result } from '@/models/types'
+import { REGION_IDS, REGIONS } from '@/models/italianRegions'
+import { ZONE_CENTROIDS, ZONE_TRANSMISSION_LINKS, REGION_TO_ZONE, ZONES } from '@/models/italianZones'
 
 interface Props {
   result: Level4Result
-  selected: RegionId | null
-  onSelect: (id: RegionId) => void
+  selected: MarketZoneId | null
+  onSelect: (id: MarketZoneId) => void
 }
 
 // ---------------------------------------------------------------------------
-// Real geographic SVG paths generated from official ISTAT / openpolis GeoJSON.
-// ViewBox: "0 0 560 640"
-// Projection: x = (lon - 6.6) / 12.0 * 520 + 20,  y = (47.1 - lat) / 10.5 * 610 + 15
+// Real geographic SVG paths — viewBox: "0 0 560 640"
 // ---------------------------------------------------------------------------
 const PATHS: Record<RegionId, string> = {
   pie: "M 43.2,120.7 L 43.2,117.7 L 44.2,115.4 L 43.5,112.3 L 42.3,109.5 L 43.5,108.2 L 45.3,108.9 L 48.9,107.8 L 52.8,106.5 L 56.8,104.5 L 60.7,103.2 L 64.6,103.9 L 70.1,104.3 L 73.5,102.3 L 76.1,102.6 L 76.9,100.3 L 77.1,98.1 L 77.1,93.8 L 74.8,89.6 L 75.2,86.8 L 75,82 L 79.9,79 L 82.1,76.2 L 83.9,72.7 L 86.8,71 L 87.8,68.4 L 85.4,64.4 L 87.1,61.4 L 90.3,60.1 L 91.7,58.8 L 92,57.8 L 94.3,56.6 L 94.3,54.3 L 100.1,52 L 100.8,55.5 L 99.7,61.2 L 100.1,63.7 L 101.9,65.6 L 104,67.3 L 106.5,70.7 L 111,73 L 111.9,76.6 L 107.4,82.5 L 104.7,90.5 L 107,94.8 L 108.5,97 L 109.8,97.7 L 109.9,98.8 L 109.3,99.7 L 110.3,101 L 111.2,102.8 L 111,103.7 L 111.6,106.8 L 114.4,108.9 L 115.8,111.6 L 115.8,114.5 L 111.8,115 L 112.9,117.3 L 109.2,119.4 L 106.1,116.6 L 103.6,118.5 L 103.1,121.1 L 103.8,121.8 L 103.3,122.2 L 103.6,123.1 L 103.4,123.9 L 103.6,125.4 L 105.7,125.4 L 104.8,127.8 L 107.7,131.3 L 108.7,133.8 L 108.9,135.6 L 111,135.2 L 112,135.6 L 113.1,136.5 L 114.4,135.6 L 115.1,135.1 L 117.3,134 L 119.7,134.5 L 121.9,137.7 L 124.3,142.6 L 126.2,145.7 L 127.5,147.8 L 130.7,148 L 133.3,151.8 L 132.7,156 L 132.8,159.8 L 130.4,161.7 L 128.5,159.9 L 125.7,157.8 L 124.3,156.3 L 122.4,155.9 L 119.1,158.4 L 120.6,162.1 L 118.2,162.2 L 116.4,163.8 L 114,166.6 L 113.8,164.5 L 112.4,161.9 L 109.6,161.3 L 107.1,161.9 L 106.6,163.8 L 104.4,165.8 L 101.2,165 L 97.9,166.5 L 95.2,166.7 L 92.3,165.2 L 89.2,167.4 L 89.7,171.3 L 86.7,175.2 L 85.1,177.6 L 84.2,178.9 L 83.6,180.2 L 84.7,183.5 L 83.7,186.6 L 80,186.8 L 81,188.3 L 78.8,189.1 L 75.5,188.6 L 69.7,187.2 L 68.6,189.4 L 69.3,190.7 L 66.5,188.1 L 66.5,184.8 L 60.8,186.6 L 57.8,187.3 L 54.8,188.2 L 52.1,186.6 L 48.1,185.9 L 45.9,184.3 L 42.8,182.8 L 38.3,181.5 L 36.5,178.4 L 34.1,175.7 L 32.8,173.5 L 34.4,170.2 L 32.2,167.4 L 32.1,162.9 L 34.7,160 L 35.6,158.5 L 36.1,155.7 L 40.5,155.5 L 38.4,151.2 L 37.9,147.1 L 34.6,145.1 L 30.4,145.1 L 27.6,142.8 L 26.6,140.6 L 26.2,137.3 L 25.1,135.8 L 23,134.4 L 21.6,130.3 L 25.3,128.8 L 30.8,129.6 L 33.8,127.3 L 35.8,124.9 L 41,124 L 43.2,120.9 L 43.2,120.7 Z",
@@ -35,30 +34,6 @@ const PATHS: Record<RegionId, string> = {
   sar: "M 96.6,398.6 L 94.4,394.2 L 91.3,393.9 L 89.8,391.8 L 87.9,393.5 L 87.5,394.3 L 88.9,389.3 L 89,387.3 L 87.3,385.7 L 87.8,381.2 L 89,374.4 L 89.7,371.3 L 90.8,374.3 L 94.7,378.5 L 95.8,378.7 L 101.4,379.9 L 107.6,377.4 L 112.1,374.5 L 116.9,371.9 L 122.1,365.5 L 126.2,361.5 L 129.3,360.8 L 130.6,360.4 L 131,355.7 L 130.1,355.2 L 132.4,355 L 134.3,355.1 L 135.9,358.1 L 136.7,357.8 L 137.8,358 L 139.1,357.3 L 140.1,358.8 L 142.1,359.8 L 142.6,360.9 L 144.4,362.1 L 144.9,361.1 L 146.8,361.6 L 147.8,362.8 L 146.9,365.1 L 145.9,368.7 L 147.1,367.7 L 148.8,369.1 L 152.2,369.1 L 150.9,369.3 L 149,372.1 L 148.9,373.2 L 145.7,374.1 L 149.6,375.1 L 151.9,374 L 150.7,375.8 L 152.3,377.5 L 153.8,377.7 L 153.7,379 L 153.5,380.5 L 154.5,383.6 L 155.7,387.1 L 156.5,389.4 L 156.4,391.5 L 157.9,393.9 L 159.2,396.3 L 158,401.9 L 154.2,407.2 L 151,412.9 L 151.5,417.1 L 153,419.8 L 155.9,423 L 154.3,426.5 L 153.9,430.7 L 154,432.2 L 154,436.3 L 153,441.1 L 153.2,443.8 L 152.3,449.2 L 151.4,456.4 L 151.7,460.1 L 149.9,465.4 L 151.4,468.4 L 149.6,469.4 L 148.4,474.3 L 148.4,477.3 L 146.6,479.7 L 146,478.8 L 143.6,478 L 141.7,477.2 L 141,476.5 L 139.2,475.2 L 137.9,473.7 L 134.5,472.9 L 132.1,472.9 L 131,474.4 L 127,474 L 124.6,479.1 L 125.7,481.9 L 123.9,486.4 L 120.7,489.8 L 116.7,492.7 L 114.3,490.5 L 111.6,489.9 L 109.7,491.5 L 108.3,493.4 L 107,487.8 L 106.2,487.7 L 105.5,484.7 L 104.9,482.8 L 102.9,482 L 100.2,485.7 L 99.7,487.4 L 98.9,487.8 L 98.1,487.5 L 97.2,485.4 L 96.3,482.9 L 96,480.9 L 97.4,479.8 L 100.4,480.7 L 101.4,481.9 L 100.4,478.7 L 98.6,476.8 L 98,470.9 L 99.6,468.7 L 98.2,466 L 98.1,462.1 L 97.4,457.9 L 100.4,452.8 L 100.8,449.8 L 100.1,446.4 L 100.1,443.8 L 101,441.5 L 102.6,443.3 L 104.3,439.4 L 104.3,435.3 L 101.9,433 L 99.4,435.5 L 98,433.2 L 98.5,427.4 L 97.8,425.7 L 98.3,424.9 L 102,422.4 L 100.6,417.3 L 101.2,413 L 101.5,410.8 L 100.5,408.9 L 97.2,406.4 L 96.9,399.4 L 96.6,398.6 Z",
 }
 
-// Pre-computed centroids from the geographic data
-const CENTROIDS: Record<RegionId, [number, number]> = {
-  pie: [84, 131],
-  vda: [53, 95],
-  lom: [156, 106],
-  taa: [225, 54],
-  ven: [253, 93],
-  fvg: [306, 79],
-  lig: [114, 180],
-  emr: [212, 166],
-  tos: [219, 227],
-  umb: [276, 255],
-  mar: [297, 234],
-  laz: [288, 304],
-  abr: [337, 303],
-  mol: [363, 330],
-  cam: [379, 379],
-  pug: [459, 376],
-  bas: [426, 399],
-  cal: [441, 477],
-  sic: [351, 567],
-  sar: [124, 422],
-}
-
 function balanceColor(routedBalance: number, demandMWh: number): string {
   const pct = demandMWh > 0 ? routedBalance / demandMWh : 0
   if (pct >  0.20) return '#16a34a'
@@ -68,6 +43,23 @@ function balanceColor(routedBalance: number, demandMWh: number): string {
   return '#dc2626'
 }
 
+// International HVDC/AC interconnection links
+const INTL_LINKS: {
+  country: string
+  label: string
+  capacityGW: number
+  node: { x: number; y: number }
+  zone: MarketZoneId
+}[] = [
+  { country: 'FR',  label: 'Francia (Frejus/Alpi)',     capacityGW: 3.6, node: { x: 5,   y: 115 }, zone: 'nord' },
+  { country: 'CH',  label: 'Svizzera (vari valichi)',   capacityGW: 4.7, node: { x: 175, y: 5   }, zone: 'nord' },
+  { country: 'AT',  label: 'Austria (Brennero)',        capacityGW: 1.2, node: { x: 310, y: 5   }, zone: 'nord' },
+  { country: 'SI',  label: 'Slovenia',                  capacityGW: 0.6, node: { x: 545, y: 80  }, zone: 'nord' },
+  { country: 'ME',  label: 'Montenegro (MONITA)',       capacityGW: 0.5, node: { x: 545, y: 400 }, zone: 'sud'  },
+  { country: 'TN',  label: 'Tunisia (ELMED)',           capacityGW: 0.6, node: { x: 330, y: 635 }, zone: 'sic'  },
+  { country: 'FR',  label: 'Francia (SACOI-Sardegna)',  capacityGW: 0.3, node: { x: 5,   y: 375 }, zone: 'sar'  },
+]
+
 export function ItalyGeoMap({ result, selected, onSelect }: Props) {
   const maxFlow = Math.max(...result.flows.map(f => f.energyMWh), 1)
 
@@ -76,25 +68,23 @@ export function ItalyGeoMap({ result, selected, onSelect }: Props) {
       viewBox="0 0 560 640"
       className="w-full h-auto"
       style={{ maxHeight: 600 }}
-      aria-label="Mappa geografica dell'Italia divisa in regioni"
+      aria-label="Mappa geografica dell'Italia divisa in zone di mercato Terna"
     >
-      {/* Sea background */}
       <rect width="560" height="640" fill="#dbeafe" rx="8" />
 
-      {/* Transmission flow lines — rendered behind regions */}
-      {TRANSMISSION_LINKS.map(([a, b]) => {
-        const [ax, ay] = CENTROIDS[a]
-        const [bx, by] = CENTROIDS[b]
+      {/* Zone-to-zone transmission flow lines */}
+      {ZONE_TRANSMISSION_LINKS.map(([a, b]) => {
+        const [ax, ay] = ZONE_CENTROIDS[a]
+        const [bx, by] = ZONE_CENTROIDS[b]
         const flow = result.flows
-          .filter(f => f.path.includes(a) && f.path.includes(b))
+          .filter(f => (f.from === a && f.to === b) || (f.from === b && f.to === a))
           .reduce((s, f) => s + f.energyMWh, 0)
         const thickness = flow > 0 ? 1 + (flow / maxFlow) * 4 : 0.5
         const color = flow > 0 ? '#3b82f6' : '#cbd5e1'
         return (
           <line
             key={`${a}-${b}`}
-            x1={ax} y1={ay}
-            x2={bx} y2={by}
+            x1={ax} y1={ay} x2={bx} y2={by}
             stroke={color}
             strokeWidth={thickness}
             strokeOpacity={flow > 0 ? 0.7 : 0.4}
@@ -102,127 +92,101 @@ export function ItalyGeoMap({ result, selected, onSelect }: Props) {
         )
       })}
 
-      {/* Region paths and labels */}
+      {/* Region paths — colored by zone balance, click selects zone */}
       {REGION_IDS.map(id => {
-        const r = result.regions[id]
-        const reg = REGIONS[id]
-        const fill = balanceColor(r.routedBalance, r.demandMWh)
-        const isSelected = selected === id
-        const [cx, cy] = CENTROIDS[id]
-        const pct = r.demandMWh > 0 ? (r.routedBalance / r.demandMWh * 100).toFixed(0) : '0'
-        const sign = r.routedBalance >= 0 ? '+' : ''
-
+        const zone = REGION_TO_ZONE[id]
+        const z = result.zones[zone]
+        const fill = balanceColor(z.routedBalance, z.demandMWh)
+        const isSelectedZone = selected === zone
         return (
           <g
             key={id}
-            onClick={() => onSelect(id)}
+            onClick={() => onSelect(zone)}
             className="cursor-pointer"
-            aria-label={`${reg.name}: ${sign}${pct}%`}
+            aria-label={`${REGIONS[id].name} (${ZONES[zone].name})`}
           >
-            <title>{reg.name}: {sign}{pct}%</title>
-
-            {/* Region geographic shape */}
+            <title>{REGIONS[id].name} — {ZONES[zone].name}</title>
             <path
               d={PATHS[id]}
               fill={fill}
               fillOpacity={0.85}
-              stroke={isSelected ? '#0f172a' : 'white'}
-              strokeWidth={isSelected ? 2.5 : 1}
+              stroke={isSelectedZone ? '#0f172a' : 'white'}
+              strokeWidth={isSelectedZone ? 2 : 0.8}
               strokeLinejoin="round"
               style={{ transition: 'fill 0.2s' }}
             />
+          </g>
+        )
+      })}
 
-            {/* Abbreviation label */}
+      {/* Zone centroid nodes */}
+      {(Object.keys(result.zones) as MarketZoneId[]).map(zoneId => {
+        const z = result.zones[zoneId]
+        const [cx, cy] = ZONE_CENTROIDS[zoneId]
+        const fill = balanceColor(z.routedBalance, z.demandMWh)
+        const isSelected = selected === zoneId
+        const pct = z.demandMWh > 0 ? (z.routedBalance / z.demandMWh * 100).toFixed(0) : '0'
+        const sign = z.routedBalance >= 0 ? '+' : ''
+
+        return (
+          <g
+            key={`zone-${zoneId}`}
+            onClick={() => onSelect(zoneId)}
+            className="cursor-pointer"
+          >
+            <title>{ZONES[zoneId].name}: {sign}{pct}%</title>
+            <circle
+              cx={cx} cy={cy}
+              r={isSelected ? 18 : 14}
+              fill={fill}
+              stroke={isSelected ? '#0f172a' : 'white'}
+              strokeWidth={isSelected ? 2.5 : 1.5}
+              style={{ transition: 'r 0.15s' }}
+            />
             <text
-              x={cx}
-              y={cy}
+              x={cx} y={cy - 3}
               textAnchor="middle"
               dominantBaseline="middle"
-              fontSize={9}
-              fontWeight="600"
+              fontSize={8}
+              fontWeight="700"
               fill="#1e293b"
               style={{ pointerEvents: 'none', userSelect: 'none' }}
             >
-              {reg.abbr}
+              {ZONES[zoneId].abbr}
+            </text>
+            <text
+              x={cx} y={cy + 7}
+              textAnchor="middle"
+              dominantBaseline="middle"
+              fontSize={7}
+              fill="#1e293b"
+              style={{ pointerEvents: 'none', userSelect: 'none' }}
+            >
+              {sign}{pct}%
             </text>
           </g>
         )
       })}
 
-      {/* Circular nodes at centroids — rendered on top */}
-      {REGION_IDS.map(id => {
-        const r = result.regions[id]
-        const fill = balanceColor(r.routedBalance, r.demandMWh)
-        const isSelected = selected === id
-        const [cx, cy] = CENTROIDS[id]
-
-        return (
-          <circle
-            key={`node-${id}`}
-            cx={cx}
-            cy={cy}
-            r={isSelected ? 12 : 8}
-            fill={fill}
-            stroke="white"
-            strokeWidth={isSelected ? 2.5 : 1.5}
-            onClick={() => onSelect(id)}
-            className="cursor-pointer"
-            style={{ transition: 'r 0.15s' }}
-          />
-        )
-      })}
-
-      {/* Node labels rendered on top of circles */}
-      {REGION_IDS.map(id => {
-        const [cx, cy] = CENTROIDS[id]
-        const reg = REGIONS[id]
-        return (
-          <text
-            key={`label-${id}`}
-            x={cx}
-            y={cy}
-            textAnchor="middle"
-            dominantBaseline="middle"
-            fontSize={7}
-            fontWeight="700"
-            fill="#1e293b"
-            style={{ pointerEvents: 'none', userSelect: 'none' }}
-          >
-            {reg.abbr}
-          </text>
-        )
-      })}
-
-      {/* International connections — HVDC/AC links to neighbouring countries */}
-      {INTL_LINKS.map(({ country, label, capacityGW, node, region }) => {
-        const [rx, ry] = CENTROIDS[region]
+      {/* International connections */}
+      {INTL_LINKS.map(({ country, label, capacityGW, node, zone }) => {
+        const [rx, ry] = ZONE_CENTROIDS[zone]
         const thick = 1 + (capacityGW / 5) * 3
         return (
-          <g key={`intl-${country}-${region}`}>
-            {/* Dashed line to border */}
+          <g key={`intl-${country}-${zone}`}>
             <line
-              x1={rx} y1={ry}
-              x2={node.x} y2={node.y}
+              x1={rx} y1={ry} x2={node.x} y2={node.y}
               stroke="#7c3aed"
               strokeWidth={thick}
               strokeDasharray="5 3"
               strokeOpacity={0.7}
             />
-            {/* Country badge */}
-            <rect
-              x={node.x - 14} y={node.y - 10}
-              width={28} height={20}
-              rx={4}
-              fill="#7c3aed"
-              opacity={0.9}
-            />
+            <rect x={node.x - 14} y={node.y - 10} width={28} height={20} rx={4} fill="#7c3aed" opacity={0.9} />
             <text
               x={node.x} y={node.y}
               textAnchor="middle"
               dominantBaseline="middle"
-              fontSize={8}
-              fontWeight="700"
-              fill="white"
+              fontSize={8} fontWeight="700" fill="white"
               style={{ pointerEvents: 'none', userSelect: 'none' }}
             >
               {country}
@@ -243,21 +207,3 @@ export function ItalyGeoMap({ result, selected, onSelect }: Props) {
     </svg>
   )
 }
-
-// International HVDC/AC interconnection links
-// node: SVG position of the border endpoint (outside Italy)
-const INTL_LINKS: {
-  country: string
-  label: string
-  capacityGW: number
-  node: { x: number; y: number }
-  region: RegionId
-}[] = [
-  { country: 'FR',  label: 'Francia (Frejus/Alpi)',    capacityGW: 3.6, node: { x: 5,   y: 115 }, region: 'pie' },
-  { country: 'CH',  label: 'Svizzera (vari valichi)',  capacityGW: 4.7, node: { x: 175, y: 5  }, region: 'lom' },
-  { country: 'AT',  label: 'Austria (Brennero)',       capacityGW: 1.2, node: { x: 310, y: 5  }, region: 'taa' },
-  { country: 'SI',  label: 'Slovenia',                 capacityGW: 0.6, node: { x: 545, y: 80 }, region: 'fvg' },
-  { country: 'ME',  label: 'Montenegro (MONITA)',      capacityGW: 0.5, node: { x: 545, y: 400}, region: 'pug' },
-  { country: 'TN',  label: 'Tunisia (ELMED)',          capacityGW: 0.6, node: { x: 330, y: 635}, region: 'sic' },
-  { country: 'FR',  label: 'Francia (SACOI-Sardegna)', capacityGW: 0.3, node: { x: 5,   y: 375}, region: 'sar' },
-]

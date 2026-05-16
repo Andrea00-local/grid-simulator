@@ -128,36 +128,39 @@ export type RegionId =
   'cam' | 'pug' | 'bas' | 'cal' |
   'sic' | 'sar'
 
+// Terna 7-zone market model
+export type MarketZoneId = 'nord' | 'cnord' | 'csud' | 'sud' | 'cal' | 'sic' | 'sar'
+
 export type DistributionPlan = 'uniform' | 'current2023' | 'pniec2030' | 'maximizeCF'
 
-export interface RegionalResult {
-  regionId: RegionId
+export interface MarketZoneResult {
+  zoneId: MarketZoneId
   name: string
   solarGW: number
   windGW: number
   productionMWh: number
   renewableMWh: number
   demandMWh: number
-  rawBalance: number       // before routing
-  routedBalance: number    // after Dijkstra routing
+  rawBalance: number
+  routedBalance: number
   importedMWh: number
   exportedMWh: number
   emissionsTonnes: number
 }
 
-export interface RegionFlow {
-  from: RegionId
-  to: RegionId
+export interface MarketZoneFlow {
+  from: MarketZoneId
+  to: MarketZoneId
   energyMWh: number
-  path: RegionId[]
+  path: MarketZoneId[]
 }
 
 export interface Level4Result {
-  regions: Record<RegionId, RegionalResult>
-  flows: RegionFlow[]
+  zones: Record<MarketZoneId, MarketZoneResult>
+  flows: MarketZoneFlow[]
   annualDeficitTWh: number
   annualSurplusTWh: number
   nationalRenewableShare: number
   emissionsMtAnnual: number
-  regionsWithDeficit: RegionId[]
+  zonesWithDeficit: MarketZoneId[]
 }

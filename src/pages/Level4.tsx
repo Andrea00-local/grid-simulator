@@ -9,13 +9,13 @@ import { YearSelector } from '@/components/ui/YearSelector'
 import { useSimStore } from '@/store/simulationStore'
 import { LEVEL4_CONFIG } from '@/simulation/levels/level4'
 import { computeLevel4 } from '@/models/balanceRegional'
-import { REGIONS, PLAN_LABELS } from '@/models/italianRegions'
+import { ZONES, PLAN_LABELS } from '@/models/italianZones'
 import { ItalyGeoMap } from '@/components/map/ItalyGeoMap'
-import { RegionDetail } from '@/components/map/RegionDetail'
+import { ZoneDetail } from '@/components/map/ZoneDetail'
 import { ControlsPanel } from '@/components/controls/ControlsPanel'
 import { ITALY_CO2_BASELINE_MT } from '@/models/constants'
 import * as RadixSlider from '@radix-ui/react-slider'
-import type { RegionId, DistributionPlan } from '@/models/types'
+import type { MarketZoneId, DistributionPlan } from '@/models/types'
 
 const PLANS: DistributionPlan[] = ['uniform', 'current2023', 'pniec2030', 'maximizeCF']
 
@@ -27,8 +27,8 @@ export default function Level4() {
   const demandTWh         = useSimStore(s => s.demandTWh)
 
   const [plan, setPlan]         = useState<DistributionPlan>('current2023')
-  const [txBoost, setTxBoost]   = useState(1.0)   // 1x = current Terna limits
-  const [selected, setSelected] = useState<RegionId | null>(null)
+  const [txBoost, setTxBoost]   = useState(1.0)
+  const [selected, setSelected] = useState<MarketZoneId | null>(null)
 
   useEffect(() => { setLevelConfig(LEVEL4_CONFIG) }, [setLevelConfig])
 
@@ -54,7 +54,7 @@ export default function Level4() {
         extraParams={[
           { label: 'Piano distribuzione', value: PLAN_LABELS[plan] },
           { label: 'Potenziamento rete', value: `${txBoost.toFixed(1)}×` },
-          { label: 'Regioni in deficit', value: `${level4.regionsWithDeficit.length} / 20` },
+          { label: 'Zone in deficit', value: `${level4.zonesWithDeficit.length} / 7` },
           { label: 'Surplus non instradabile', value: `${level4.annualSurplusTWh.toFixed(1)} TWh` },
         ]}
       />
@@ -68,7 +68,7 @@ export default function Level4() {
               Distribuzione Territoriale
             </div>
             <div className="flex items-center gap-2">
-              <h1 className="text-2xl font-bold text-gray-900 dark:text-slate-100">Bilancio per regione</h1>
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-slate-100">Bilancio per zona di mercato</h1>
               <button
                 onClick={() => setShowIntro(true)}
                 className="w-5 h-5 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-500 text-[11px] font-bold flex items-center justify-center transition-colors flex-shrink-0"
@@ -87,19 +87,19 @@ export default function Level4() {
         avoidedMt={avoidedMt}
       />
 
-      {/* Regional deficit summary */}
+      {/* Zone deficit summary */}
       <div className="gs-card p-4 flex items-center gap-3 mb-8 -mt-2">
         <MapPin className="w-4 h-4 text-gray-400 flex-shrink-0" />
         <div className="flex-1 min-w-0">
-          <span className="text-xs text-gray-500">Regioni in deficit</span>
+          <span className="text-xs text-gray-500">Zone in deficit</span>
           <span className="ml-2 text-sm font-bold text-gray-800 tabular-nums">
-            {level4.regionsWithDeficit.length} / 20
+            {level4.zonesWithDeficit.length} / 7
           </span>
         </div>
         <span className="text-xs text-gray-400 truncate">
-          {level4.regionsWithDeficit.length === 0
-            ? 'Tutte le regioni sono bilanciate'
-            : level4.regionsWithDeficit.map(id => REGIONS[id].abbr).join(', ')}
+          {level4.zonesWithDeficit.length === 0
+            ? 'Tutte le zone sono bilanciate'
+            : level4.zonesWithDeficit.map(id => ZONES[id].name).join(', ')}
         </span>
         <Zap className="w-4 h-4 text-gray-400 flex-shrink-0 ml-4" />
         <span className="text-xs text-gray-500">Surplus non instradabile</span>
@@ -108,23 +108,21 @@ export default function Level4() {
         </span>
       </div>
 
-      {/* Map - full width */}
       <div className="space-y-5">
 
         {/* Map */}
         <div className="gs-card p-4">
           <h3 className="text-sm font-semibold text-gray-700 mb-3">
-            Bilancio regionale post-routing
+            Bilancio per zona di mercato
             <span className="ml-2 text-xs font-normal text-gray-400">Clicca per dettaglio</span>
           </h3>
           <ItalyGeoMap result={level4} selected={selected} onSelect={setSelected} />
-          {/* Legend */}
           <div className="flex gap-3 mt-3 flex-wrap">
             {[
               { color: '#16a34a', label: 'Surplus >20%' },
-              { color: '#4ade80', label: 'Surplus 5-20%' },
-              { color: '#facc15', label: 'Bilanciato' },
-              { color: '#f87171', label: 'Deficit 5-20%' },
+              { color: '#86efac', label: 'Surplus 5-20%' },
+              { color: '#fef08a', label: 'Bilanciato' },
+              { color: '#fca5a5', label: 'Deficit 5-20%' },
               { color: '#dc2626', label: 'Deficit >20%' },
             ].map(({ color, label }) => (
               <span key={label} className="flex items-center gap-1 text-xs text-gray-500">
@@ -148,12 +146,12 @@ export default function Level4() {
                 .map((f, i) => (
                   <div key={i} className="flex items-center gap-2 text-xs">
                     <span className="font-medium text-gray-700 w-6 text-right">{i + 1}.</span>
-                    <span className="text-gray-600">{REGIONS[f.from].name}</span>
+                    <span className="text-gray-600">{ZONES[f.from].name}</span>
                     <span className="text-blue-400">→</span>
-                    <span className="text-gray-600">{REGIONS[f.to].name}</span>
+                    <span className="text-gray-600">{ZONES[f.to].name}</span>
                     {f.path.length > 2 && (
                       <span className="text-gray-400 text-[10px]">
-                        via {f.path.slice(1, -1).map(id => REGIONS[id].abbr).join('→')}
+                        via {f.path.slice(1, -1).map(id => ZONES[id].abbr).join('→')}
                       </span>
                     )}
                     <span className="ml-auto font-medium tabular-nums">
@@ -169,8 +167,8 @@ export default function Level4() {
         <div className="gs-callout-violet p-4">
           <h3 className="text-sm font-semibold text-violet-800 mb-1">Perché la distribuzione conta</h3>
           <p className="text-xs text-violet-700 leading-relaxed">
-            Il <strong>piano "Massimizza CF"</strong> concentra solare e eolico nelle regioni più soleggiate
-            e ventose (Puglia, Sicilia, Sardegna, Calabria) — massimizza la produzione totale ma
+            Il <strong>piano "Massimizza CF"</strong> concentra solare e eolico nelle zone più soleggiate
+            e ventose (Sud, Calabria, Sicilia, Sardegna) — massimizza la produzione totale ma
             crea grandi surplus al Sud e deficit al Nord. Il piano <strong>"Uniforme"</strong> distribuisce
             per abitante ma spreca i migliori capacity factor meridionali.{' '}
             Il <strong>potenziamento rete</strong> sblocca i flussi verso Nord, ma la trasmissione ha
@@ -183,10 +181,9 @@ export default function Level4() {
       {/* Distribution plan + transmission controls */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mt-8 print:hidden">
 
-        {/* Distribution plan */}
         <div className="gs-card p-5">
           <h2 className="text-sm font-semibold text-gray-700 mb-1">Piano di distribuzione</h2>
-          <p className="text-xs text-gray-400 mb-3">Come vengono allocate le rinnovabili nazionali alle regioni</p>
+          <p className="text-xs text-gray-400 mb-3">Come vengono allocate le rinnovabili nazionali alle zone</p>
           <div className="space-y-2">
             {PLANS.map(p => (
               <button
@@ -204,7 +201,6 @@ export default function Level4() {
           </div>
         </div>
 
-        {/* Transmission boost */}
         <div className="gs-card p-5">
           <h2 className="text-sm font-semibold text-gray-700 mb-1">Potenziamento trasmissione</h2>
           <p className="text-xs text-gray-400 mb-3">Moltiplicatore sulle capacità Terna (1× = attuale)</p>
@@ -240,8 +236,7 @@ export default function Level4() {
         <DataSources level={4} />
       </div>
 
-      {/* Region detail drawer (slide-in from right) */}
-      {/* Backdrop */}
+      {/* Zone detail drawer */}
       {selected && (
         <div
           className="fixed inset-0 bg-black/20 backdrop-blur-sm z-40"
@@ -250,15 +245,14 @@ export default function Level4() {
         />
       )}
 
-      {/* Drawer */}
       <div
         className={`fixed inset-y-0 right-0 w-full sm:w-[480px] bg-white shadow-2xl z-50 flex flex-col
           transform transition-transform duration-300 ease-in-out
           ${selected ? 'translate-x-0' : 'translate-x-full'}`}
       >
         {selected && (
-          <RegionDetail
-            regionId={selected}
+          <ZoneDetail
+            zoneId={selected}
             result={level4}
             flows={level4.flows}
             onClose={() => setSelected(null)}
