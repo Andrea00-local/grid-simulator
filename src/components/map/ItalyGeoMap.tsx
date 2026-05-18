@@ -8,6 +8,27 @@ interface Props {
   onSelect: (id: MarketZoneId) => void
 }
 
+// Physical line capacities in GW for display (Terna NTC values)
+const LINK_GW: Record<string, number> = {
+  'nord-cnord':  3.70,
+  'cnord-sar':   0.35,
+  'sar-csud':    0.90,
+  'cnord-csud':  2.90,
+  'csud-sud':    5.00,
+  'csud-cal':    1.00,
+  'sud-cal':     2.50,
+  'cal-sic':     1.50,
+}
+
+function getLinkCapGW(a: MarketZoneId, b: MarketZoneId): number {
+  return LINK_GW[`${a}-${b}`] ?? LINK_GW[`${b}-${a}`] ?? 1.0
+}
+
+// Stroke width proportional to capacity: 1.5px at 0 GW → 7px at 5 GW
+function linkThickness(capGW: number): number {
+  return 1.5 + (capGW / 5.0) * 5.5
+}
+
 // ---------------------------------------------------------------------------
 // Real geographic SVG paths — viewBox: "0 0 560 640"
 // ---------------------------------------------------------------------------
@@ -62,6 +83,7 @@ const INTL_LINKS: {
 
 export function ItalyGeoMap({ result, selected, onSelect }: Props) {
   const maxFlow = Math.max(...result.flows.map(f => f.energyMWh), 1)
+  const hasSelection = selected !== null
 
   return (
     <svg
@@ -72,23 +94,27 @@ export function ItalyGeoMap({ result, selected, onSelect }: Props) {
     >
       <rect width="560" height="640" fill="#dbeafe" rx="8" />
 
-      {/* Zone-to-zone transmission flow lines */}
+      {/* Transmission capacity lines — thickness ∝ physical capacity (GW) */}
       {ZONE_TRANSMISSION_LINKS.map(([a, b]) => {
         const [ax, ay] = ZONE_CENTROIDS[a]
         const [bx, by] = ZONE_CENTROIDS[b]
+        const capGW = getLinkCapGW(a, b)
+        const thickness = linkThickness(capGW)
         const flow = result.flows
           .filter(f => (f.from === a && f.to === b) || (f.from === b && f.to === a))
           .reduce((s, f) => s + f.energyMWh, 0)
-        const thickness = flow > 0 ? 1 + (flow / maxFlow) * 4 : 0.5
-        const color = flow > 0 ? '#3b82f6' : '#cbd5e1'
+        const hasFlow = flow > maxFlow * 0.02
         return (
           <line
             key={`${a}-${b}`}
             x1={ax} y1={ay} x2={bx} y2={by}
-            stroke={color}
+            stroke={hasFlow ? '#3b82f6' : '#94a3b8'}
             strokeWidth={thickness}
-            strokeOpacity={flow > 0 ? 0.7 : 0.4}
-          />
+            strokeOpacity={hasFlow ? 0.75 : 0.45}
+            strokeLinecap="round"
+          >
+            <title>{ZONES[a].name} — {ZONES[b].name}: {capGW.toFixed(2)} GW</title>
+          </line>
         )
       })}
 
@@ -98,6 +124,7 @@ export function ItalyGeoMap({ result, selected, onSelect }: Props) {
         const z = result.zones[zone]
         const fill = balanceColor(z.routedBalance, z.demandMWh)
         const isSelectedZone = selected === zone
+        const dimmed = hasSelection && !isSelectedZone
         return (
           <g
             key={id}
@@ -109,11 +136,11 @@ export function ItalyGeoMap({ result, selected, onSelect }: Props) {
             <path
               d={PATHS[id]}
               fill={fill}
-              fillOpacity={0.85}
-              stroke={isSelectedZone ? '#0f172a' : 'white'}
-              strokeWidth={isSelectedZone ? 2 : 0.8}
+              fillOpacity={dimmed ? 0.25 : 0.88}
+              stroke={isSelectedZone ? '#7c3aed' : dimmed ? '#94a3b8' : 'white'}
+              strokeWidth={isSelectedZone ? 2.5 : dimmed ? 0.5 : 0.8}
               strokeLinejoin="round"
-              style={{ transition: 'fill 0.2s' }}
+              style={{ transition: 'fill 0.2s, fill-opacity 0.2s' }}
             />
           </g>
         )
@@ -125,6 +152,7 @@ export function ItalyGeoMap({ result, selected, onSelect }: Props) {
         const [cx, cy] = ZONE_CENTROIDS[zoneId]
         const fill = balanceColor(z.routedBalance, z.demandMWh)
         const isSelected = selected === zoneId
+        const dimmed = hasSelection && !isSelected
         const pct = z.demandMWh > 0 ? (z.routedBalance / z.demandMWh * 100).toFixed(0) : '0'
         const sign = z.routedBalance >= 0 ? '+' : ''
 
@@ -133,14 +161,15 @@ export function ItalyGeoMap({ result, selected, onSelect }: Props) {
             key={`zone-${zoneId}`}
             onClick={() => onSelect(zoneId)}
             className="cursor-pointer"
+            opacity={dimmed ? 0.4 : 1}
           >
             <title>{ZONES[zoneId].name}: {sign}{pct}%</title>
             <circle
               cx={cx} cy={cy}
-              r={isSelected ? 18 : 14}
+              r={isSelected ? 19 : 14}
               fill={fill}
-              stroke={isSelected ? '#0f172a' : 'white'}
-              strokeWidth={isSelected ? 2.5 : 1.5}
+              stroke={isSelected ? '#7c3aed' : 'white'}
+              strokeWidth={isSelected ? 3 : 1.5}
               style={{ transition: 'r 0.15s' }}
             />
             <text
@@ -196,12 +225,23 @@ export function ItalyGeoMap({ result, selected, onSelect }: Props) {
         )
       })}
 
-      {/* International legend */}
-      <g transform="translate(8, 608)">
-        <rect width={130} height={22} rx={4} fill="white" fillOpacity={0.85} />
-        <line x1={6} y1={11} x2={22} y2={11} stroke="#7c3aed" strokeWidth={2} strokeDasharray="4 2" />
-        <text x={26} y={11} dominantBaseline="middle" fontSize={8} fill="#4b5563">
-          Interconnessioni estere (HVDC/AC)
+      {/* Legend — transmission lines */}
+      <g transform="translate(8, 605)">
+        <rect width={260} height={30} rx={4} fill="white" fillOpacity={0.88} />
+        {/* capacity scale: 1 GW, 3 GW, 5 GW */}
+        {[{ gw: 1, x: 8 }, { gw: 3, x: 70 }, { gw: 5, x: 132 }].map(({ gw, x }) => (
+          <g key={gw} transform={`translate(${x}, 0)`}>
+            <line x1={0} y1={15} x2={20} y2={15} stroke="#94a3b8" strokeWidth={linkThickness(gw)} strokeLinecap="round" />
+            <text x={10} y={26} textAnchor="middle" fontSize={7} fill="#6b7280">{gw} GW</text>
+          </g>
+        ))}
+        <line x1={170} y1={15} x2={186} y2={15} stroke="#7c3aed" strokeWidth={2} strokeDasharray="4 2" />
+        <text x={190} y={15} dominantBaseline="middle" fontSize={7} fill="#4b5563">
+          Estero
+        </text>
+        <line x1={214} y1={15} x2={230} y2={15} stroke="#3b82f6" strokeWidth={2.5} strokeLinecap="round" />
+        <text x={234} y={15} dominantBaseline="middle" fontSize={7} fill="#4b5563">
+          Flusso
         </text>
       </g>
     </svg>

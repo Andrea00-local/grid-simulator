@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import {
-  BarChart, Bar, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
+  BarChart, Bar, Area, AreaChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
   ResponsiveContainer, ComposedChart, ReferenceLine,
 } from 'recharts'
 import type { MarketZoneId, Level4Result, MarketZoneFlow } from '@/models/types'
@@ -332,31 +332,65 @@ export function ZoneDetail({ zoneId, result, flows, onClose }: Props) {
               </div>
             </div>
 
-            {/* Dispatch chart */}
+            {/* Dispatch streamgraph */}
             <div>
               <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">
                 Profilo orario — {MONTH_LABELS[hourlyMonth]} (MWh)
               </h3>
               <ResponsiveContainer width="100%" height={260}>
-                <ComposedChart data={hourlyData} margin={{ top: 5, right: 10, bottom: 5, left: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                  <XAxis dataKey="hour" tick={{ fontSize: 9 }} interval={3} />
-                  <YAxis tick={{ fontSize: 10 }} width={44} />
+                <AreaChart data={hourlyData} margin={{ top: 5, right: 10, bottom: 5, left: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
+                  <XAxis dataKey="hour" tick={{ fontSize: 9 }} interval={3} axisLine={false} tickLine={false} />
+                  <YAxis tick={{ fontSize: 10 }} width={44} axisLine={false} tickLine={false} />
                   <Tooltip formatter={fmtTip} contentStyle={{ fontSize: 12 }} />
                   <Legend wrapperStyle={{ fontSize: 10 }} />
-                  <ReferenceLine y={0} stroke="#e5e7eb" />
-                  <Bar dataKey="coal"    name="Carbone"   stackId="s" fill={COLORS.coal}    />
-                  <Bar dataKey="gas"     name="Gas"       stackId="s" fill={COLORS.gas}     />
-                  <Bar dataKey="imports" name="Import IT" stackId="s" fill={COLORS.imports} />
-                  <Bar dataKey="biomass" name="Biomasse"  stackId="s" fill={COLORS.biomass} />
-                  <Bar dataKey="geo"     name="Geotermico" stackId="s" fill={COLORS.geo}   />
-                  <Bar dataKey="nuclear" name="Nucleare"  stackId="s" fill={COLORS.nuclear} />
-                  <Bar dataKey="hydro"   name="Idro"      stackId="s" fill={COLORS.hydro}   />
-                  <Bar dataKey="wind"    name="Eolico"    stackId="s" fill={COLORS.wind}    />
-                  <Bar dataKey="solar"   name="Solare"    stackId="s" fill={COLORS.solar}   />
-                  <Bar dataKey="regImp"  name="Import reg." fill={COLORS.regImp} />
-                  <Line dataKey="demand" name="Domanda" type="monotone" stroke={COLORS.demand} strokeWidth={2} dot={false} />
-                </ComposedChart>
+                  {/* Stacked areas bottom → top */}
+                  {([
+                    ['coal',    'Carbone',    COLORS.coal],
+                    ['gas',     'Gas',        COLORS.gas],
+                    ['imports', 'Import IT',  COLORS.imports],
+                    ['biomass', 'Biomasse',   COLORS.biomass],
+                    ['geo',     'Geotermico', COLORS.geo],
+                    ['nuclear', 'Nucleare',   COLORS.nuclear],
+                    ['hydro',   'Idro',       COLORS.hydro],
+                    ['wind',    'Eolico',     COLORS.wind],
+                    ['solar',   'Solare',     COLORS.solar],
+                  ] as [string, string, string][]).map(([key, name, color]) => (
+                    <Area
+                      key={key}
+                      dataKey={key}
+                      name={name}
+                      stackId="s"
+                      type="monotone"
+                      fill={color}
+                      stroke={color}
+                      fillOpacity={0.88}
+                      strokeWidth={0}
+                      isAnimationActive={false}
+                    />
+                  ))}
+                  {/* Regional import/export as a dashed line (can be negative) */}
+                  <Line
+                    dataKey="regImp"
+                    name="Imp. reg."
+                    type="monotone"
+                    stroke={COLORS.regImp}
+                    strokeWidth={1.5}
+                    strokeDasharray="4 2"
+                    dot={false}
+                    isAnimationActive={false}
+                  />
+                  {/* Demand line on top */}
+                  <Line
+                    dataKey="demand"
+                    name="Domanda"
+                    type="monotone"
+                    stroke={COLORS.demand}
+                    strokeWidth={2.5}
+                    dot={false}
+                    isAnimationActive={false}
+                  />
+                </AreaChart>
               </ResponsiveContainer>
             </div>
 
