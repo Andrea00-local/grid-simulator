@@ -8,8 +8,8 @@
  *  4. Battery per zone (equal split of national total, same logic as Level 3)
  *
  * Non-renewable allocation formula:
- *   dailyBudget[src][zone][month] = (totalSrcTWh×1e6 / 365) × (residualDay[zone][month] / Σ residualDay)
- *   where Σ is over all 7 zones × 12 months (84 representative days).
+ *   dailyBudget[src][zone][month] = totalSrcMWh × residualDay[zone][month] / Σ(residualDay × daysInMonth)
+ *   where Σ is weighted by DAYS_PER_MONTH so annual totals are preserved exactly.
  *   Within each hour: hourlyFrac = hourlyResidual / dailyResidual.
  */
 import type {
@@ -110,15 +110,16 @@ export function computeLevel4(
     }
   }
 
-  // ── Pass 2: total residual across all 84 representative days ─────────────────
-  let totalResidual84 = 0
+  // ── Pass 2: weighted residual sum (by days-in-month) for correct annual budget ─
+  // Each representative day stands for DAYS_PER_MONTH[m] actual days.
+  // Weighting ensures: Σ(dailyBudget[id][m] × days[m]) = NR_TOTALS exactly.
+  let totalResidualWeighted = 0
   for (const id of ZONE_IDS)
     for (let m = 0; m < 12; m++)
-      totalResidual84 += residualDay[id][m]
+      totalResidualWeighted += residualDay[id][m] * DAYS_PER_MONTH[m]
 
   // ── Pass 3: daily budgets for dispatchable non-renewables per zone × month ────
-  // dailyBudget = (totalTWh×1e6 / 365) × (residualDay / totalResidual84)
-  // Biomass is now zone-allocated at fixed CF (like hydro), not dispatchable.
+  // dailyBudget[id][m] = NR_TOTALS × residualDay[id][m] / totalResidualWeighted
   type NRKey = 'gas' | 'coal' | 'nuclear' | 'imports'
   const NR_TOTALS: Record<NRKey, number> = {
     gas:     gasTotalMWh,
@@ -134,8 +135,8 @@ export function computeLevel4(
     for (const id of ZONE_IDS) {
       dailyBudget[key][id] = []
       for (let m = 0; m < 12; m++) {
-        const b = totalResidual84 > 0
-          ? (NR_TOTALS[key] / 365) * (residualDay[id][m] / totalResidual84)
+        const b = totalResidualWeighted > 0
+          ? NR_TOTALS[key] * residualDay[id][m] / totalResidualWeighted
           : 0
         dailyBudget[key][id].push(b)
       }
