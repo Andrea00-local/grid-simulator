@@ -244,39 +244,57 @@ export function computeLevel4(
         localNet[id]  = total - demand[h]
       }
 
-      // Dijkstra routing — reset link capacity each hour
+      // Proportional routing — each pass allocates surplus proportionally to deficit zones.
+      // Each zone in deficit receives (its_deficit / total_deficit) × min(total_surplus, total_deficit).
+      // Congestion on paths leaves some share undelivered; subsequent passes re-proportion the remainder.
       const remCap = new Map<string, number>(linkCapMW)
       const routedBal: Record<MarketZoneId, number> = { ...localNet }
       const regImport: Record<MarketZoneId, number> = {} as Record<MarketZoneId, number>
       for (const id of ZONE_IDS) regImport[id] = 0
 
-      for (let iter = 0; iter < 200; iter++) {
-        const surplus = ZONE_IDS.filter(id => routedBal[id] > 100)
-          .sort((a, b) => routedBal[b] - routedBal[a])
-        const deficit = ZONE_IDS.filter(id => routedBal[id] < -100)
-          .sort((a, b) => routedBal[a] - routedBal[b])
+      for (let pass = 0; pass < 50; pass++) {
+        const surplusZones = ZONE_IDS.filter(id => routedBal[id] > 100)
+        const deficitZones = ZONE_IDS.filter(id => routedBal[id] < -100)
+        if (!surplusZones.length || !deficitZones.length) break
 
-        if (!surplus.length || !deficit.length) break
+        const totalDeficit = deficitZones.reduce((s, id) => s + (-routedBal[id]), 0)
+        const totalSurplus = surplusZones.reduce((s, id) => s + routedBal[id], 0)
+        const toRoute      = Math.min(totalSurplus, totalDeficit)
 
-        let routed = false
-        outer:
-        for (const src of surplus) {
-          for (const dst of deficit) {
+        // Largest deficit zones get first pick on available paths within this pass
+        const sortedDeficit = [...deficitZones].sort((a, b) => routedBal[a] - routedBal[b])
+
+        let passRouted = 0
+
+        for (const dst of sortedDeficit) {
+          const frac   = (-routedBal[dst]) / totalDeficit
+          let   budget = frac * toRoute   // this zone's proportional share for this pass
+
+          // Re-read surplus order each destination so balance changes are reflected
+          const availSurplus = surplusZones
+            .filter(s => routedBal[s] > 10)
+            .sort((a, b) => routedBal[b] - routedBal[a])
+
+          for (const src of availSurplus) {
+            if (budget < 10 || routedBal[dst] > -10) break
+
             const r = dijkstraPath(src, dst, remCap, adj)
             if (!r || r.bottleneck <= 0) continue
-            const amount = Math.min(routedBal[src], -routedBal[dst], r.bottleneck)
+
+            const amount = Math.min(budget, routedBal[src], -routedBal[dst], r.bottleneck)
             if (amount < 10) continue
 
             routedBal[src] -= amount
             routedBal[dst] += amount
             regImport[src]  -= amount
             regImport[dst]  += amount
+            budget          -= amount
+            passRouted      += amount
 
             for (let i = 0; i < r.path.length - 1; i++) {
               const a = r.path[i], b = r.path[i + 1]
               remCap.set(`${a}-${b}`, (remCap.get(`${a}-${b}`) ?? 0) - amount)
               remCap.set(`${b}-${a}`, (remCap.get(`${b}-${a}`) ?? 0) - amount)
-              // Track directional link flow (canonical order from ZONE_TRANSMISSION_LINKS)
               if (linkFlowHourly.has(`${a}-${b}`)) {
                 linkFlowHourly.get(`${a}-${b}`)![m][h] += amount
               } else {
@@ -286,11 +304,10 @@ export function computeLevel4(
 
             const pairKey = `${src}:${dst}`
             flowPairMap.set(pairKey, (flowPairMap.get(pairKey) ?? 0) + amount * days)
-            routed = true
-            break outer
           }
         }
-        if (!routed) break
+
+        if (passRouted < 10) break
       }
 
       // Battery + record hourly point per zone
