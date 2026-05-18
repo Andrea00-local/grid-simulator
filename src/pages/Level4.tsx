@@ -12,6 +12,7 @@ import { computeLevel4 } from '@/models/balanceRegional'
 import { ZONES, PLAN_LABELS } from '@/models/italianZones'
 import { ItalyGeoMap } from '@/components/map/ItalyGeoMap'
 import { ZoneDetail } from '@/components/map/ZoneDetail'
+import { TransmissionDetail } from '@/components/map/TransmissionDetail'
 import { ControlsPanel } from '@/components/controls/ControlsPanel'
 import { ITALY_CO2_BASELINE_MT } from '@/models/constants'
 import { MEGAPACK_HOURS } from '@/models/hourlyProfiles'
@@ -29,9 +30,14 @@ export default function Level4() {
 
   const storagePowerGW = useSimStore(s => s.storagePowerGW)
 
-  const [plan, setPlan]         = useState<DistributionPlan>('attuale')
-  const [txBoost, setTxBoost]   = useState(1.0)
-  const [selected, setSelected] = useState<MarketZoneId | null>(null)
+  const [plan, setPlan]             = useState<DistributionPlan>('attuale')
+  const [txBoost, setTxBoost]       = useState(1.0)
+  const [selected, setSelected]     = useState<MarketZoneId | null>(null)
+  const [selectedLink, setSelectedLink] = useState<string | null>(null)
+
+  function selectZone(id: MarketZoneId) { setSelected(id); setSelectedLink(null) }
+  function selectLink(key: string)      { setSelectedLink(key); setSelected(null) }
+  function closeDrawer()                { setSelected(null); setSelectedLink(null) }
 
   useEffect(() => { setLevelConfig(LEVEL4_CONFIG) }, [setLevelConfig])
 
@@ -118,9 +124,15 @@ export default function Level4() {
         <div className="gs-card p-4">
           <h3 className="text-sm font-semibold text-gray-700 mb-3">
             Bilancio per zona di mercato
-            <span className="ml-2 text-xs font-normal text-gray-400">Clicca per dettaglio</span>
+            <span className="ml-2 text-xs font-normal text-gray-400">Clicca su zona o linea per dettaglio</span>
           </h3>
-          <ItalyGeoMap result={level4} selected={selected} onSelect={setSelected} />
+          <ItalyGeoMap
+            result={level4}
+            selected={selected}
+            onSelect={selectZone}
+            selectedLink={selectedLink}
+            onSelectLink={selectLink}
+          />
           <div className="flex gap-3 mt-3 flex-wrap">
             {[
               { color: '#16a34a', label: 'Surplus >20%' },
@@ -240,28 +252,33 @@ export default function Level4() {
         <DataSources level={4} />
       </div>
 
-      {/* Zone detail drawer */}
-      {selected && (
+      {/* Detail drawer backdrop */}
+      {(selected || selectedLink) && (
         <div
           className="fixed inset-0 bg-black/20 backdrop-blur-sm z-40"
-          onClick={() => setSelected(null)}
+          onClick={closeDrawer}
           aria-hidden="true"
         />
       )}
 
+      {/* Detail drawer */}
       <div
         className={`fixed inset-y-0 right-0 w-full sm:w-[480px] bg-white shadow-2xl z-50 flex flex-col
           transform transition-transform duration-300 ease-in-out
-          ${selected ? 'translate-x-0' : 'translate-x-full'}`}
+          ${selected || selectedLink ? 'translate-x-0' : 'translate-x-full'}`}
       >
         {selected && (
           <ZoneDetail
             zoneId={selected}
             result={level4}
             flows={level4.flows}
-            onClose={() => setSelected(null)}
+            onClose={closeDrawer}
           />
         )}
+        {selectedLink && (() => {
+          const link = level4.transmissionLinks.find(l => l.key === selectedLink)
+          return link ? <TransmissionDetail link={link} onClose={closeDrawer} /> : null
+        })()}
       </div>
     </div>
     </>

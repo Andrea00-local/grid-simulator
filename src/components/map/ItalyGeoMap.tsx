@@ -3,9 +3,11 @@ import { REGION_IDS, REGIONS } from '@/models/italianRegions'
 import { ZONE_CENTROIDS, ZONE_TRANSMISSION_LINKS, REGION_TO_ZONE, ZONES } from '@/models/italianZones'
 
 interface Props {
-  result: Level4Result
-  selected: MarketZoneId | null
-  onSelect: (id: MarketZoneId) => void
+  result:          Level4Result
+  selected:        MarketZoneId | null
+  onSelect:        (id: MarketZoneId) => void
+  selectedLink?:   string | null
+  onSelectLink?:   (key: string) => void
 }
 
 // Physical line capacities in GW for display (Terna NTC values)
@@ -81,7 +83,7 @@ const INTL_LINKS: {
   { country: 'FR',  label: 'Francia (SACOI-Sardegna)',  capacityGW: 0.3, node: { x: 5,   y: 375 }, zone: 'sar'  },
 ]
 
-export function ItalyGeoMap({ result, selected, onSelect }: Props) {
+export function ItalyGeoMap({ result, selected, onSelect, selectedLink, onSelectLink }: Props) {
   const maxFlow = Math.max(...result.flows.map(f => f.energyMWh), 1)
   const hasSelection = selected !== null
 
@@ -94,27 +96,36 @@ export function ItalyGeoMap({ result, selected, onSelect }: Props) {
     >
       <rect width="560" height="640" fill="#dbeafe" rx="8" />
 
-      {/* Transmission capacity lines — thickness ∝ physical capacity (GW) */}
+      {/* Transmission capacity lines — thickness ∝ physical capacity (GW), clickable */}
       {ZONE_TRANSMISSION_LINKS.map(([a, b]) => {
         const [ax, ay] = ZONE_CENTROIDS[a]
         const [bx, by] = ZONE_CENTROIDS[b]
-        const capGW = getLinkCapGW(a, b)
+        const capGW    = getLinkCapGW(a, b)
         const thickness = linkThickness(capGW)
+        const linkKey  = `${a}-${b}`
+        const isSelLink = selectedLink === linkKey
         const flow = result.flows
           .filter(f => (f.from === a && f.to === b) || (f.from === b && f.to === a))
           .reduce((s, f) => s + f.energyMWh, 0)
         const hasFlow = flow > maxFlow * 0.02
         return (
-          <line
-            key={`${a}-${b}`}
-            x1={ax} y1={ay} x2={bx} y2={by}
-            stroke={hasFlow ? '#3b82f6' : '#94a3b8'}
-            strokeWidth={thickness}
-            strokeOpacity={hasFlow ? 0.75 : 0.45}
-            strokeLinecap="round"
+          <g
+            key={linkKey}
+            onClick={() => onSelectLink?.(linkKey)}
+            className={onSelectLink ? 'cursor-pointer' : undefined}
           >
-            <title>{ZONES[a].name} — {ZONES[b].name}: {capGW.toFixed(2)} GW</title>
-          </line>
+            <title>{ZONES[a].name} — {ZONES[b].name}: {capGW.toFixed(2)} GW · Clicca per dettaglio</title>
+            {/* Invisible wider hit area */}
+            <line x1={ax} y1={ay} x2={bx} y2={by} stroke="transparent" strokeWidth={18} />
+            {/* Visible line */}
+            <line
+              x1={ax} y1={ay} x2={bx} y2={by}
+              stroke={isSelLink ? '#f59e0b' : hasFlow ? '#3b82f6' : '#94a3b8'}
+              strokeWidth={isSelLink ? thickness + 2.5 : thickness}
+              strokeOpacity={isSelLink ? 1 : hasFlow ? 0.75 : 0.45}
+              strokeLinecap="round"
+            />
+          </g>
         )
       })}
 

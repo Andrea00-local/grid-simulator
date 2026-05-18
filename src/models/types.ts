@@ -197,10 +197,27 @@ export interface MarketZoneFlow {
   path: MarketZoneId[]
 }
 
+export interface TransmissionLinkData {
+  key: string             // canonical: `${from}-${to}`
+  from: MarketZoneId
+  to: MarketZoneId
+  capacityGW: number
+  // Hourly flow per representative day: [month][hour], MWh
+  // Positive = from→to, Negative = to→from
+  hourlyMWh: number[][]
+  // Monthly energy by direction: [month] in GWh (×days already applied)
+  monthlyGWhFromTo: number[]
+  monthlyGWhToFrom: number[]   // positive value
+  annualFromToTWh: number
+  annualToFromTWh: number
+  utilizationPct: number       // energy-based: |transferred| / max possible × 100
+}
+
 export interface Level4Result {
   zones: Record<MarketZoneId, MarketZoneResult>
   zoneMonths: Record<MarketZoneId, ZoneDailyResult[]>
   flows: MarketZoneFlow[]
+  transmissionLinks: TransmissionLinkData[]
   annualDeficitTWh: number
   annualSurplusTWh: number
   nationalRenewableShare: number

@@ -13,7 +13,7 @@
  *   Within each hour: hourlyFrac = hourlyResidual / dailyResidual.
  */
 import type {
-  MarketZoneId, MarketZoneResult, MarketZoneFlow,
+  MarketZoneId, MarketZoneResult, MarketZoneFlow, TransmissionLinkData,
   ZoneHourlyPoint, ZoneDailyResult, Level4Result,
   CapacityMap, DistributionPlan,
 } from './types'
@@ -142,6 +142,12 @@ export function computeLevel4(
     }
   }
 
+  // ── Per-link directional hourly flow tracker (canonical order = ZONE_TRANSMISSION_LINKS) ──
+  // Positive = from→to, Negative = to→from
+  const linkFlowHourly: Map<string, number[][]> = new Map()
+  for (const [a, b] of ZONE_TRANSMISSION_LINKS)
+    linkFlowHourly.set(`${a}-${b}`, Array.from({ length: 12 }, () => new Array(24).fill(0)))
+
   // ── Transmission graph (MW = MWh/h per link) ──────────────────────────────────
   const linkCapMW = new Map<string, number>()
   const adj       = new Map<MarketZoneId, MarketZoneId[]>()
@@ -269,6 +275,12 @@ export function computeLevel4(
               const a = r.path[i], b = r.path[i + 1]
               remCap.set(`${a}-${b}`, (remCap.get(`${a}-${b}`) ?? 0) - amount)
               remCap.set(`${b}-${a}`, (remCap.get(`${b}-${a}`) ?? 0) - amount)
+              // Track directional link flow (canonical order from ZONE_TRANSMISSION_LINKS)
+              if (linkFlowHourly.has(`${a}-${b}`)) {
+                linkFlowHourly.get(`${a}-${b}`)![m][h] += amount
+              } else {
+                linkFlowHourly.get(`${b}-${a}`)![m][h] -= amount
+              }
             }
 
             const pairKey = `${src}:${dst}`
@@ -404,10 +416,46 @@ export function computeLevel4(
     })
     .sort((a, b) => b.energyMWh - a.energyMWh)
 
+  // ── Build TransmissionLinkData from accumulated hourly link flows ──────────────
+  const transmissionLinks: TransmissionLinkData[] = ZONE_TRANSMISSION_LINKS.map(([a, b, capGW]) => {
+    const key    = `${a}-${b}`
+    const hourly = linkFlowHourly.get(key)!
+    const monthlyGWhFromTo: number[] = []
+    const monthlyGWhToFrom: number[] = []
+    let annualFromToMWh = 0, annualToFromMWh = 0
+    let totalEnergyMWh  = 0
+
+    for (let m = 0; m < 12; m++) {
+      const days = DAYS_PER_MONTH[m]
+      let ft = 0, tf = 0
+      for (let h = 0; h < 24; h++) {
+        const flow = hourly[m][h]
+        if (flow > 0) ft += flow; else tf += (-flow)
+        totalEnergyMWh += Math.abs(flow) * days
+      }
+      monthlyGWhFromTo.push(ft * days / 1000)
+      monthlyGWhToFrom.push(tf * days / 1000)
+      annualFromToMWh += ft * days
+      annualToFromMWh += tf * days
+    }
+
+    const utilizationPct = capGW > 0 ? totalEnergyMWh / (capGW * 1000 * 8760) * 100 : 0
+
+    return {
+      key, from: a, to: b, capacityGW: capGW,
+      hourlyMWh: hourly,
+      monthlyGWhFromTo, monthlyGWhToFrom,
+      annualFromToTWh: annualFromToMWh / 1e6,
+      annualToFromTWh: annualToFromMWh / 1e6,
+      utilizationPct,
+    }
+  })
+
   return {
     zones: zoneResults,
     zoneMonths,
     flows,
+    transmissionLinks,
     annualDeficitTWh:       annDeficitMWh / 1e6,
     annualSurplusTWh:       annSurplusMWh / 1e6,
     nationalRenewableShare: totalProdMWh > 0 ? totalRenewMWh / totalProdMWh : 0,
