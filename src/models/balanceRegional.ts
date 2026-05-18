@@ -63,13 +63,9 @@ export function computeLevel4(
   // ── Zone allocation (solar, wind onshore/offshore, biomass each get own zone weights) ──
   const allocation = allocateToZones(totalSolarGW, totalWindOnshoreGW, totalWindOffshoreGW, totalBiomassGW, plan)
 
-  // ── Pre-compute zone biomass daily MWh budget (dispatched via residual frac like NR sources) ──
-  // Biomass is excluded from `renew` so that residual demand stays nonzero even when
-  // solar/wind/hydro/geo cover all demand — otherwise totalResidual84 collapses to 0
-  // and all dispatchable budgets (gas/coal/nuclear/imports) also become 0.
-  const biomassZoneDailyMWh: Record<MarketZoneId, number> = {} as Record<MarketZoneId, number>
-  for (const id of ZONE_IDS)
-    biomassZoneDailyMWh[id] = allocation[id].biomass * BIOMASS_CF * 24 * 1000
+  // Biomass national annual total — treated as dispatchable (like gas/coal/nuclear/imports).
+  // Allocated to each zone × month in proportion to residual demand, not pre-assigned by plan.
+  const biomassTotalMWh = totalBiomassGW * BIOMASS_CF * 8760 * 1000
 
   // ── Pass 1: renewable production + residual demand per zone × month ───────────
   // Store hourly demand and residual for later use in the main simulation
@@ -118,17 +114,19 @@ export function computeLevel4(
     for (let m = 0; m < 12; m++)
       totalResidualWeighted += residualDay[id][m] * DAYS_PER_MONTH[m]
 
-  // ── Pass 3: daily budgets for dispatchable non-renewables per zone × month ────
+  // ── Pass 3: daily budgets for all dispatchable sources per zone × month ─────────
   // dailyBudget[id][m] = NR_TOTALS × residualDay[id][m] / totalResidualWeighted
-  type NRKey = 'gas' | 'coal' | 'nuclear' | 'imports'
+  // Biomass is included here as a national dispatchable, not zone-pre-allocated.
+  type NRKey = 'gas' | 'coal' | 'nuclear' | 'imports' | 'biomass'
   const NR_TOTALS: Record<NRKey, number> = {
     gas:     gasTotalMWh,
     coal:    coalTotalMWh,
     nuclear: nuclearTotalMWh,
     imports: importsTotalMWh,
+    biomass: biomassTotalMWh,
   }
   const dailyBudget: Record<NRKey, Record<MarketZoneId, number[]>> = {
-    gas: {}, coal: {}, nuclear: {}, imports: {},
+    gas: {}, coal: {}, nuclear: {}, imports: {}, biomass: {},
   } as Record<NRKey, Record<MarketZoneId, number[]>>
 
   for (const key of Object.keys(NR_TOTALS) as NRKey[]) {
@@ -190,8 +188,7 @@ export function computeLevel4(
       const dayRes = residualDay[id][m]
       for (let h = 0; h < 24; h++) {
         let prod = renew[h]  // solar, wind, hydro, geo from hoursCache
-        const frac = dayRes > 0 ? residual[h] / dayRes : 1 / 24
-        prod += biomassZoneDailyMWh[id] * frac
+        const frac = dayRes > 0 ? residual[h] / dayRes : 0
         for (const key of Object.keys(NR_TOTALS) as NRKey[])
           prod += dailyBudget[key][id][m] * frac
         const net = prod - demand[h]
@@ -226,14 +223,14 @@ export function computeLevel4(
         const hydroGW = ZONES[id].hydroGW
         const { demand, residual } = hoursCache[id][m]
         const dayRes = residualDay[id][m]
-        const frac   = dayRes > 0 ? residual[h] / dayRes : 1 / 24
+        const frac   = dayRes > 0 ? residual[h] / dayRes : 0
 
         const solarH  = solarGW    * ZONE_SOLAR_PROFILE[id][m][h]           * 1000
         const windH   = onshoreGW  * ZONE_WIND_PROFILE[id][m][h]            * 1000
                       + offshoreGW * ZONE_WIND_OFFSHORE_PROFILE[id][m][h]   * 1000
         const hydroH  = hydroGW    * ZONE_HYDRO_PROFILE[id][m][h]           * 1000
         const geoH    = geoNationalGW * ZONE_GEO_PROFILE[id][m][h]          * 1000
-        const bioH    = biomassZoneDailyMWh[id] * frac
+        const bioH    = dailyBudget.biomass[id][m] * frac
         const gasH    = dailyBudget.gas[id][m]     * frac
         const coalH   = dailyBudget.coal[id][m]    * frac
         const nucH    = dailyBudget.nuclear[id][m] * frac
@@ -281,18 +278,41 @@ export function computeLevel4(
             const r = dijkstraPath(src, dst, remCap, adj)
             if (!r || r.bottleneck <= 0) continue
 
-            const amount = Math.min(budget, routedBal[src], -routedBal[dst], r.bottleneck)
+            // If the path passes through an intermediate zone that also has deficit,
+            // stop there instead of bypassing it. Energy fills the nearer need first;
+            // the original dst is served again in a subsequent pass.
+            let actualDst  = dst
+            let actualPath = r.path
+            for (let i = 1; i < r.path.length - 1; i++) {
+              if (routedBal[r.path[i]] < -100) {
+                actualDst  = r.path[i]
+                actualPath = r.path.slice(0, i + 1)
+                break
+              }
+            }
+            // Recompute bottleneck for the (possibly truncated) path
+            let pathBN = Infinity
+            for (let i = 0; i < actualPath.length - 1; i++) {
+              const a = actualPath[i], b = actualPath[i + 1]
+              pathBN = Math.min(pathBN,
+                remCap.get(`${a}-${b}`) ?? 0,
+                remCap.get(`${b}-${a}`) ?? 0,
+              )
+            }
+            if (pathBN <= 0) continue
+
+            const amount = Math.min(budget, routedBal[src], -routedBal[actualDst], pathBN)
             if (amount < 10) continue
 
-            routedBal[src] -= amount
-            routedBal[dst] += amount
-            regImport[src]  -= amount
-            regImport[dst]  += amount
-            budget          -= amount
-            passRouted      += amount
+            routedBal[src]       -= amount
+            routedBal[actualDst] += amount
+            regImport[src]       -= amount
+            regImport[actualDst] += amount
+            budget               -= amount
+            passRouted           += amount
 
-            for (let i = 0; i < r.path.length - 1; i++) {
-              const a = r.path[i], b = r.path[i + 1]
+            for (let i = 0; i < actualPath.length - 1; i++) {
+              const a = actualPath[i], b = actualPath[i + 1]
               remCap.set(`${a}-${b}`, (remCap.get(`${a}-${b}`) ?? 0) - amount)
               remCap.set(`${b}-${a}`, (remCap.get(`${b}-${a}`) ?? 0) - amount)
               if (linkFlowHourly.has(`${a}-${b}`)) {
@@ -302,7 +322,7 @@ export function computeLevel4(
               }
             }
 
-            const pairKey = `${src}:${dst}`
+            const pairKey = `${src}:${actualDst}`
             flowPairMap.set(pairKey, (flowPairMap.get(pairKey) ?? 0) + amount * days)
           }
         }
