@@ -187,16 +187,13 @@ export default function Level4() {
                   <XAxis dataKey="label" tick={{ fontSize: 10 }} />
                   <YAxis tick={{ fontSize: 10 }} width={44} unit=" TWh" />
                   <Tooltip
-                    formatter={(v: unknown, name: string, props: { payload?: { fromName: string; toName: string; util: number } }) => {
-                      const d = props.payload
+                    formatter={(v: unknown, name: string, entry: { payload?: { fromName: string; toName: string; util: number } }) => {
+                      const d = entry.payload
                       const dir = name === 'fromTo' ? `${d?.fromName}→${d?.toName}` : `${d?.toName}→${d?.fromName}`
-                      return [`${Number(v).toFixed(1)} TWh`, dir]
+                      return [`${Number(v).toFixed(1)} TWh (util: ${d?.util ?? 0}%)`, dir]
                     }}
                     contentStyle={{ fontSize: 12 }}
                     wrapperStyle={{ zIndex: 9999 }}
-                    footer={({ payload }: { payload?: { payload: { util: number } }[] }) =>
-                      payload?.[0] ? `Utilizzo: ${payload[0].payload.util}%` : undefined
-                    }
                   />
                   <Bar dataKey="fromTo" name="fromTo" fill="#3b82f6" radius={[3, 3, 0, 0]} />
                   <Bar dataKey="toFrom" name="toFrom" fill="#f97316" radius={[3, 3, 0, 0]} />

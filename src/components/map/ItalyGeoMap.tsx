@@ -208,12 +208,12 @@ export function ItalyGeoMap({ result, selected, onSelect, selectedLink, onSelect
         )
       })}
 
-      {/* International connections */}
+      {/* International connections — pointerEvents:none so they don't intercept zone centroid clicks */}
       {INTL_LINKS.map(({ country, label, capacityGW, node, zone }) => {
         const [rx, ry] = ZONE_CENTROIDS[zone]
         const thick = 1 + (capacityGW / 5) * 3
         return (
-          <g key={`intl-${country}-${zone}`}>
+          <g key={`intl-${country}-${zone}`} style={{ pointerEvents: 'none' }}>
             <line
               x1={rx} y1={ry} x2={node.x} y2={node.y}
               stroke="#7c3aed"
