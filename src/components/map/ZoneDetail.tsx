@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import {
   BarChart, Bar, Area, AreaChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
-  ResponsiveContainer, ComposedChart, ReferenceLine,
+  ResponsiveContainer, ComposedChart, ReferenceLine, PieChart, Pie, Cell,
 } from 'recharts'
 import type { MarketZoneId, Level4Result, MarketZoneFlow } from '@/models/types'
 import { ZONES } from '@/models/italianZones'
@@ -179,34 +179,78 @@ export function ZoneDetail({ zoneId, result, flows, onClose }: Props) {
               ))}
             </div>
 
-            {/* Annual production bar chart */}
-            <div>
-              <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">
-                Produzione annuale (GWh)
-              </h3>
-              <ResponsiveContainer width="100%" height={200}>
-                <BarChart
-                  data={[annualTotals]}
-                  margin={{ top: 5, right: 10, bottom: 5, left: 0 }}
-                >
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                  <XAxis dataKey="name" tick={false} />
-                  <YAxis tick={{ fontSize: 10 }} width={44} />
-                  <Tooltip formatter={fmtTipGWh} contentStyle={{ fontSize: 12 }} wrapperStyle={{ zIndex: 9999 }} />
-                  <Legend wrapperStyle={{ fontSize: 10 }} />
-                  <Bar dataKey="solar"   name="Solare"    stackId="s" fill={COLORS.solar}   />
-                  <Bar dataKey="wind"    name="Eolico"    stackId="s" fill={COLORS.wind}    />
-                  <Bar dataKey="hydro"   name="Idro"      stackId="s" fill={COLORS.hydro}   />
-                  <Bar dataKey="nuclear" name="Nucleare"  stackId="s" fill={COLORS.nuclear} />
-                  <Bar dataKey="biomass" name="Biomasse"  stackId="s" fill={COLORS.biomass} />
-                  <Bar dataKey="geo"     name="Geotermico" stackId="s" fill={COLORS.geo}    />
-                  <Bar dataKey="gas"     name="Gas"       stackId="s" fill={COLORS.gas}     />
-                  <Bar dataKey="coal"    name="Carbone"   stackId="s" fill={COLORS.coal}    />
-                  <Bar dataKey="imports" name="Import IT" stackId="s" fill={COLORS.imports} />
-                  <Bar dataKey="regImp"  name="Import reg." fill={COLORS.regImp} />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
+            {/* Annual production donut chart */}
+            {(() => {
+              const donutSegments = [
+                { label: 'Solare',     value: annualTotals.solar,   color: COLORS.solar   },
+                { label: 'Eolico',     value: annualTotals.wind,    color: COLORS.wind    },
+                { label: 'Idro',       value: annualTotals.hydro,   color: COLORS.hydro   },
+                { label: 'Nucleare',   value: annualTotals.nuclear, color: COLORS.nuclear },
+                { label: 'Biomasse',   value: annualTotals.biomass, color: COLORS.biomass },
+                { label: 'Geotermico', value: annualTotals.geo,     color: COLORS.geo     },
+                { label: 'Gas',        value: annualTotals.gas,     color: COLORS.gas     },
+                { label: 'Carbone',    value: annualTotals.coal,    color: COLORS.coal    },
+                { label: 'Import IT',  value: annualTotals.imports, color: COLORS.imports },
+              ].filter(s => s.value > 1)
+              const totalGWh  = donutSegments.reduce((s, x) => s + x.value, 0)
+              const renewGWh  = (annualTotals.solar + annualTotals.wind + annualTotals.hydro + annualTotals.biomass + annualTotals.geo)
+              const renewPct  = totalGWh > 0 ? (renewGWh / totalGWh * 100).toFixed(0) : '0'
+              const DonutTip  = ({ active, payload }: { active?: boolean; payload?: { payload: typeof donutSegments[0] }[] }) => {
+                if (!active || !payload?.[0]) return null
+                const d = payload[0].payload
+                return (
+                  <div className="gs-card p-2.5 text-xs" style={{ zIndex: 9999 }}>
+                    <div className="flex items-center gap-1.5 mb-1">
+                      <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: d.color }} />
+                      <span className="font-semibold text-gray-900">{d.label}</span>
+                    </div>
+                    <p className="text-gray-600">{d.value.toFixed(0)} GWh</p>
+                    <p className="text-gray-400">{totalGWh > 0 ? ((d.value / totalGWh) * 100).toFixed(1) : 0}% del mix</p>
+                  </div>
+                )
+              }
+              return (
+                <div>
+                  <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                    Mix energetico annuale
+                  </h3>
+                  <div className="relative" style={{ height: 200 }}>
+                    <ResponsiveContainer width="100%" height={200}>
+                      <PieChart margin={{ top: 4, right: 4, bottom: 4, left: 4 }}>
+                        <Pie
+                          data={donutSegments}
+                          cx="50%" cy="50%"
+                          innerRadius={62} outerRadius={88}
+                          dataKey="value"
+                          nameKey="label"
+                          paddingAngle={1.5}
+                          strokeWidth={0}
+                          isAnimationActive={false}
+                        >
+                          {donutSegments.map((seg, i) => <Cell key={i} fill={seg.color} />)}
+                        </Pie>
+                        <Tooltip content={<DonutTip />} wrapperStyle={{ zIndex: 9999 }} />
+                      </PieChart>
+                    </ResponsiveContainer>
+                    <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                      <p className="text-xl font-bold tabular-nums text-gray-900">{totalGWh.toFixed(0)}</p>
+                      <p className="text-xs text-gray-400">GWh prodotti</p>
+                      <p className={`text-sm font-semibold mt-0.5 ${Number(renewPct) >= 65 ? 'text-green-600' : 'text-amber-500'}`}>
+                        {renewPct}% rinnovabile
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex flex-wrap gap-x-3 gap-y-1 mt-1 justify-center">
+                    {donutSegments.map(seg => (
+                      <div key={seg.label} className="flex items-center gap-1.5 text-xs text-gray-600">
+                        <div className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: seg.color }} />
+                        {seg.label}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )
+            })()}
 
             {/* Flows */}
             {zoneFlows.length > 0 && (
