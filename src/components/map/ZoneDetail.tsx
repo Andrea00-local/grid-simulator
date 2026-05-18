@@ -37,7 +37,7 @@ const COLORS = {
 } as const
 
 // ─── Chart tooltip formatters ─────────────────────────────────────────────────
-const fmtTip    = (v: unknown) => `${Number(v).toFixed(0)} MWh`
+const fmtTip    = (v: unknown) => `${Number(v).toFixed(0)} MW`
 const fmtTipGWh = (v: unknown) => `${Number(v).toFixed(0)} GWh`
 
 export function ZoneDetail({ zoneId, result, flows, onClose }: Props) {
@@ -379,7 +379,7 @@ export function ZoneDetail({ zoneId, result, flows, onClose }: Props) {
             {/* Dispatch streamgraph */}
             <div>
               <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">
-                Profilo orario — {MONTH_LABELS[hourlyMonth]} (MWh)
+                Profilo orario — {MONTH_LABELS[hourlyMonth]} (MW)
               </h3>
               <ResponsiveContainer width="100%" height={260}>
                 <AreaChart data={hourlyData} margin={{ top: 5, right: 10, bottom: 5, left: 0 }}>

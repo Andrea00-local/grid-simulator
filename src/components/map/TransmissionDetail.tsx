@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import {
   BarChart, Bar, Cell, XAxis, YAxis, CartesianGrid, Tooltip,
-  ResponsiveContainer, ReferenceLine, ComposedChart,
+  ResponsiveContainer, ComposedChart,
 } from 'recharts'
 import type { TransmissionLinkData } from '@/models/types'
 import { ZONES } from '@/models/italianZones'
@@ -19,7 +19,7 @@ const COLOR_FT = '#3b82f6'   // from→to: blue
 const COLOR_TF = '#f97316'   // to→from: orange
 
 const fmtGWh = (v: unknown) => `${Number(v).toFixed(0)} GWh`
-const fmtMWh = (v: unknown) => `${Number(v).toFixed(0)} MWh`
+const fmtMW  = (v: unknown) => `${Number(v).toFixed(0)} MW`
 
 export function TransmissionDetail({ link, onClose }: Props) {
   const [tab, setTab]               = useState<Tab>('monthly')
@@ -28,11 +28,11 @@ export function TransmissionDetail({ link, onClose }: Props) {
   const fromName = ZONES[link.from].name
   const toName   = ZONES[link.to].name
 
-  // Monthly chart data: fromTo positive, toFrom negative for visual separation
+  // Monthly chart data: both directions always positive, shown side-by-side
   const monthlyData = MONTH_LABELS.map((label, m) => ({
     label,
-    fromTo:  Math.round(link.monthlyGWhFromTo[m] * 10) / 10,
-    toFrom: -Math.round(link.monthlyGWhToFrom[m] * 10) / 10,
+    fromTo: Math.round(link.monthlyGWhFromTo[m] * 10) / 10,
+    toFrom: Math.round(link.monthlyGWhToFrom[m] * 10) / 10,
   }))
 
   // Annual summary bar chart
@@ -41,10 +41,12 @@ export function TransmissionDetail({ link, onClose }: Props) {
     { label: `${toName}→${fromName}`, value: Math.round(link.annualToFromTWh * 1000) },
   ]
 
-  // Hourly chart for selected month
+  // Hourly chart: split signed flow into two always-positive series
+  // Since each hour can only flow one direction, stacking them equals a single positive bar
   const hourlyData = link.hourlyMWh[hourlyMonth].map((mwh, h) => ({
-    hour: `${String(h).padStart(2, '0')}:00`,
-    flow: Math.round(mwh),
+    hour:   `${String(h).padStart(2, '0')}:00`,
+    fromTo: mwh > 0 ? Math.round(mwh)  : 0,
+    toFrom: mwh < 0 ? Math.round(-mwh) : 0,
   }))
 
   const capMW = Math.round(link.capacityGW * 1000)
@@ -169,11 +171,10 @@ export function TransmissionDetail({ link, onClose }: Props) {
                 <XAxis dataKey="label" tick={{ fontSize: 10 }} />
                 <YAxis tick={{ fontSize: 10 }} width={44} />
                 <Tooltip
-                  formatter={(v, name) => [`${Math.abs(Number(v)).toFixed(1)} GWh`, name]}
+                  formatter={(v, name) => [`${Number(v).toFixed(1)} GWh`, name]}
                   contentStyle={{ fontSize: 12 }}
                   wrapperStyle={{ zIndex: 9999 }}
                 />
-                <ReferenceLine y={0} stroke="#d1d5db" />
                 <Bar dataKey="fromTo" name={`${fromName}→${toName}`} fill={COLOR_FT} />
                 <Bar dataKey="toFrom" name={`${toName}→${fromName}`} fill={COLOR_TF} />
               </ComposedChart>
@@ -236,7 +237,7 @@ export function TransmissionDetail({ link, onClose }: Props) {
 
             <div>
               <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
-                Profilo orario — {MONTH_LABELS[hourlyMonth]} (MWh)
+                Profilo orario — {MONTH_LABELS[hourlyMonth]} (MW)
               </h3>
               <div className="flex gap-4 mb-3">
                 <span className="flex items-center gap-1.5 text-xs text-gray-500">
@@ -253,19 +254,14 @@ export function TransmissionDetail({ link, onClose }: Props) {
                   <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
                   <XAxis dataKey="hour" tick={{ fontSize: 9 }} interval={3} axisLine={false} tickLine={false} />
                   <YAxis tick={{ fontSize: 10 }} width={54} axisLine={false} tickLine={false} />
-                  <Tooltip formatter={fmtMWh} contentStyle={{ fontSize: 12 }} wrapperStyle={{ zIndex: 9999 }} />
-                  <ReferenceLine y={0}      stroke="#9ca3af" strokeWidth={1.5} />
-                  <ReferenceLine y={ capMW} stroke={COLOR_FT} strokeDasharray="3 2" strokeOpacity={0.45} />
-                  <ReferenceLine y={-capMW} stroke={COLOR_TF} strokeDasharray="3 2" strokeOpacity={0.45} />
-                  <Bar dataKey="flow" name="Flusso" maxBarSize={18}>
-                    {hourlyData.map((entry, i) => (
-                      <Cell key={i} fill={entry.flow >= 0 ? COLOR_FT : COLOR_TF} />
-                    ))}
-                  </Bar>
+                  <Tooltip formatter={fmtMW} contentStyle={{ fontSize: 12 }} wrapperStyle={{ zIndex: 9999 }} />
+                  <ReferenceLine y={capMW} stroke="#9ca3af" strokeDasharray="3 2" strokeOpacity={0.5} />
+                  <Bar dataKey="fromTo" name={`${fromName}→${toName}`} stackId="s" fill={COLOR_FT} maxBarSize={18} />
+                  <Bar dataKey="toFrom" name={`${toName}→${fromName}`} stackId="s" fill={COLOR_TF} maxBarSize={18} />
                 </BarChart>
               </ResponsiveContainer>
               <p className="text-xs text-gray-400 mt-1 text-center">
-                Linee tratteggiate = capacità massima ±{link.capacityGW.toFixed(2)} GW
+                Linea tratteggiata = capacità massima {link.capacityGW.toFixed(2)} GW
               </p>
             </div>
           </>
