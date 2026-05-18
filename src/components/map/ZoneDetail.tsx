@@ -327,7 +327,7 @@ export function ZoneDetail({ zoneId, result, flows, onClose }: Props) {
                   <Bar dataKey="gas"     name="Gas"       stackId="s" fill={COLORS.gas}     />
                   <Bar dataKey="coal"    name="Carbone"   stackId="s" fill={COLORS.coal}    />
                   <Bar dataKey="imports" name="Import IT" stackId="s" fill={COLORS.imports} />
-                  <Bar dataKey="regImp"  name="Imp./Exp. reg." fill={COLORS.regImp} />
+                  <Bar dataKey="regImp"  name="Imp./Exp. reg." stackId="s" fill={COLORS.regImp} />
                   <Line dataKey="demand" name="Domanda" type="monotone" stroke={COLORS.demand} strokeWidth={2} dot={false} />
                 </ComposedChart>
               </ResponsiveContainer>
