@@ -22,16 +22,16 @@ function fmtPct(v: number) { return (v * 100).toFixed(0) + '%' }
 
 // ─── colour palette ────────────────────────────────────────────────────────────
 const COLORS = {
-  solar:    '#facc15',
-  wind:     '#60a5fa',
-  hydro:    '#34d399',
-  nuclear:  '#a78bfa',
-  biomass:  '#86efac',
-  geo:      '#6ee7b7',
-  gas:      '#fb923c',
-  coal:     '#6b7280',
-  imports:  '#94a3b8',
-  regImp:   '#8b5cf6',  // same colour for both positive (import) and negative (export)
+  solar:    '#FFB627',
+  wind:     '#7DD3FC',
+  hydro:    '#14B8A6',
+  nuclear:  '#8B5CF6',
+  biomass:  '#22c55e',
+  geo:      '#EA580C',
+  gas:      '#94a3b8',
+  coal:     '#475569',
+  imports:  '#a855f7',
+  regImp:   '#06b6d4',
   demand:   '#ef4444',
   battery:  '#0d9488',
 } as const
@@ -105,7 +105,7 @@ export function ZoneDetail({ zoneId, result, flows, onClose }: Props) {
     gas:     Math.round(hp.gas),
     coal:    Math.round(hp.coal),
     imports: Math.round(hp.imports),
-    regImp:  Math.round(hp.regionalImport),
+    regImp:  Math.max(0, Math.round(hp.regionalImport)),
     demand:  Math.round(hp.demand),
     deficit: Math.round(hp.deficit),
   }))
@@ -393,6 +393,7 @@ export function ZoneDetail({ zoneId, result, flows, onClose }: Props) {
                     ['coal',    'Carbone',    COLORS.coal],
                     ['gas',     'Gas',        COLORS.gas],
                     ['imports', 'Import IT',  COLORS.imports],
+                    ['regImp',  'Imp. reg.',  COLORS.regImp],
                     ['biomass', 'Biomasse',   COLORS.biomass],
                     ['geo',     'Geotermico', COLORS.geo],
                     ['nuclear', 'Nucleare',   COLORS.nuclear],
@@ -413,17 +414,6 @@ export function ZoneDetail({ zoneId, result, flows, onClose }: Props) {
                       isAnimationActive={false}
                     />
                   ))}
-                  {/* Regional import/export as a dashed line (can be negative) */}
-                  <Line
-                    dataKey="regImp"
-                    name="Imp. reg."
-                    type="monotone"
-                    stroke={COLORS.regImp}
-                    strokeWidth={1.5}
-                    strokeDasharray="4 2"
-                    dot={false}
-                    isAnimationActive={false}
-                  />
                   {/* Demand line on top */}
                   <Line
                     dataKey="demand"
