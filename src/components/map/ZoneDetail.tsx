@@ -49,9 +49,6 @@ export function ZoneDetail({ zoneId, result, flows, onClose }: Props) {
   const months = result.zoneMonths[zoneId]  // ZoneDailyResult[] — 12 entries
 
   const renewShare    = z.productionMWh > 0 ? z.renewableMWh / z.productionMWh : 0
-  const balancePct    = z.demandMWh > 0 ? z.routedBalance / z.demandMWh : 0
-  const balanceColor  = balancePct > 0.05 ? '#16a34a' : balancePct < -0.05 ? '#dc2626' : '#ca8a04'
-  const netBalance    = z.routedBalance / 1e6
 
   const zoneFlows = flows
     .filter(f => f.from === zoneId || f.to === zoneId)
@@ -160,24 +157,46 @@ export function ZoneDetail({ zoneId, result, flows, onClose }: Props) {
         {/* ── ANNUAL TAB ──────────────────────────────────────────────────────── */}
         {tab === 'annual' && (
           <>
-            <div className="grid grid-cols-2 gap-3">
-              {[
-                { label: 'Domanda',       value: fmt1(z.demandMWh / 1e6),     unit: 'TWh' },
-                { label: 'Produzione',    value: fmt1(z.productionMWh / 1e6), unit: 'TWh' },
-                { label: 'Quota rinnov.', value: fmtPct(renewShare),           unit: '' },
-                { label: 'Emissioni',     value: (z.emissionsTonnes / 1e6).toFixed(2), unit: 'MtCO₂' },
-                { label: 'Saldo netto',   value: (netBalance >= 0 ? '+' : '') + fmt1(netBalance), unit: 'TWh', color: balanceColor },
-                { label: 'Idro (fisso)',  value: fmt1(zone.hydroGW),           unit: 'GW' },
-              ].map(({ label, value, unit, color }) => (
-                <div key={label} className="bg-gray-50 rounded-xl p-3">
-                  <p className="text-xs text-gray-400 mb-1">{label}</p>
-                  <p className="text-lg font-bold" style={{ color: color ?? '#111827' }}>
-                    {value}
-                    {unit && <span className="text-xs font-normal text-gray-400 ml-1">{unit}</span>}
-                  </p>
+            {(() => {
+              const exportTWh = flows.filter(f => f.from === zoneId).reduce((s, f) => s + f.energyMWh, 0) / 1e6
+              const importTWh = flows.filter(f => f.to   === zoneId).reduce((s, f) => s + f.energyMWh, 0) / 1e6
+              const deficitTWh  = annualTotals.deficit  / 1000
+              const surplusTWh  = annualTotals.surplus  / 1000
+              return (
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="bg-gray-50 rounded-xl p-3">
+                    <p className="text-xs text-gray-400 mb-1">Domanda</p>
+                    <p className="text-lg font-bold text-gray-900">{fmt1(z.demandMWh / 1e6)}<span className="text-xs font-normal text-gray-400 ml-1">TWh</span></p>
+                  </div>
+                  <div className="bg-gray-50 rounded-xl p-3">
+                    <p className="text-xs text-gray-400 mb-1">Produzione</p>
+                    <p className="text-lg font-bold text-gray-900">{fmt1(z.productionMWh / 1e6)}<span className="text-xs font-normal text-gray-400 ml-1">TWh</span></p>
+                  </div>
+                  <div className="bg-red-50 rounded-xl p-3">
+                    <p className="text-xs text-red-400 mb-1">Deficit</p>
+                    <p className="text-lg font-bold text-red-700">{fmt1(deficitTWh)}<span className="text-xs font-normal text-red-400 ml-1">TWh</span></p>
+                  </div>
+                  <div className="bg-green-50 rounded-xl p-3">
+                    <p className="text-xs text-green-500 mb-1">Surplus</p>
+                    <p className="text-lg font-bold text-green-700">{fmt1(surplusTWh)}<span className="text-xs font-normal text-green-500 ml-1">TWh</span></p>
+                  </div>
+                  <div className="bg-amber-50 rounded-xl p-3">
+                    <p className="text-xs text-amber-500 mb-1">Export</p>
+                    <p className="text-lg font-bold text-amber-700">{fmt1(exportTWh)}<span className="text-xs font-normal text-amber-500 ml-1">TWh</span></p>
+                  </div>
+                  <div className="bg-blue-50 rounded-xl p-3">
+                    <p className="text-xs text-blue-400 mb-1">Import</p>
+                    <p className="text-lg font-bold text-blue-700">{fmt1(importTWh)}<span className="text-xs font-normal text-blue-400 ml-1">TWh</span></p>
+                  </div>
+                  <div className="bg-gray-50 rounded-xl p-3 col-span-2">
+                    <p className="text-xs text-gray-400 mb-1">Quota rinnovabili</p>
+                    <p className="text-lg font-bold" style={{ color: renewShare >= 0.65 ? '#16a34a' : '#ca8a04' }}>
+                      {fmtPct(renewShare)}
+                    </p>
+                  </div>
                 </div>
-              ))}
-            </div>
+              )
+            })()}
 
             {/* Annual production donut chart */}
             {(() => {
