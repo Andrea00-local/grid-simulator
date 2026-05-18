@@ -44,27 +44,24 @@ export function computeLevel4(
 ): Level4Result {
 
   // ── Installed capacity & source totals ────────────────────────────────────────
-  const totalSolarGW        = renewableCapacity.solar ?? 0
-  const totalWindOnshoreGW  = renewableCapacity.wind_onshore  ?? 0
-  const totalWindOffshoreGW = renewableCapacity.wind_offshore ?? 0
-  const totalWindGW         = totalWindOnshoreGW + totalWindOffshoreGW
-  const onshoreFrac         = totalWindGW > 0 ? totalWindOnshoreGW / totalWindGW : 1
-  const offshoreFrac        = 1 - onshoreFrac
-  const geoNationalGW       = renewableCapacity.geothermal ?? 0
+  const totalSolarGW        = renewableCapacity.solar          ?? 0
+  const totalWindOnshoreGW  = renewableCapacity.wind_onshore   ?? 0
+  const totalWindOffshoreGW = renewableCapacity.wind_offshore  ?? 0
+  const totalBiomassGW      = renewableCapacity.biomass        ?? 0
+  const geoNationalGW       = renewableCapacity.geothermal     ?? 0
 
   const gasTotalMWh     = (directProduction.gas_ccgt  ?? 0) * 1e6
   const coalTotalMWh    = (directProduction.coal       ?? 0) * 1e6
   const nuclearTotalMWh = (directProduction.nuclear    ?? 0) * 1e6
   const importsTotalMWh = (directProduction.imports    ?? 0) * 1e6
-  const biomassTotalMWh = (renewableCapacity.biomass    ?? 0) * BIOMASS_CF * 8760 * 1000
 
   // ── Battery per zone ──────────────────────────────────────────────────────────
   const nZones             = ZONE_IDS.length  // 7
   const battCapMWhPerZone  = storagePowerGW * MEGAPACK_HOURS * 1000 / nZones
   const battPowerMWhPerZone = battCapMWhPerZone > 0 ? battCapMWhPerZone / MEGAPACK_HOURS : 0
 
-  // ── Zone allocation ────────────────────────────────────────────────────────────
-  const allocation = allocateToZones(totalSolarGW, totalWindGW, plan)
+  // ── Zone allocation (solar, wind onshore/offshore, biomass each get own zone weights) ──
+  const allocation = allocateToZones(totalSolarGW, totalWindOnshoreGW, totalWindOffshoreGW, totalBiomassGW, plan)
 
   // ── Pass 1: renewable production + residual demand per zone × month ───────────
   // Store hourly demand and residual for later use in the main simulation
@@ -75,10 +72,8 @@ export function computeLevel4(
   for (const id of ZONE_IDS) {
     hoursCache[id]  = []
     residualDay[id] = []
-    const { solar: solarGW, wind: windGW } = allocation[id]
-    const onshoreGW  = windGW * onshoreFrac
-    const offshoreGW = windGW * offshoreFrac
-    const hydroGW    = ZONES[id].hydroGW
+    const { solar: solarGW, wind_onshore: onshoreGW, wind_offshore: offshoreGW, biomass: biomassGW } = allocation[id]
+    const hydroGW = ZONES[id].hydroGW
 
     for (let m = 0; m < 12; m++) {
       const demand:   number[] = []
@@ -89,12 +84,13 @@ export function computeLevel4(
       for (let h = 0; h < 24; h++) {
         // demand: MW/TWh × TWh = MW; energy in 1 hour = MWh
         const d   = ZONE_DEMAND_PROFILE[id][m][h] * demandTWh
-        const s   = solarGW  * ZONE_SOLAR_PROFILE[id][m][h]           * 1000
-        const won = onshoreGW  * ZONE_WIND_PROFILE[id][m][h]          * 1000
-        const wof = offshoreGW * ZONE_WIND_OFFSHORE_PROFILE[id][m][h] * 1000
-        const hyd = hydroGW    * ZONE_HYDRO_PROFILE[id][m][h]         * 1000
-        const geo = geoNationalGW * ZONE_GEO_PROFILE[id][m][h]        * 1000
-        const r   = s + won + wof + hyd + geo
+        const s   = solarGW    * ZONE_SOLAR_PROFILE[id][m][h]           * 1000
+        const won = onshoreGW  * ZONE_WIND_PROFILE[id][m][h]            * 1000
+        const wof = offshoreGW * ZONE_WIND_OFFSHORE_PROFILE[id][m][h]   * 1000
+        const hyd = hydroGW    * ZONE_HYDRO_PROFILE[id][m][h]           * 1000
+        const geo = geoNationalGW * ZONE_GEO_PROFILE[id][m][h]          * 1000
+        const bio = biomassGW  * BIOMASS_CF * 1000                       // flat baseload
+        const r   = s + won + wof + hyd + geo + bio
         const res = Math.max(0, d - r)
         demand.push(d)
         renew.push(r)
@@ -112,18 +108,18 @@ export function computeLevel4(
     for (let m = 0; m < 12; m++)
       totalResidual84 += residualDay[id][m]
 
-  // ── Pass 3: daily budgets for non-renewables per zone × month ─────────────────
+  // ── Pass 3: daily budgets for dispatchable non-renewables per zone × month ────
   // dailyBudget = (totalTWh×1e6 / 365) × (residualDay / totalResidual84)
-  type NRKey = 'gas' | 'coal' | 'nuclear' | 'imports' | 'biomass'
+  // Biomass is now zone-allocated at fixed CF (like hydro), not dispatchable.
+  type NRKey = 'gas' | 'coal' | 'nuclear' | 'imports'
   const NR_TOTALS: Record<NRKey, number> = {
     gas:     gasTotalMWh,
     coal:    coalTotalMWh,
     nuclear: nuclearTotalMWh,
     imports: importsTotalMWh,
-    biomass: biomassTotalMWh,
   }
   const dailyBudget: Record<NRKey, Record<MarketZoneId, number[]>> = {
-    gas: {}, coal: {}, nuclear: {}, imports: {}, biomass: {},
+    gas: {}, coal: {}, nuclear: {}, imports: {},
   } as Record<NRKey, Record<MarketZoneId, number[]>>
 
   for (const key of Object.keys(NR_TOTALS) as NRKey[]) {
@@ -156,12 +152,12 @@ export function computeLevel4(
 
   // Annual aggregates for map coloring
   const annZone: Record<MarketZoneId, {
-    solar: number; wind: number; hydro: number; nonrenew: number
+    solar: number; wind: number; hydro: number; bio: number; geo: number; nonrenew: number
     prod: number; demand: number; imported: number; exported: number
     emissions: number; deficit: number; surplus: number
   }> = {} as Record<MarketZoneId, any>
   for (const id of ZONE_IDS) {
-    annZone[id] = { solar: 0, wind: 0, hydro: 0, nonrenew: 0, prod: 0, demand: 0, imported: 0, exported: 0, emissions: 0, deficit: 0, surplus: 0 }
+    annZone[id] = { solar: 0, wind: 0, hydro: 0, bio: 0, geo: 0, nonrenew: 0, prod: 0, demand: 0, imported: 0, exported: 0, emissions: 0, deficit: 0, surplus: 0 }
   }
 
   // Annual inter-zone flows (MWh): key = `${from}:${to}`
@@ -210,10 +206,8 @@ export function computeLevel4(
       const localNet: Record<MarketZoneId, number> = {} as Record<MarketZoneId, number>
 
       for (const id of ZONE_IDS) {
-        const { solar: solarGW, wind: windGW } = allocation[id]
-        const onshoreGW  = windGW * onshoreFrac
-        const offshoreGW = windGW * offshoreFrac
-        const hydroGW    = ZONES[id].hydroGW
+        const { solar: solarGW, wind_onshore: onshoreGW, wind_offshore: offshoreGW, biomass: biomassGW } = allocation[id]
+        const hydroGW = ZONES[id].hydroGW
         const { demand, residual } = hoursCache[id][m]
         const dayRes = residualDay[id][m]
         const frac   = dayRes > 0 ? residual[h] / dayRes : 1 / 24
@@ -223,12 +217,12 @@ export function computeLevel4(
                       + offshoreGW * ZONE_WIND_OFFSHORE_PROFILE[id][m][h]   * 1000
         const hydroH  = hydroGW    * ZONE_HYDRO_PROFILE[id][m][h]           * 1000
         const geoH    = geoNationalGW * ZONE_GEO_PROFILE[id][m][h]          * 1000
+        const bioH    = biomassGW  * BIOMASS_CF * 1000                       // flat baseload
         const gasH    = dailyBudget.gas[id][m]     * frac
         const coalH   = dailyBudget.coal[id][m]    * frac
         const nucH    = dailyBudget.nuclear[id][m] * frac
         const impH    = dailyBudget.imports[id][m] * frac
-        const bioH    = dailyBudget.biomass[id][m] * frac
-        const total   = solarH + windH + hydroH + geoH + gasH + coalH + nucH + impH + bioH
+        const total   = solarH + windH + hydroH + geoH + bioH + gasH + coalH + nucH + impH
 
         localProd[id] = { solar: solarH, wind: windH, hydro: hydroH, gas: gasH, coal: coalH, nuclear: nucH, imports: impH, biomass: bioH, geo: geoH, total }
         localNet[id]  = total - demand[h]
@@ -348,9 +342,10 @@ export function computeLevel4(
 
       // Accumulate annual zone totals
       const az = annZone[id]
-      az.solar    += solar * days;  az.wind  += wind  * days;  az.hydro += hydro * days
-      az.nonrenew += (nuc + gas + coal + imp + bio + geo) * days
-      az.prod     += (solar + wind + hydro + nuc + gas + coal + imp + bio + geo) * days
+      az.solar    += solar * days; az.wind  += wind  * days; az.hydro += hydro * days
+      az.bio      += bio   * days; az.geo   += geo   * days
+      az.nonrenew += (nuc + gas + coal + imp) * days
+      az.prod     += (solar + wind + hydro + bio + geo + nuc + gas + coal + imp) * days
       az.demand   += dem   * days
       az.imported += Math.max(0,  regImp) * days
       az.exported += Math.max(0, -regImp) * days
@@ -369,12 +364,14 @@ export function computeLevel4(
     const az = annZone[id]
     const routedBalance = az.surplus - az.deficit  // > 0 surplus, < 0 deficit
 
+    const zoneWindGW = allocation[id].wind_onshore + allocation[id].wind_offshore
+    const zoneRenewMWh = az.solar + az.wind + az.hydro + az.bio + az.geo
     zoneResults[id] = {
       zoneId: id, name: ZONES[id].name,
       solarGW:    allocation[id].solar,
-      windGW:     allocation[id].wind,
+      windGW:     zoneWindGW,
       productionMWh:  az.prod,
-      renewableMWh:   az.solar + az.wind + az.hydro,
+      renewableMWh:   zoneRenewMWh,
       demandMWh:      az.demand,
       rawBalance:     az.prod - az.demand,
       routedBalance,
@@ -385,7 +382,7 @@ export function computeLevel4(
 
     annDeficitMWh += az.deficit
     annSurplusMWh += az.surplus
-    totalRenewMWh += az.solar + az.wind + az.hydro
+    totalRenewMWh += zoneRenewMWh
     totalProdMWh  += az.prod
     totalEmissions += az.emissions
     if (az.deficit > az.demand * 0.001) zonesWithDeficit.push(id)

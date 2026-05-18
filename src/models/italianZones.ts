@@ -1,9 +1,9 @@
 import type { MarketZoneId, RegionId, DistributionPlan } from './types'
 
 export const PLAN_LABELS: Record<DistributionPlan, string> = {
-  attuale:    'Attuale (2023)',
-  moltoNord:  'Molto a Nord',
-  moltoSud:   'Molto a Sud',
+  attuale:    'Italia 2023',
+  moltoNord:  'Produzione Nord',
+  moltoSud:   'Produzione Sud',
   equilibrato:'Equilibrato',
 }
 
@@ -68,37 +68,60 @@ export const REGION_TO_ZONE: Record<RegionId, MarketZoneId> = {
   sic: 'sic',
 }
 
-// Zone distribution weights [nord, cnord, csud, sud, cal, sic, sar] — placeholder values
-// The user will provide updated numbers; these follow the ZONE_IDS order.
-const DISTRIBUTION_WEIGHTS: Record<DistributionPlan, { solar: number[]; wind: number[] }> = {
+// Zone distribution weights [nord, cnord, csud, sud, cal, sic, sar] — from Terna/ENTSO-E data.
+// Order matches ZONE_IDS. All arrays must sum to 1.0 (normalized).
+// Sources: solar=fotovoltaico, wind_onshore=eolico, wind_offshore=eolico offshore, biomass=bioenergie.
+// Hydro is fixed by zone.hydroGW. Geothermal uses cnord profile only (physically in Toscana).
+const DISTRIBUTION_WEIGHTS: Record<DistributionPlan, {
+  solar:         number[]
+  wind_onshore:  number[]
+  wind_offshore: number[]
+  biomass:       number[]
+}> = {
+  // ── Italia 2023 ─────────────────────────────────────────────────────────────
   attuale: {
-    solar: [0.443, 0.096, 0.144, 0.197, 0.029, 0.053, 0.038],
-    wind:  [0.074, 0.039, 0.195, 0.331, 0.078, 0.175, 0.107],
+    solar:         [0.485, 0.091, 0.162, 0.131, 0.020, 0.071, 0.040],
+    wind_onshore:  [0.020, 0.010, 0.190, 0.410, 0.100, 0.180, 0.090],
+    wind_offshore: [0.020, 0.010, 0.190, 0.410, 0.100, 0.180, 0.090],
+    biomass:       [0.618, 0.049, 0.118, 0.118, 0.049, 0.020, 0.029],
   },
+  // ── Produzione Nord — more renewables in northern zones ─────────────────────
   moltoNord: {
-    solar: [0.500, 0.200, 0.120, 0.090, 0.030, 0.040, 0.020],
-    wind:  [0.350, 0.200, 0.180, 0.140, 0.050, 0.050, 0.030],
+    solar:         [0.550, 0.090, 0.165, 0.095, 0.010, 0.040, 0.050],
+    wind_onshore:  [0.030, 0.015, 0.200, 0.370, 0.090, 0.170, 0.125],
+    wind_offshore: [0.040, 0.030, 0.070, 0.300, 0.060, 0.230, 0.270],
+    biomass:       [0.700, 0.080, 0.080, 0.080, 0.020, 0.020, 0.020],
   },
+  // ── Produzione Sud — more renewables in southern zones ──────────────────────
   moltoSud: {
-    solar: [0.050, 0.050, 0.150, 0.250, 0.150, 0.200, 0.150],
-    wind:  [0.040, 0.040, 0.180, 0.280, 0.160, 0.170, 0.130],
+    solar:         [0.390, 0.070, 0.170, 0.160, 0.040, 0.110, 0.060],
+    wind_onshore:  [0.020, 0.010, 0.190, 0.410, 0.100, 0.180, 0.090],
+    wind_offshore: [0.020, 0.010, 0.080, 0.330, 0.080, 0.240, 0.240],
+    biomass:       [0.618, 0.049, 0.118, 0.118, 0.049, 0.020, 0.029],
   },
+  // ── Equilibrato — geographically balanced ────────────────────────────────────
   equilibrato: {
-    solar: [0.200, 0.130, 0.170, 0.180, 0.100, 0.120, 0.100],
-    wind:  [0.140, 0.100, 0.200, 0.220, 0.130, 0.120, 0.090],
+    solar:         [0.200, 0.090, 0.170, 0.180, 0.100, 0.150, 0.110],
+    wind_onshore:  [0.100, 0.050, 0.200, 0.280, 0.130, 0.150, 0.090],
+    wind_offshore: [0.060, 0.040, 0.120, 0.320, 0.120, 0.200, 0.140],
+    biomass:       [0.300, 0.100, 0.150, 0.150, 0.100, 0.100, 0.100],
   },
 }
 
 export function allocateToZones(
-  totalSolarGW: number,
-  totalWindGW: number,
+  totalSolarGW:        number,
+  totalWindOnshoreGW:  number,
+  totalWindOffshoreGW: number,
+  totalBiomassGW:      number,
   plan: DistributionPlan,
-): Record<MarketZoneId, { solar: number; wind: number }> {
+): Record<MarketZoneId, { solar: number; wind_onshore: number; wind_offshore: number; biomass: number }> {
   const w = DISTRIBUTION_WEIGHTS[plan]
   return Object.fromEntries(
     ZONE_IDS.map((id, i) => [id, {
-      solar: totalSolarGW * w.solar[i],
-      wind:  totalWindGW  * w.wind[i],
+      solar:         totalSolarGW        * w.solar[i],
+      wind_onshore:  totalWindOnshoreGW  * w.wind_onshore[i],
+      wind_offshore: totalWindOffshoreGW * w.wind_offshore[i],
+      biomass:       totalBiomassGW      * w.biomass[i],
     }])
-  ) as Record<MarketZoneId, { solar: number; wind: number }>
+  ) as Record<MarketZoneId, { solar: number; wind_onshore: number; wind_offshore: number; biomass: number }>
 }
