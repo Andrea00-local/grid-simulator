@@ -192,7 +192,7 @@ export function ZoneDetail({ zoneId, result, flows, onClose }: Props) {
                   <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                   <XAxis dataKey="name" tick={false} />
                   <YAxis tick={{ fontSize: 10 }} width={44} />
-                  <Tooltip formatter={fmtTipGWh} contentStyle={{ fontSize: 12 }} />
+                  <Tooltip formatter={fmtTipGWh} contentStyle={{ fontSize: 12 }} wrapperStyle={{ zIndex: 9999 }} />
                   <Legend wrapperStyle={{ fontSize: 10 }} />
                   <Bar dataKey="solar"   name="Solare"    stackId="s" fill={COLORS.solar}   />
                   <Bar dataKey="wind"    name="Eolico"    stackId="s" fill={COLORS.wind}    />
@@ -252,7 +252,7 @@ export function ZoneDetail({ zoneId, result, flows, onClose }: Props) {
                   <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                   <XAxis dataKey="label" tick={{ fontSize: 10 }} />
                   <YAxis tick={{ fontSize: 10 }} width={40} />
-                  <Tooltip formatter={fmtTipGWh} contentStyle={{ fontSize: 12 }} />
+                  <Tooltip formatter={fmtTipGWh} contentStyle={{ fontSize: 12 }} wrapperStyle={{ zIndex: 9999 }} />
                   <Legend wrapperStyle={{ fontSize: 10 }} />
                   <Bar dataKey="solar"   name="Solare"    stackId="s" fill={COLORS.solar}   />
                   <Bar dataKey="wind"    name="Eolico"    stackId="s" fill={COLORS.wind}    />
@@ -342,7 +342,7 @@ export function ZoneDetail({ zoneId, result, flows, onClose }: Props) {
                   <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
                   <XAxis dataKey="hour" tick={{ fontSize: 9 }} interval={3} axisLine={false} tickLine={false} />
                   <YAxis tick={{ fontSize: 10 }} width={44} axisLine={false} tickLine={false} />
-                  <Tooltip formatter={fmtTip} contentStyle={{ fontSize: 12 }} />
+                  <Tooltip formatter={fmtTip} contentStyle={{ fontSize: 12 }} wrapperStyle={{ zIndex: 9999 }} />
                   <Legend wrapperStyle={{ fontSize: 10 }} />
                   {/* Stacked areas bottom → top */}
                   {([
@@ -406,7 +406,7 @@ export function ZoneDetail({ zoneId, result, flows, onClose }: Props) {
                     <XAxis dataKey="hour" tick={{ fontSize: 9 }} interval={3} />
                     <YAxis yAxisId="batt" tick={{ fontSize: 10 }} width={36} />
                     <YAxis yAxisId="soc" orientation="right" tick={{ fontSize: 10 }} width={36} unit=" GWh" />
-                    <Tooltip contentStyle={{ fontSize: 12 }} />
+                    <Tooltip contentStyle={{ fontSize: 12 }} wrapperStyle={{ zIndex: 9999 }} />
                     <ReferenceLine y={0} yAxisId="batt" stroke="#e5e7eb" />
                     <Bar yAxisId="batt" dataKey="discharge" name="Scarica (MWh)" fill={COLORS.battery} opacity={0.8} />
                     <Bar yAxisId="batt" dataKey="charge"    name="Carica (MWh)"  fill="#7c3aed" opacity={0.6} />

@@ -63,6 +63,14 @@ export function computeLevel4(
   // ── Zone allocation (solar, wind onshore/offshore, biomass each get own zone weights) ──
   const allocation = allocateToZones(totalSolarGW, totalWindOnshoreGW, totalWindOffshoreGW, totalBiomassGW, plan)
 
+  // ── Pre-compute zone biomass daily MWh budget (dispatched via residual frac like NR sources) ──
+  // Biomass is excluded from `renew` so that residual demand stays nonzero even when
+  // solar/wind/hydro/geo cover all demand — otherwise totalResidual84 collapses to 0
+  // and all dispatchable budgets (gas/coal/nuclear/imports) also become 0.
+  const biomassZoneDailyMWh: Record<MarketZoneId, number> = {} as Record<MarketZoneId, number>
+  for (const id of ZONE_IDS)
+    biomassZoneDailyMWh[id] = allocation[id].biomass * BIOMASS_CF * 24 * 1000
+
   // ── Pass 1: renewable production + residual demand per zone × month ───────────
   // Store hourly demand and residual for later use in the main simulation
   type HoursCache = { demand: number[]; residual: number[]; renew: number[] }
@@ -72,7 +80,7 @@ export function computeLevel4(
   for (const id of ZONE_IDS) {
     hoursCache[id]  = []
     residualDay[id] = []
-    const { solar: solarGW, wind_onshore: onshoreGW, wind_offshore: offshoreGW, biomass: biomassGW } = allocation[id]
+    const { solar: solarGW, wind_onshore: onshoreGW, wind_offshore: offshoreGW } = allocation[id]
     const hydroGW = ZONES[id].hydroGW
 
     for (let m = 0; m < 12; m++) {
@@ -89,8 +97,8 @@ export function computeLevel4(
         const wof = offshoreGW * ZONE_WIND_OFFSHORE_PROFILE[id][m][h]   * 1000
         const hyd = hydroGW    * ZONE_HYDRO_PROFILE[id][m][h]           * 1000
         const geo = geoNationalGW * ZONE_GEO_PROFILE[id][m][h]          * 1000
-        const bio = biomassGW  * BIOMASS_CF * 1000                       // flat baseload
-        const r   = s + won + wof + hyd + geo + bio
+        // biomass excluded here — dispatched via frac alongside NR sources
+        const r   = s + won + wof + hyd + geo
         const res = Math.max(0, d - r)
         demand.push(d)
         renew.push(r)
@@ -174,8 +182,9 @@ export function computeLevel4(
       const { demand, residual, renew } = hoursCache[id][m]
       const dayRes = residualDay[id][m]
       for (let h = 0; h < 24; h++) {
-        let prod = renew[h]  // includes solar, wind, hydro, geo from hoursCache
+        let prod = renew[h]  // solar, wind, hydro, geo from hoursCache
         const frac = dayRes > 0 ? residual[h] / dayRes : 1 / 24
+        prod += biomassZoneDailyMWh[id] * frac
         for (const key of Object.keys(NR_TOTALS) as NRKey[])
           prod += dailyBudget[key][id][m] * frac
         const net = prod - demand[h]
@@ -206,7 +215,7 @@ export function computeLevel4(
       const localNet: Record<MarketZoneId, number> = {} as Record<MarketZoneId, number>
 
       for (const id of ZONE_IDS) {
-        const { solar: solarGW, wind_onshore: onshoreGW, wind_offshore: offshoreGW, biomass: biomassGW } = allocation[id]
+        const { solar: solarGW, wind_onshore: onshoreGW, wind_offshore: offshoreGW } = allocation[id]
         const hydroGW = ZONES[id].hydroGW
         const { demand, residual } = hoursCache[id][m]
         const dayRes = residualDay[id][m]
@@ -217,7 +226,7 @@ export function computeLevel4(
                       + offshoreGW * ZONE_WIND_OFFSHORE_PROFILE[id][m][h]   * 1000
         const hydroH  = hydroGW    * ZONE_HYDRO_PROFILE[id][m][h]           * 1000
         const geoH    = geoNationalGW * ZONE_GEO_PROFILE[id][m][h]          * 1000
-        const bioH    = biomassGW  * BIOMASS_CF * 1000                       // flat baseload
+        const bioH    = biomassZoneDailyMWh[id] * frac
         const gasH    = dailyBudget.gas[id][m]     * frac
         const coalH   = dailyBudget.coal[id][m]    * frac
         const nucH    = dailyBudget.nuclear[id][m] * frac
