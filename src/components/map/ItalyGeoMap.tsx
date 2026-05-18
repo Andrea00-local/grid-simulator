@@ -96,7 +96,35 @@ export function ItalyGeoMap({ result, selected, onSelect, selectedLink, onSelect
     >
       <rect width="560" height="640" fill="#dbeafe" rx="8" />
 
-      {/* Transmission capacity lines — thickness ∝ physical capacity (GW), clickable */}
+      {/* Region paths — colored by zone balance, click selects zone */}
+      {REGION_IDS.map(id => {
+        const zone = REGION_TO_ZONE[id]
+        const z = result.zones[zone]
+        const fill = balanceColor(z.routedBalance, z.demandMWh)
+        const isSelectedZone = selected === zone
+        const dimmed = hasSelection && !isSelectedZone
+        return (
+          <g
+            key={id}
+            onClick={() => onSelect(zone)}
+            className="cursor-pointer"
+            aria-label={`${REGIONS[id].name} (${ZONES[zone].name})`}
+          >
+            <title>{REGIONS[id].name} — {ZONES[zone].name}</title>
+            <path
+              d={PATHS[id]}
+              fill={fill}
+              fillOpacity={dimmed ? 0.25 : 0.88}
+              stroke={isSelectedZone ? '#7c3aed' : dimmed ? '#94a3b8' : 'white'}
+              strokeWidth={isSelectedZone ? 2.5 : dimmed ? 0.5 : 0.8}
+              strokeLinejoin="round"
+              style={{ transition: 'fill 0.2s, fill-opacity 0.2s' }}
+            />
+          </g>
+        )
+      })}
+
+      {/* Transmission capacity lines — drawn after regions so they appear on top */}
       {ZONE_TRANSMISSION_LINKS.map(([a, b]) => {
         const [ax, ay] = ZONE_CENTROIDS[a]
         const [bx, by] = ZONE_CENTROIDS[b]
@@ -124,34 +152,6 @@ export function ItalyGeoMap({ result, selected, onSelect, selectedLink, onSelect
               strokeWidth={isSelLink ? thickness + 2.5 : thickness}
               strokeOpacity={isSelLink ? 1 : hasFlow ? 0.75 : 0.45}
               strokeLinecap="round"
-            />
-          </g>
-        )
-      })}
-
-      {/* Region paths — colored by zone balance, click selects zone */}
-      {REGION_IDS.map(id => {
-        const zone = REGION_TO_ZONE[id]
-        const z = result.zones[zone]
-        const fill = balanceColor(z.routedBalance, z.demandMWh)
-        const isSelectedZone = selected === zone
-        const dimmed = hasSelection && !isSelectedZone
-        return (
-          <g
-            key={id}
-            onClick={() => onSelect(zone)}
-            className="cursor-pointer"
-            aria-label={`${REGIONS[id].name} (${ZONES[zone].name})`}
-          >
-            <title>{REGIONS[id].name} — {ZONES[zone].name}</title>
-            <path
-              d={PATHS[id]}
-              fill={fill}
-              fillOpacity={dimmed ? 0.25 : 0.88}
-              stroke={isSelectedZone ? '#7c3aed' : dimmed ? '#94a3b8' : 'white'}
-              strokeWidth={isSelectedZone ? 2.5 : dimmed ? 0.5 : 0.8}
-              strokeLinejoin="round"
-              style={{ transition: 'fill 0.2s, fill-opacity 0.2s' }}
             />
           </g>
         )
