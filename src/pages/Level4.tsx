@@ -135,6 +135,7 @@ export default function Level4() {
             onSelect={selectZone}
             selectedLink={selectedLink}
             onSelectLink={selectLink}
+            txBoost={txBoost}
           />
           <div className="flex gap-3 mt-3 flex-wrap">
             {[

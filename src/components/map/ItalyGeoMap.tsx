@@ -8,6 +8,7 @@ interface Props {
   onSelect:        (id: MarketZoneId) => void
   selectedLink?:   string | null
   onSelectLink?:   (key: string) => void
+  txBoost?:        number
 }
 
 // Physical line capacities in GW for display (Terna NTC values)
@@ -26,9 +27,9 @@ function getLinkCapGW(a: MarketZoneId, b: MarketZoneId): number {
   return LINK_GW[`${a}-${b}`] ?? LINK_GW[`${b}-${a}`] ?? 1.0
 }
 
-// Stroke width proportional to capacity: 1.5px at 0 GW → 7px at 5 GW
+// Stroke width proportional to capacity: 1.5px at 0 GW → 7px at 5 GW, capped at 14px
 function linkThickness(capGW: number): number {
-  return 1.5 + (capGW / 5.0) * 5.5
+  return Math.min(14, 1.5 + (capGW / 5.0) * 5.5)
 }
 
 // ---------------------------------------------------------------------------
@@ -83,8 +84,7 @@ const INTL_LINKS: {
   { country: 'FR',  label: 'Francia (SACOI-Sardegna)',  capacityGW: 0.3, node: { x: 5,   y: 375 }, zone: 'sar'  },
 ]
 
-export function ItalyGeoMap({ result, selected, onSelect, selectedLink, onSelectLink }: Props) {
-  const maxFlow = Math.max(...result.flows.map(f => f.energyMWh), 1)
+export function ItalyGeoMap({ result, selected, onSelect, selectedLink, onSelectLink, txBoost = 1 }: Props) {
   const hasSelection = selected !== null
 
   return (
@@ -129,28 +129,24 @@ export function ItalyGeoMap({ result, selected, onSelect, selectedLink, onSelect
         const [ax, ay] = ZONE_CENTROIDS[a]
         const [bx, by] = ZONE_CENTROIDS[b]
         const capGW    = getLinkCapGW(a, b)
-        const thickness = linkThickness(capGW)
+        const thickness = linkThickness(capGW * txBoost)
         const linkKey  = `${a}-${b}`
         const isSelLink = selectedLink === linkKey
-        const flow = result.flows
-          .filter(f => (f.from === a && f.to === b) || (f.from === b && f.to === a))
-          .reduce((s, f) => s + f.energyMWh, 0)
-        const hasFlow = flow > maxFlow * 0.02
         return (
           <g
             key={linkKey}
             onClick={() => onSelectLink?.(linkKey)}
             className={onSelectLink ? 'cursor-pointer' : undefined}
           >
-            <title>{ZONES[a].name} — {ZONES[b].name}: {capGW.toFixed(2)} GW · Clicca per dettaglio</title>
+            <title>{ZONES[a].name} — {ZONES[b].name}: {(capGW * txBoost).toFixed(2)} GW · Clicca per dettaglio</title>
             {/* Invisible wider hit area */}
             <line x1={ax} y1={ay} x2={bx} y2={by} stroke="transparent" strokeWidth={18} />
             {/* Visible line */}
             <line
               x1={ax} y1={ay} x2={bx} y2={by}
-              stroke={isSelLink ? '#f59e0b' : hasFlow ? '#3b82f6' : '#94a3b8'}
+              stroke={isSelLink ? '#f59e0b' : '#94a3b8'}
               strokeWidth={isSelLink ? thickness + 2.5 : thickness}
-              strokeOpacity={isSelLink ? 1 : hasFlow ? 0.75 : 0.45}
+              strokeOpacity={isSelLink ? 1 : 0.55}
               strokeLinecap="round"
             />
           </g>
@@ -236,25 +232,6 @@ export function ItalyGeoMap({ result, selected, onSelect, selectedLink, onSelect
         )
       })}
 
-      {/* Legend — transmission lines */}
-      <g transform="translate(8, 605)">
-        <rect width={260} height={30} rx={4} fill="white" fillOpacity={0.88} />
-        {/* capacity scale: 1 GW, 3 GW, 5 GW */}
-        {[{ gw: 1, x: 8 }, { gw: 3, x: 70 }, { gw: 5, x: 132 }].map(({ gw, x }) => (
-          <g key={gw} transform={`translate(${x}, 0)`}>
-            <line x1={0} y1={15} x2={20} y2={15} stroke="#94a3b8" strokeWidth={linkThickness(gw)} strokeLinecap="round" />
-            <text x={10} y={26} textAnchor="middle" fontSize={7} fill="#6b7280">{gw} GW</text>
-          </g>
-        ))}
-        <line x1={170} y1={15} x2={186} y2={15} stroke="#7c3aed" strokeWidth={2} strokeDasharray="4 2" />
-        <text x={190} y={15} dominantBaseline="middle" fontSize={7} fill="#4b5563">
-          Estero
-        </text>
-        <line x1={214} y1={15} x2={230} y2={15} stroke="#3b82f6" strokeWidth={2.5} strokeLinecap="round" />
-        <text x={234} y={15} dominantBaseline="middle" fontSize={7} fill="#4b5563">
-          Flusso
-        </text>
-      </g>
     </svg>
   )
 }
