@@ -1,4 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
+import {
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
+} from 'recharts'
 import { Zap, MapPin } from 'lucide-react'
 import { LevelIntro } from '@/components/layout/LevelIntro'
 import { DataSources } from '@/components/ui/DataSources'
@@ -19,7 +22,7 @@ import { MEGAPACK_HOURS } from '@/models/hourlyProfiles'
 import * as RadixSlider from '@radix-ui/react-slider'
 import type { MarketZoneId, DistributionPlan } from '@/models/types'
 
-const PLANS: DistributionPlan[] = ['attuale', 'moltoNord', 'moltoSud', 'equilibrato']
+const PLANS: DistributionPlan[] = ['attuale', 'moltoNord', 'moltoSud']
 
 export default function Level4() {
   const [showIntro, setShowIntro] = useState(true)
@@ -149,49 +152,59 @@ export default function Level4() {
           </div>
         </div>
 
-        {/* Flow table */}
-        {level4.flows.length > 0 && (
-          <div className="gs-card p-5">
-            <h3 className="text-sm font-semibold text-gray-700 mb-3">
-              Principali flussi di energia ({level4.flows.length} rotte)
-            </h3>
-            <div className="space-y-1.5">
-              {level4.flows
-                .sort((a, b) => b.energyMWh - a.energyMWh)
-                .slice(0, 8)
-                .map((f, i) => (
-                  <div key={i} className="flex items-center gap-2 text-xs">
-                    <span className="font-medium text-gray-700 w-6 text-right">{i + 1}.</span>
-                    <span className="text-gray-600">{ZONES[f.from].name}</span>
-                    <span className="text-blue-400">→</span>
-                    <span className="text-gray-600">{ZONES[f.to].name}</span>
-                    {f.path.length > 2 && (
-                      <span className="text-gray-400 text-[10px]">
-                        via {f.path.slice(1, -1).map(id => ZONES[id].abbr).join('→')}
-                      </span>
-                    )}
-                    <span className="ml-auto font-medium tabular-nums">
-                      {(f.energyMWh / 1e6).toFixed(1)} TWh
-                    </span>
-                  </div>
-                ))}
-            </div>
-          </div>
-        )}
+        {/* Flow bar chart */}
+        {(() => {
+          const chartData = level4.transmissionLinks
+            .filter(l => l.annualFromToTWh + l.annualToFromTWh > 0.001)
+            .map(l => ({
+              label:  `${ZONES[l.from].abbr}↔${ZONES[l.to].abbr}`,
+              fromTo: Math.round(l.annualFromToTWh * 10) / 10,
+              toFrom: Math.round(l.annualToFromTWh * 10) / 10,
+              util:   Math.round(l.utilizationPct),
+              fromName: ZONES[l.from].name,
+              toName:   ZONES[l.to].name,
+            }))
+            .sort((a, b) => (b.fromTo + b.toFrom) - (a.fromTo + a.toFrom))
 
-        {/* Educational callout */}
-        <div className="gs-callout-violet p-4">
-          <h3 className="text-sm font-semibold text-violet-800 mb-1">Perché la distribuzione conta</h3>
-          <p className="text-xs text-violet-700 leading-relaxed">
-            Il <strong>piano "Massimizza CF"</strong> concentra solare e eolico nelle zone più soleggiate
-            e ventose (Sud, Calabria, Sicilia, Sardegna) — massimizza la produzione totale ma
-            crea grandi surplus al Sud e deficit al Nord. Il piano <strong>"Uniforme"</strong> distribuisce
-            per abitante ma spreca i migliori capacity factor meridionali.{' '}
-            Il <strong>potenziamento rete</strong> sblocca i flussi verso Nord, ma la trasmissione ha
-            limiti fisici (congestioni, costo delle infrastrutture). In Italia, il corridoio
-            Sud→Centro è il collo di bottiglia storico del sistema elettrico.
-          </p>
-        </div>
+          if (chartData.length === 0) return null
+
+          return (
+            <div className="gs-card p-5">
+              <h3 className="text-sm font-semibold text-gray-700 mb-1">Flussi annuali sulle linee di trasmissione</h3>
+              <div className="flex gap-4 mb-3">
+                <span className="flex items-center gap-1.5 text-xs text-gray-500">
+                  <span className="w-3 h-3 rounded-sm inline-block bg-blue-500" />
+                  Da → A
+                </span>
+                <span className="flex items-center gap-1.5 text-xs text-gray-500">
+                  <span className="w-3 h-3 rounded-sm inline-block bg-orange-400" />
+                  A → Da
+                </span>
+              </div>
+              <ResponsiveContainer width="100%" height={220}>
+                <BarChart data={chartData} margin={{ top: 4, right: 10, bottom: 4, left: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                  <XAxis dataKey="label" tick={{ fontSize: 10 }} />
+                  <YAxis tick={{ fontSize: 10 }} width={44} unit=" TWh" />
+                  <Tooltip
+                    formatter={(v: unknown, name: string, props: { payload?: { fromName: string; toName: string; util: number } }) => {
+                      const d = props.payload
+                      const dir = name === 'fromTo' ? `${d?.fromName}→${d?.toName}` : `${d?.toName}→${d?.fromName}`
+                      return [`${Number(v).toFixed(1)} TWh`, dir]
+                    }}
+                    contentStyle={{ fontSize: 12 }}
+                    wrapperStyle={{ zIndex: 9999 }}
+                    footer={({ payload }: { payload?: { payload: { util: number } }[] }) =>
+                      payload?.[0] ? `Utilizzo: ${payload[0].payload.util}%` : undefined
+                    }
+                  />
+                  <Bar dataKey="fromTo" name="fromTo" fill="#3b82f6" radius={[3, 3, 0, 0]} />
+                  <Bar dataKey="toFrom" name="toFrom" fill="#f97316" radius={[3, 3, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          )
+        })()}
       </div>
 
       {/* Distribution plan + transmission controls */}
