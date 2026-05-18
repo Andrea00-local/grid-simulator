@@ -102,7 +102,8 @@ export function ZoneDetail({ zoneId, result, flows, onClose }: Props) {
     gas:     Math.round(hp.gas),
     coal:    Math.round(hp.coal),
     imports: Math.round(hp.imports),
-    regImp:  Math.max(0, Math.round(hp.regionalImport)),
+    regImpPos: Math.max(0, Math.round(hp.regionalImport)),
+    regExp:    Math.min(0, Math.round(hp.regionalImport)),
     demand:  Math.round(hp.demand),
     deficit: Math.round(hp.deficit),
   }))
@@ -326,7 +327,7 @@ export function ZoneDetail({ zoneId, result, flows, onClose }: Props) {
                   <Bar dataKey="gas"     name="Gas"       stackId="s" fill={COLORS.gas}     />
                   <Bar dataKey="coal"    name="Carbone"   stackId="s" fill={COLORS.coal}    />
                   <Bar dataKey="imports" name="Import IT" stackId="s" fill={COLORS.imports} />
-                  <Bar dataKey="regImp"  name="Import reg." fill={COLORS.regImp} />
+                  <Bar dataKey="regImp"  name="Imp./Exp. reg." fill={COLORS.regImp} />
                   <Line dataKey="demand" name="Domanda" type="monotone" stroke={COLORS.demand} strokeWidth={2} dot={false} />
                 </ComposedChart>
               </ResponsiveContainer>
@@ -412,7 +413,7 @@ export function ZoneDetail({ zoneId, result, flows, onClose }: Props) {
                     ['coal',    'Carbone',    COLORS.coal],
                     ['gas',     'Gas',        COLORS.gas],
                     ['imports', 'Import IT',  COLORS.imports],
-                    ['regImp',  'Imp. reg.',  COLORS.regImp],
+                    ['regImpPos', 'Imp. reg.',  COLORS.regImp],
                     ['biomass', 'Biomasse',   COLORS.biomass],
                     ['geo',     'Geotermico', COLORS.geo],
                     ['nuclear', 'Nucleare',   COLORS.nuclear],
@@ -433,6 +434,17 @@ export function ZoneDetail({ zoneId, result, flows, onClose }: Props) {
                       isAnimationActive={false}
                     />
                   ))}
+                  {/* Export regionale: area negativa sotto lo zero */}
+                  <Area
+                    dataKey="regExp"
+                    name="Exp. reg."
+                    type="monotone"
+                    fill="#f97316"
+                    stroke="#f97316"
+                    fillOpacity={0.7}
+                    strokeWidth={0}
+                    isAnimationActive={false}
+                  />
                   {/* Demand line on top */}
                   <Line
                     dataKey="demand"
