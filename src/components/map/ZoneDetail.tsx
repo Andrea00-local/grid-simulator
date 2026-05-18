@@ -70,7 +70,9 @@ export function ZoneDetail({ zoneId, result, flows, onClose }: Props) {
       gas:     Math.round(d.gasMWh      * scale),
       coal:    Math.round(d.coalMWh     * scale),
       imports: Math.round(d.importsMWh  * scale),
-      regImp:  Math.round(d.regionalImportMWh * scale),
+      regImp:    Math.round(d.regionalImportMWh * scale),
+      regImpPos: Math.max(0, Math.round(d.regionalImportMWh * scale)),
+      regExp:    Math.min(0, Math.round(d.regionalImportMWh * scale)),
       demand:  Math.round(d.demandMWh   * scale),
       deficit: Math.round(d.deficitMWh  * scale),
       surplus: Math.round(d.curtailmentMWh * scale),
@@ -327,7 +329,8 @@ export function ZoneDetail({ zoneId, result, flows, onClose }: Props) {
                   <Bar dataKey="gas"     name="Gas"       stackId="s" fill={COLORS.gas}     />
                   <Bar dataKey="coal"    name="Carbone"   stackId="s" fill={COLORS.coal}    />
                   <Bar dataKey="imports" name="Import IT" stackId="s" fill={COLORS.imports} />
-                  <Bar dataKey="regImp"  name="Imp./Exp. reg." stackId="s" fill={COLORS.regImp} />
+                  <Bar dataKey="regImpPos" name="Imp. reg."   stackId="s" fill={COLORS.regImp} />
+                  <Bar dataKey="regExp"    name="Exp. reg."   stackId="s" fill="#f97316" />
                   <Line dataKey="demand" name="Domanda" type="monotone" stroke={COLORS.demand} strokeWidth={2} dot={false} />
                 </ComposedChart>
               </ResponsiveContainer>
