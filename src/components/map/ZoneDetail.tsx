@@ -9,10 +9,11 @@ import { MONTH_LABELS } from '@/models/profiles'
 import { DAYS_PER_MONTH } from '@/models/hourlyProfiles'
 
 interface Props {
-  zoneId:  MarketZoneId
-  result:  Level4Result
-  flows:   MarketZoneFlow[]
-  onClose: () => void
+  zoneId:               MarketZoneId
+  result:               Level4Result
+  flows:                MarketZoneFlow[]
+  onClose:              () => void
+  storageCapacityGWh?:  number
 }
 
 type Tab = 'annual' | 'monthly' | 'hourly'
@@ -40,7 +41,7 @@ const COLORS = {
 const fmtTip    = (v: unknown) => `${Number(v).toFixed(0)} MW`
 const fmtTipGWh = (v: unknown) => `${Number(v).toFixed(0)} GWh`
 
-export function ZoneDetail({ zoneId, result, flows, onClose }: Props) {
+export function ZoneDetail({ zoneId, result, flows, onClose, storageCapacityGWh }: Props) {
   const [tab, setTab]               = useState<Tab>('annual')
   const [hourlyMonth, setHourlyMonth] = useState(6)
 
@@ -111,13 +112,11 @@ export function ZoneDetail({ zoneId, result, flows, onClose }: Props) {
   }))
 
   const socData = (months[hourlyMonth]?.hours ?? []).map(hp => ({
-    hour: `${String(hp.hour).padStart(2, '0')}:00`,
-    charge:    -Math.round(hp.batteryCharge),
-    discharge: Math.round(hp.batteryDischarge),
-    soc:       Math.round(hp.batterySOC / 1000 * 10) / 10,  // GWh
+    hour: hp.hour,
+    soc:  Math.round(hp.batterySOC / 1000 * 10) / 10,
   }))
 
-  const hasBattery = socData.some(d => d.soc > 0 || d.charge < 0 || d.discharge > 0)
+  const hasBattery = socData.some(d => d.soc > 0)
 
   const TABS: { id: Tab; label: string }[] = [
     { id: 'annual',  label: 'Annuale' },
@@ -462,23 +461,44 @@ export function ZoneDetail({ zoneId, result, flows, onClose }: Props) {
               </ResponsiveContainer>
             </div>
 
-            {/* Battery sub-chart */}
+            {/* Battery SOC sub-chart */}
             {hasBattery && (
               <div>
-                <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">
+                <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
                   Batteria — {MONTH_LABELS[hourlyMonth]}
                 </h3>
-                <ResponsiveContainer width="100%" height={140}>
-                  <ComposedChart data={socData} margin={{ top: 5, right: 10, bottom: 5, left: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                    <XAxis dataKey="hour" tick={{ fontSize: 9 }} interval={3} />
-                    <YAxis yAxisId="batt" tick={{ fontSize: 10 }} width={36} />
-                    <YAxis yAxisId="soc" orientation="right" tick={{ fontSize: 10 }} width={36} unit=" GWh" />
-                    <Tooltip contentStyle={{ fontSize: 12 }} wrapperStyle={{ zIndex: 9999 }} />
-                    <ReferenceLine y={0} yAxisId="batt" stroke="#e5e7eb" />
-                    <Bar yAxisId="batt" dataKey="discharge" name="Scarica (MWh)" fill={COLORS.battery} opacity={0.8} />
-                    <Bar yAxisId="batt" dataKey="charge"    name="Carica (MWh)"  fill="#7c3aed" opacity={0.6} />
-                    <Line yAxisId="soc" dataKey="soc" name="SOC (GWh)" type="monotone" stroke={COLORS.battery} strokeWidth={2} dot={false} />
+                <p className="text-xs text-gray-400 mb-1">Stato di carica (GWh)</p>
+                <ResponsiveContainer width="100%" height={70}>
+                  <ComposedChart data={socData} margin={{ top: 0, right: 8, left: 0, bottom: 0 }}>
+                    <XAxis
+                      dataKey="hour"
+                      ticks={[0, 6, 12, 18, 23]}
+                      tickFormatter={h => `${h}:00`}
+                      tick={{ fontSize: 10 }}
+                      height={18}
+                    />
+                    <YAxis
+                      domain={[0, storageCapacityGWh ?? 'auto']}
+                      tick={{ fontSize: 10 }}
+                      width={35}
+                    />
+                    <Area
+                      type="monotone"
+                      dataKey="soc"
+                      fill={COLORS.battery}
+                      stroke={COLORS.battery}
+                      fillOpacity={0.35}
+                      strokeWidth={1.5}
+                      isAnimationActive={false}
+                    />
+                    {(storageCapacityGWh ?? 0) > 0 && (
+                      <ReferenceLine
+                        y={storageCapacityGWh}
+                        stroke="#f97316"
+                        strokeDasharray="4 2"
+                        strokeWidth={1}
+                      />
+                    )}
                   </ComposedChart>
                 </ResponsiveContainer>
               </div>

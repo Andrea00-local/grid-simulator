@@ -283,6 +283,7 @@ export default function Level4() {
             result={level4}
             flows={level4.flows}
             onClose={closeDrawer}
+            storageCapacityGWh={storageCapacityGWh}
           />
         )}
         {selectedLink && (() => {
