@@ -32,6 +32,13 @@ const DISCHARGE_EFF = 0.95
 // Fixed annual CF for biomass (no hourly profile available)
 const BIOMASS_CF = 0.55
 
+// Battery share per zone for each distribution plan (rows = zones, cols = plans)
+export const BATT_DIST: Record<DistributionPlan, Record<MarketZoneId, number>> = {
+  attuale:   { nord: 0.48, cnord: 0.09, csud: 0.16, sud: 0.13, cal: 0.02, sic: 0.07, sar: 0.04 },
+  moltoNord: { nord: 0.55, cnord: 0.09, csud: 0.165, sud: 0.095, cal: 0.01, sic: 0.04, sar: 0.05 },
+  moltoSud:  { nord: 0.39, cnord: 0.07, csud: 0.17,  sud: 0.16,  cal: 0.04, sic: 0.11, sar: 0.06 },
+}
+
 // ─── Public API ────────────────────────────────────────────────────────────────
 
 export function computeLevel4(
@@ -55,10 +62,16 @@ export function computeLevel4(
   const nuclearTotalMWh = (directProduction.nuclear    ?? 0) * 1e6
   const importsTotalMWh = (directProduction.imports    ?? 0) * 1e6
 
-  // ── Battery per zone ──────────────────────────────────────────────────────────
-  const nZones             = ZONE_IDS.length  // 7
-  const battCapMWhPerZone  = storagePowerGW * MEGAPACK_HOURS * 1000 / nZones
-  const battPowerMWhPerZone = battCapMWhPerZone > 0 ? battCapMWhPerZone / MEGAPACK_HOURS : 0
+  // ── Battery per zone (distributed by plan weights) ───────────────────────────
+  const totalBattCapMWh = storagePowerGW * MEGAPACK_HOURS * 1000
+  const battDist     = BATT_DIST[plan]
+  const battDistSum  = Object.values(battDist).reduce((s, v) => s + v, 0)
+  const battCapMWh:   Record<MarketZoneId, number> = {} as Record<MarketZoneId, number>
+  const battPowerMWh: Record<MarketZoneId, number> = {} as Record<MarketZoneId, number>
+  for (const id of ZONE_IDS) {
+    battCapMWh[id]   = totalBattCapMWh * (battDist[id] / battDistSum)
+    battPowerMWh[id] = battCapMWh[id] > 0 ? battCapMWh[id] / MEGAPACK_HOURS : 0
+  }
 
   // ── Zone allocation (solar, wind onshore/offshore, biomass each get own zone weights) ──
   const allocation = allocateToZones(totalSolarGW, totalWindOnshoreGW, totalWindOffshoreGW, totalBiomassGW, plan)
@@ -182,7 +195,7 @@ export function computeLevel4(
     // Battery warm-up: single dry pass (no routing) to find steady-state initial SOC
     const initSOC: Record<MarketZoneId, number> = {} as Record<MarketZoneId, number>
     for (const id of ZONE_IDS) {
-      if (battCapMWhPerZone <= 0) { initSOC[id] = 0; continue }
+      if (battCapMWh[id] <= 0) { initSOC[id] = 0; continue }
       let soc = 0
       const { demand, residual, renew } = hoursCache[id][m]
       const dayRes = residualDay[id][m]
@@ -193,10 +206,10 @@ export function computeLevel4(
           prod += dailyBudget[key][id][m] * frac
         const net = prod - demand[h]
         if (net > 0) {
-          const charge = Math.min(net, battPowerMWhPerZone, (battCapMWhPerZone - soc) / CHARGE_EFF)
+          const charge = Math.min(net, battPowerMWh[id], (battCapMWh[id] - soc) / CHARGE_EFF)
           soc += charge * CHARGE_EFF
         } else if (net < 0) {
-          const discharge = Math.min(-net, battPowerMWhPerZone, soc * DISCHARGE_EFF)
+          const discharge = Math.min(-net, battPowerMWh[id], soc * DISCHARGE_EFF)
           soc -= discharge / DISCHARGE_EFF
         }
       }
@@ -339,13 +352,13 @@ export function computeLevel4(
         battCharge[id]    = 0
         battDischarge[id] = 0
 
-        if (net > 0 && battCapMWhPerZone > 0) {
-          const charge = Math.min(net, battPowerMWhPerZone, (battCapMWhPerZone - battSOC[id]) / CHARGE_EFF)
+        if (net > 0 && battCapMWh[id] > 0) {
+          const charge = Math.min(net, battPowerMWh[id], (battCapMWh[id] - battSOC[id]) / CHARGE_EFF)
           battSOC[id]      += charge * CHARGE_EFF
           battCharge[id]    = charge
           routedBal[id]    -= charge
-        } else if (net < 0 && battCapMWhPerZone > 0) {
-          const discharge = Math.min(-net, battPowerMWhPerZone, battSOC[id] * DISCHARGE_EFF)
+        } else if (net < 0 && battCapMWh[id] > 0) {
+          const discharge = Math.min(-net, battPowerMWh[id], battSOC[id] * DISCHARGE_EFF)
           battSOC[id]      -= discharge / DISCHARGE_EFF
           battDischarge[id] = discharge
           routedBal[id]    += discharge
@@ -358,10 +371,10 @@ export function computeLevel4(
       const battExportOffer: Record<MarketZoneId, number> = {} as Record<MarketZoneId, number>
       for (const id of ZONE_IDS) battExportOffer[id] = 0
 
-      if (battCapMWhPerZone > 0 && ZONE_IDS.some(id => routedBal[id] < -100)) {
+      if (totalBattCapMWh > 0 && ZONE_IDS.some(id => routedBal[id] < -100)) {
         for (const id of ZONE_IDS) {
           if (routedBal[id] > -100 && battSOC[id] > 0) {
-            const offer = Math.min(battPowerMWhPerZone, battSOC[id] * DISCHARGE_EFF)
+            const offer = Math.min(battPowerMWh[id], battSOC[id] * DISCHARGE_EFF)
             if (offer > 10) {
               battExportOffer[id]  = offer
               routedBal[id]       += offer

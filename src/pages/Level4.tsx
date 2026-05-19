@@ -11,7 +11,7 @@ import { ScenarioPrintHeader } from '@/components/print/ScenarioPrintHeader'
 import { YearSelector } from '@/components/ui/YearSelector'
 import { useSimStore } from '@/store/simulationStore'
 import { LEVEL4_CONFIG } from '@/simulation/levels/level4'
-import { computeLevel4 } from '@/models/balanceRegional'
+import { computeLevel4, BATT_DIST } from '@/models/balanceRegional'
 import { ZONES, PLAN_LABELS } from '@/models/italianZones'
 import { ItalyGeoMap } from '@/components/map/ItalyGeoMap'
 import { ZoneDetail } from '@/components/map/ZoneDetail'
@@ -50,6 +50,9 @@ export default function Level4() {
   )
 
   const storageCapacityGWh = storagePowerGW * MEGAPACK_HOURS
+  const battDistSum = Object.values(BATT_DIST[plan]).reduce((s, v) => s + v, 0)
+  const zoneStorageGWh = (zoneId: MarketZoneId) =>
+    storageCapacityGWh * (BATT_DIST[plan][zoneId] / battDistSum)
   const coverage  = Math.max(0, 1 - level4.annualDeficitTWh / demandTWh)
   const avoidedMt = ITALY_CO2_BASELINE_MT - level4.emissionsMtAnnual
 
@@ -284,7 +287,7 @@ export default function Level4() {
             result={level4}
             flows={level4.flows}
             onClose={closeDrawer}
-            storageCapacityGWh={storageCapacityGWh}
+            storageCapacityGWh={zoneStorageGWh(selected)}
           />
         )}
         {selectedLink && (() => {
