@@ -484,6 +484,12 @@ export function ZoneDetail({ zoneId, result, flows, onClose, storageCapacityGWh 
                       tick={{ fontSize: 10 }}
                       width={35}
                     />
+                    <Tooltip
+                      formatter={(v: unknown) => [`${Number(v).toFixed(1)} GWh`, 'SOC']}
+                      labelFormatter={h => `${h}:00`}
+                      contentStyle={{ fontSize: 11 }}
+                      wrapperStyle={{ zIndex: 9999 }}
+                    />
                     <Area
                       type="monotone"
                       dataKey="soc"
