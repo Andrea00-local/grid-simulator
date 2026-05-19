@@ -2,8 +2,8 @@ import type { MarketZoneId, RegionId, DistributionPlan } from './types'
 
 export const PLAN_LABELS: Record<DistributionPlan, string> = {
   attuale:    'Italia 2023',
-  moltoNord:  'Produzione Nord',
-  moltoSud:   'Produzione Sud',
+  moltoNord:  'Concentrate al Nord',
+  moltoSud:   'Concentrate al Sud',
   equilibrato:'Equilibrato',
 }
 
