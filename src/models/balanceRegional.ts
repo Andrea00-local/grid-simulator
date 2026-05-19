@@ -352,8 +352,26 @@ export function computeLevel4(
         }
       }
 
-      // Step B — Second routing: route post-battery surplus → post-battery deficit
-      // using remaining link capacity from the first routing pass (remCap already reflects it)
+      // Step B — Second routing: route post-battery surplus + battery export → deficit zones
+      // Pre-routing: zones not in deficit offer their available battery discharge as temporary surplus.
+      // Whatever isn't actually routed gets retracted back into the battery after the routing loop.
+      const battExportOffer: Record<MarketZoneId, number> = {} as Record<MarketZoneId, number>
+      for (const id of ZONE_IDS) battExportOffer[id] = 0
+
+      if (battCapMWhPerZone > 0 && ZONE_IDS.some(id => routedBal[id] < -100)) {
+        for (const id of ZONE_IDS) {
+          if (routedBal[id] > -100 && battSOC[id] > 0) {
+            const offer = Math.min(battPowerMWhPerZone, battSOC[id] * DISCHARGE_EFF)
+            if (offer > 10) {
+              battExportOffer[id]  = offer
+              routedBal[id]       += offer
+              battSOC[id]         -= offer / DISCHARGE_EFF
+              battDischarge[id]   += offer
+            }
+          }
+        }
+      }
+
       for (let pass = 0; pass < 50; pass++) {
         const surplusZones = ZONE_IDS.filter(id => routedBal[id] > 100)
         const deficitZones = ZONE_IDS.filter(id => routedBal[id] < -100)
@@ -426,6 +444,17 @@ export function computeLevel4(
         }
 
         if (passRouted < 10) break
+      }
+
+      // Post-routing: retract unused battery offers back into storage
+      // (battery only discharges for what was actually exported, not for unroutable surplus)
+      for (const id of ZONE_IDS) {
+        if (battExportOffer[id] > 0 && routedBal[id] > 0) {
+          const retract = Math.min(routedBal[id], battExportOffer[id])
+          battSOC[id]       += retract / DISCHARGE_EFF
+          battDischarge[id] -= retract
+          routedBal[id]     -= retract
+        }
       }
 
       // Step C — Record hourly point per zone using final post-second-routing balances
