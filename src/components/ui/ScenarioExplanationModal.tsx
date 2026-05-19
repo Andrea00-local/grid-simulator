@@ -18,20 +18,20 @@ const SCENARIO_INFO: Record<ScenarioId, ScenarioInfo> = {
     color: '#6b7280',
     tagline: 'Il punto di partenza reale',
     description:
-      'Il mix energetico effettivo dell\'Italia nell\'anno 2023, basato sui dati ufficiali Terna e GSE. ' +
-      'È il riferimento da cui parte ogni simulazione: capisci dove siamo prima di decidere dove vogliamo andare.',
+      'Il mix energetico effettivo dell\'Italia nell\'anno 2023, basato sui dati ufficiali Terna. ' +
+      'È il punto di partenza per studiare il sistema e modificare quello che si vuole.',
     keyNumbers: [
-      { label: 'Solare', value: '32.7 GW', note: '~30 TWh prodotti, CF 10.5%' },
-      { label: 'Eolico onshore', value: '12.1 GW', note: '~22 TWh, CF 20.6%' },
-      { label: 'Idroelettrico', value: '22.7 GW', note: '~37 TWh totali' },
-      { label: 'Gas naturale', value: '125 TWh', note: '~45% della produzione totale' },
-      { label: 'Carbone', value: '18 TWh', note: 'In fase di dismissione' },
-      { label: 'Domanda', value: '280 TWh', note: 'Consumo netto 2023' },
+      { label: 'Solare', value: '30.3 GW' },
+      { label: 'Eolico onshore', value: '12.3 GW' },
+      { label: 'Idroelettrico', value: '23.2 GW' },
+      { label: 'Geotermico', value: '0.8 GW' },
+      { label: 'Biomasse', value: '4.1 GW' },
+      { label: 'Gas naturale', value: '121 TWh' },
+      { label: 'Carbone', value: '12 TWh' },
+      { label: 'Importazioni', value: '51 TWh' },
+      { label: 'Domanda', value: '306 TWh' },
     ],
-    tradeoffs: [
-      { pro: 'Riflette la realtà attuale del sistema', con: 'Alta dipendenza da gas e importazioni' },
-      { pro: 'Base di calcolo verificabile con dati pubblici', con: 'Quota rinnovabili solo ~40%, sotto target 2030' },
-    ],
+    tradeoffs: [],
   },
   pniec2030: {
     label: 'PNIEC 2030',
@@ -164,46 +164,39 @@ export function ScenarioExplanationModal({ scenarioId, onClose }: Props) {
                 Parametri principali
               </h3>
               <div className="space-y-2">
-                {info.keyNumbers.map(({ label, value, note }) => (
+                {info.keyNumbers.map(({ label, value }) => (
                   <div
                     key={label}
                     className="flex items-center justify-between gap-3 py-2 border-b border-gray-100 last:border-0"
                   >
                     <span className="text-sm text-gray-600">{label}</span>
-                    <div className="text-right">
-                      <span className="text-sm font-bold" style={{ color: info.color }}>{value}</span>
-                      {note && <p className="text-xs text-gray-400 mt-0.5">{note}</p>}
-                    </div>
+                    <span className="text-sm font-bold" style={{ color: info.color }}>{value}</span>
                   </div>
                 ))}
               </div>
             </div>
 
-            {/* Trade-offs */}
-            <div>
-              <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">
-                Punti di forza e criticità
-              </h3>
-              <div className="space-y-2">
-                {info.tradeoffs.map(({ pro, con }) => (
-                  <div key={pro} className="rounded-xl border border-gray-100 overflow-hidden">
-                    <div className="flex items-start gap-2 px-3 py-2 bg-green-50">
-                      <span className="text-green-600 flex-shrink-0 mt-0.5">✓</span>
-                      <span className="text-xs text-green-800">{pro}</span>
+            {info.tradeoffs.length > 0 && (
+              <div>
+                <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">
+                  Punti di forza e criticità
+                </h3>
+                <div className="space-y-2">
+                  {info.tradeoffs.map(({ pro, con }) => (
+                    <div key={pro} className="rounded-xl border border-gray-100 overflow-hidden">
+                      <div className="flex items-start gap-2 px-3 py-2 bg-green-50">
+                        <span className="text-green-600 flex-shrink-0 mt-0.5">✓</span>
+                        <span className="text-xs text-green-800">{pro}</span>
+                      </div>
+                      <div className="flex items-start gap-2 px-3 py-2 bg-red-50">
+                        <span className="text-red-500 flex-shrink-0 mt-0.5">✗</span>
+                        <span className="text-xs text-red-800">{con}</span>
+                      </div>
                     </div>
-                    <div className="flex items-start gap-2 px-3 py-2 bg-red-50">
-                      <span className="text-red-500 flex-shrink-0 mt-0.5">✗</span>
-                      <span className="text-xs text-red-800">{con}</span>
-                    </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
-            </div>
-
-            <div className="rounded-xl border border-gray-100 bg-gray-50 p-4 text-xs text-gray-500 leading-relaxed">
-              Caricare questo scenario imposta tutti gli slider ai valori di riferimento.
-              Puoi poi modificarli liberamente per esplorare varianti.
-            </div>
+            )}
           </div>
         </div>
       </div>
