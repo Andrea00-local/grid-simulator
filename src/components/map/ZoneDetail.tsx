@@ -104,11 +104,12 @@ export function ZoneDetail({ zoneId, result, flows, onClose, storageCapacityGWh 
     geo:     Math.round(hp.geothermal),
     gas:     Math.round(hp.gas),
     coal:    Math.round(hp.coal),
-    imports: Math.round(hp.imports),
+    imports:   Math.round(hp.imports),
     regImpPos: Math.max(0, Math.round(hp.regionalImport)),
     regExp:    Math.min(0, Math.round(hp.regionalImport)),
-    demand:  Math.round(hp.demand),
-    deficit: Math.round(hp.deficit),
+    battery:   Math.round(hp.batteryDischarge),
+    demand:    Math.round(hp.demand),
+    deficit:   Math.round(hp.deficit),
   }))
 
   const socData = (months[hourlyMonth]?.hours ?? []).map(hp => ({
@@ -422,6 +423,7 @@ export function ZoneDetail({ zoneId, result, flows, onClose, storageCapacityGWh 
                     ['hydro',   'Idro',       COLORS.hydro],
                     ['wind',    'Eolico',     COLORS.wind],
                     ['solar',   'Solare',     COLORS.solar],
+                    ['battery', 'Batteria',   COLORS.battery],
                   ] as [string, string, string][]).map(([key, name, color]) => (
                     <Area
                       key={key}
