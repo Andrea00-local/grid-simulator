@@ -39,9 +39,8 @@ const SCENARIO_INFO: Record<ScenarioId, ScenarioInfo> = {
     color: '#059669',
     tagline: 'Gli obiettivi ufficiali dell\'Italia',
     description:
-      'Il Piano Nazionale Integrato per l\'Energia e il Clima (PNIEC), aggiornato dal governo italiano nel 2023 ' +
-      'in base alle direttive EU "Fit for 55". Triplica il solare, quasi triplica il vento, ' +
-      'ed elimina il carbone entro il 2025. È lo scenario "politica attuale" dell\'Italia.',
+      'Il Piano Nazionale Integrato per l\'Energia e il Clima (PNIEC), è il Piano che il governo italiano ha redatto per rispettare i propri obiettivi climatici al 2030. ' +
+      'E\' stato riscritto nel 2024 per poter centrare gli obiettivi europei noti come "Fit for 55" e si basa su un forte aumento di solare ed eolico.',
     keyNumbers: [
       { label: 'Solare', value: '79.9 GW', note: '+2.4× rispetto al 2023' },
       { label: 'Eolico onshore', value: '28.1 GW', note: '+2.3× rispetto al 2023' },
@@ -50,11 +49,7 @@ const SCENARIO_INFO: Record<ScenarioId, ScenarioInfo> = {
       { label: 'Carbone', value: '0 TWh', note: 'Phase-out previsto entro 2025' },
       { label: 'Domanda', value: '340 TWh', note: '+21% per elettrificazione trasporti' },
     ],
-    tradeoffs: [
-      { pro: 'Obiettivo vincolante EU Fit for 55 (-55% CO₂)', con: 'Richiede +6 GW/anno di solare: record da battere ogni anno' },
-      { pro: 'Elimina il carbone e dimezza il gas', con: 'Iter autorizzativi attuali troppo lenti (2-7 anni)' },
-      { pro: 'Riduzione importazioni e dipendenza dal gas russo', con: 'Rete di trasmissione non ancora adeguata al Sud→Nord' },
-    ],
+    tradeoffs: [],
   },
   netzero2050: {
     label: 'Net Zero 2050',
