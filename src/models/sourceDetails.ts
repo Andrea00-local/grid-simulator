@@ -33,9 +33,9 @@ export const SOURCE_DETAILS: Partial<Record<SourceKey, SourceDetail>> = {
     description:
       'Il fotovoltaico converte direttamente la luce solare in elettricità tramite celle in silicio. La produzione varia fortemente con le stagioni: in Italia raggiunge il picco in luglio e scende quasi a zero nelle notti e nelle giornate nuvolose invernali.',
     capacityFactor: {
-      value: 0.121,
-      range: '5–18%',
-      notes: 'Media annua italiana (5.3% gen – 17.6% giu)',
+      value: 0.127,
+      range: '5–19%',
+      notes: 'Media annua italiana (CF 12.7%, 1.11 TWh/GW/anno)',
     },
     italy2023: {
       value: 30.3,

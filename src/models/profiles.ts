@@ -16,7 +16,7 @@ import type { Source } from './types'
 // Biomass is NOT here — it is treated as a dispatchable source in balance.ts.
 export const MONTHLY_PRODUCTIVITY: Record<'solar' | 'wind' | 'wind_onshore' | 'wind_offshore' | 'hydro' | 'geothermal', number[]> = {
   //                  Gen   Feb   Mar   Apr   Mag   Giu   Lug   Ago   Set   Ott   Nov   Dic
-  solar:         [0.04, 0.06, 0.09, 0.10, 0.10, 0.12, 0.13, 0.12, 0.10, 0.07, 0.05, 0.04],
+  solar:         [0.044, 0.065, 0.098, 0.109, 0.109, 0.131, 0.141, 0.131, 0.109, 0.076, 0.054, 0.044],
   wind:          [0.19, 0.15, 0.21, 0.18, 0.13, 0.08, 0.11, 0.14, 0.14, 0.15, 0.24, 0.24],
   wind_onshore:  [0.19, 0.15, 0.21, 0.18, 0.13, 0.08, 0.11, 0.14, 0.14, 0.15, 0.24, 0.24],
   wind_offshore: [0.26, 0.21, 0.29, 0.25, 0.17, 0.12, 0.15, 0.20, 0.19, 0.21, 0.34, 0.28],

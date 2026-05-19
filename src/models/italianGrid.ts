@@ -10,6 +10,7 @@ export interface GridScenario {
   renewableCapacity: CapacityMap
   directProduction: CapacityMap
   demandTWh: number
+  storagePowerGW?: number
 }
 
 export const ITALY_2023: GridScenario = {
@@ -44,12 +45,13 @@ export const PNIEC_2030: GridScenario = {
   },
   directProduction: {
     nuclear:  0,
-    gas_ccgt: 60,  // 55 + 5
+    gas_ccgt: 60,
     gas_ocgt: 0,
     coal:     0,
-    imports:  10,
+    imports:  43,
   },
-  demandTWh: 340,
+  demandTWh: 359,
+  storagePowerGW: 28.4,
 }
 
 export const NET_ZERO_2050: GridScenario = {
