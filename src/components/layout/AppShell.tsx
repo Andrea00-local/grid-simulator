@@ -70,6 +70,18 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       </header>
 
       <main className="flex-1">{children}</main>
+
+      <footer className="border-t border-gray-200 dark:border-slate-700 py-4 text-center text-xs text-gray-400 dark:text-slate-500">
+        Hai curiosità sul modello?{' '}
+        <a
+          href="https://www.linkedin.com/in/andrea-alberoni-b988562b7/"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-blue-500 hover:text-blue-600 hover:underline transition-colors"
+        >
+          Contattami
+        </a>
+      </footer>
     </div>
   )
 }
