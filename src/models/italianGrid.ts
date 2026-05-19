@@ -45,7 +45,7 @@ export const PNIEC_2030: GridScenario = {
   },
   directProduction: {
     nuclear:  0,
-    gas_ccgt: 60,
+    gas_ccgt: 107,
     gas_ocgt: 0,
     coal:     0,
     imports:  43,

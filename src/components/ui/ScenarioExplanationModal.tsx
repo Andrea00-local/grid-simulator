@@ -45,7 +45,7 @@ const SCENARIO_INFO: Record<ScenarioId, ScenarioInfo> = {
       { label: 'Solare', value: '79.2 GW' },
       { label: 'Eolico onshore', value: '26 GW' },
       { label: 'Eolico offshore', value: '2.1 GW' },
-      { label: 'Gas naturale', value: '60 TWh' },
+      { label: 'Gas naturale', value: '107 TWh' },
       { label: 'Carbone', value: '0 TWh' },
       { label: 'Importazioni', value: '43 TWh' },
       { label: 'Batterie', value: '71 GWh' },
