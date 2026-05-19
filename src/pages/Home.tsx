@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { Zap, BarChart2, Clock, Map, ChevronRight, Lock } from 'lucide-react'
+import { Zap, BarChart2, Clock, Calendar, Map, ChevronRight, Lock } from 'lucide-react'
 
 const LEVELS = [
   {
@@ -14,7 +14,7 @@ const LEVELS = [
   },
   {
     n: 2,
-    icon: Clock,
+    icon: Calendar,
     title: 'Stagionalità mensile',
     description:
       'Il sole non splende allo stesso modo tutto l\'anno. Scopri come la variabilità mensile della produzione rinnovabile e della domanda crei squilibri stagionali.',
@@ -24,7 +24,7 @@ const LEVELS = [
   },
   {
     n: 3,
-    icon: Zap,
+    icon: Clock,
     title: 'Giornata tipo',
     description:
       'Affronta il problema di equilibrare ogni singola ora, cambiando il tuo mix o introducendo batterie per bilanciare domanda e offerta.',
