@@ -330,38 +330,126 @@ export function computeLevel4(
         if (passRouted < 10) break
       }
 
-      // Battery + record hourly point per zone
+      // Step A — Battery: compute per zone, update routedBal to post-battery net
+      const battCharge:    Record<MarketZoneId, number> = {} as Record<MarketZoneId, number>
+      const battDischarge: Record<MarketZoneId, number> = {} as Record<MarketZoneId, number>
+
       for (const id of ZONE_IDS) {
         const net = routedBal[id]
-        let battCharge = 0, battDischarge = 0
+        battCharge[id]    = 0
+        battDischarge[id] = 0
 
         if (net > 0 && battCapMWhPerZone > 0) {
-          battCharge = Math.min(net, battPowerMWhPerZone, (battCapMWhPerZone - battSOC[id]) / CHARGE_EFF)
-          battSOC[id] += battCharge * CHARGE_EFF
+          const charge = Math.min(net, battPowerMWhPerZone, (battCapMWhPerZone - battSOC[id]) / CHARGE_EFF)
+          battSOC[id]      += charge * CHARGE_EFF
+          battCharge[id]    = charge
+          routedBal[id]    -= charge
         } else if (net < 0 && battCapMWhPerZone > 0) {
-          battDischarge = Math.min(-net, battPowerMWhPerZone, battSOC[id] * DISCHARGE_EFF)
-          battSOC[id]  -= battDischarge / DISCHARGE_EFF
+          const discharge = Math.min(-net, battPowerMWhPerZone, battSOC[id] * DISCHARGE_EFF)
+          battSOC[id]      -= discharge / DISCHARGE_EFF
+          battDischarge[id] = discharge
+          routedBal[id]    += discharge
+        }
+      }
+
+      // Step B — Second routing: route post-battery surplus → post-battery deficit
+      // using remaining link capacity from the first routing pass (remCap already reflects it)
+      for (let pass = 0; pass < 50; pass++) {
+        const surplusZones = ZONE_IDS.filter(id => routedBal[id] > 100)
+        const deficitZones = ZONE_IDS.filter(id => routedBal[id] < -100)
+        if (!surplusZones.length || !deficitZones.length) break
+
+        const totalDeficit = deficitZones.reduce((s, id) => s + (-routedBal[id]), 0)
+        const totalSurplus = surplusZones.reduce((s, id) => s + routedBal[id], 0)
+        const toRoute      = Math.min(totalSurplus, totalDeficit)
+
+        const sortedDeficit = [...deficitZones].sort((a, b) => routedBal[a] - routedBal[b])
+        let passRouted = 0
+
+        for (const dst of sortedDeficit) {
+          const frac   = (-routedBal[dst]) / totalDeficit
+          let   budget = frac * toRoute
+
+          const availSurplus = surplusZones
+            .filter(s => routedBal[s] > 10)
+            .sort((a, b) => routedBal[b] - routedBal[a])
+
+          for (const src of availSurplus) {
+            if (budget < 10 || routedBal[dst] > -10) break
+
+            const r = dijkstraPath(src, dst, remCap, adj)
+            if (!r || r.bottleneck <= 0) continue
+
+            let actualDst  = dst
+            let actualPath = r.path
+            for (let i = 1; i < r.path.length - 1; i++) {
+              if (routedBal[r.path[i]] < -100) {
+                actualDst  = r.path[i]
+                actualPath = r.path.slice(0, i + 1)
+                break
+              }
+            }
+            let pathBN = Infinity
+            for (let i = 0; i < actualPath.length - 1; i++) {
+              const a = actualPath[i], b = actualPath[i + 1]
+              pathBN = Math.min(pathBN,
+                remCap.get(`${a}-${b}`) ?? 0,
+                remCap.get(`${b}-${a}`) ?? 0,
+              )
+            }
+            if (pathBN <= 0) continue
+
+            const amount = Math.min(budget, routedBal[src], -routedBal[actualDst], pathBN)
+            if (amount < 10) continue
+
+            routedBal[src]       -= amount
+            routedBal[actualDst] += amount
+            regImport[src]       -= amount
+            regImport[actualDst] += amount
+            budget               -= amount
+            passRouted           += amount
+
+            for (let i = 0; i < actualPath.length - 1; i++) {
+              const a = actualPath[i], b = actualPath[i + 1]
+              remCap.set(`${a}-${b}`, (remCap.get(`${a}-${b}`) ?? 0) - amount)
+              remCap.set(`${b}-${a}`, (remCap.get(`${b}-${a}`) ?? 0) - amount)
+              if (linkFlowHourly.has(`${a}-${b}`)) {
+                linkFlowHourly.get(`${a}-${b}`)![m][h] += amount
+              } else {
+                linkFlowHourly.get(`${b}-${a}`)![m][h] -= amount
+              }
+            }
+
+            const pairKey = `${src}:${actualDst}`
+            flowPairMap.set(pairKey, (flowPairMap.get(pairKey) ?? 0) + amount * days)
+          }
         }
 
-        const deficit     = Math.max(0, -(net + battDischarge))
-        const curtailment = Math.max(0,  net - battCharge)
+        if (passRouted < 10) break
+      }
+
+      // Step C — Record hourly point per zone using final post-second-routing balances
+      for (const id of ZONE_IDS) {
+        const finalNet    = routedBal[id]
+        const deficit     = Math.max(0, -finalNet)
+        const curtailment = Math.max(0,  finalNet)
         const lp          = localProd[id]
         const { demand }  = hoursCache[id][m]
 
         zoneHours[id].push({
           hour: h,
-          solar:           lp.solar,
-          wind:            lp.wind,
-          hydro:           lp.hydro,
-          biomass:         lp.biomass,
-          geothermal:      lp.geo,
-          nuclear:         lp.nuclear,
-          gas:             lp.gas,
-          coal:            lp.coal,
-          imports:         lp.imports,
-          regionalImport:  regImport[id],
-          batteryDischarge: battDischarge,
-          batteryCharge:    battCharge,
+          solar:            lp.solar,
+          wind:             lp.wind,
+          hydro:            lp.hydro,
+          biomass:          lp.biomass,
+          geothermal:       lp.geo,
+          nuclear:          lp.nuclear,
+          gas:              lp.gas,
+          coal:             lp.coal,
+          imports:          lp.imports,
+          regionalImport:   regImport[id],
+          batteryDischarge: battDischarge[id],
+          batteryCharge:    battCharge[id],
           batterySOC:       battSOC[id],
           demand:           demand[h],
           deficit,
