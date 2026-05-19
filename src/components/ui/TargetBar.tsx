@@ -103,10 +103,13 @@ export function TargetBar({
   if (noTarget) {
     gradient = `linear-gradient(to right, #dbeafe 0%, #93c5fd 50%, #3b82f6 100%)`
   } else if (direzione === 'alto-meglio') {
+    const badPos = badThreshold !== undefined
+      ? ((badThreshold - min) / (safeMax - min)) * 100
+      : tPos * 0.75
     gradient = `linear-gradient(to right,
       #dc2626 0%,
-      #ef4444 ${tPos * 0.3}%,
-      #facc15 ${tPos * 0.75}%,
+      #ef4444 ${badPos * 0.5}%,
+      #facc15 ${badPos}%,
       #22c55e ${Math.max(tPos, 0.5)}%,
       #15803d 100%)`
   } else if (tPos <= 1) {
