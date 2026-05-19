@@ -14,7 +14,26 @@ export function PrintButton({ className = '' }: Props) {
     if (!main) { window.print(); return }
 
     setLoading(true)
+
+    // Full-screen overlay so DOM manipulations by html2canvas are invisible
+    const overlay = document.createElement('div')
+    overlay.style.cssText = [
+      'position:fixed', 'inset:0', 'background:white', 'z-index:99999',
+      'display:flex', 'flex-direction:column', 'align-items:center',
+      'justify-content:center', 'gap:12px', 'font-family:sans-serif',
+    ].join(';')
+    overlay.innerHTML = `
+      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="2">
+        <polyline points="6 9 12 15 18 9"/>
+      </svg>
+      <span style="font-size:14px;color:#64748b;font-weight:500">Preparazione stampa…</span>
+    `
+    document.body.appendChild(overlay)
+
     try {
+      // Let the overlay paint before starting capture
+      await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)))
+
       window.scrollTo(0, 0)
 
       const canvas = await html2canvas(main as HTMLElement, {
@@ -22,18 +41,16 @@ export function PrintButton({ className = '' }: Props) {
         useCORS: true,
         allowTaint: true,
         backgroundColor: '#FAFAF9',
-        width: main.scrollWidth,
-        height: main.scrollHeight,
         windowWidth: window.innerWidth,
         windowHeight: main.scrollHeight,
         scrollY: 0,
+        ignoreElements: el => el === overlay,
       })
 
       const imgData = canvas.toDataURL('image/png')
       const win = window.open('', '_blank')
-      if (!win) { setLoading(false); return }
-
-      win.document.write(`<!DOCTYPE html>
+      if (win) {
+        win.document.write(`<!DOCTYPE html>
 <html>
   <head>
     <title>Grid Simulator — Scenario</title>
@@ -49,8 +66,10 @@ export function PrintButton({ className = '' }: Props) {
     <script>window.onload = function() { window.print(); }<\/script>
   </body>
 </html>`)
-      win.document.close()
+        win.document.close()
+      }
     } finally {
+      document.body.removeChild(overlay)
       setLoading(false)
     }
   }
