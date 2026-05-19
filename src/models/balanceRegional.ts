@@ -34,9 +34,10 @@ const BIOMASS_CF = 0.55
 
 // Battery share per zone for each distribution plan (rows = zones, cols = plans)
 export const BATT_DIST: Record<DistributionPlan, Record<MarketZoneId, number>> = {
-  attuale:   { nord: 0.48, cnord: 0.09, csud: 0.16, sud: 0.13, cal: 0.02, sic: 0.07, sar: 0.04 },
-  moltoNord: { nord: 0.55, cnord: 0.09, csud: 0.165, sud: 0.095, cal: 0.01, sic: 0.04, sar: 0.05 },
-  moltoSud:  { nord: 0.39, cnord: 0.07, csud: 0.17,  sud: 0.16,  cal: 0.04, sic: 0.11, sar: 0.06 },
+  attuale:     { nord: 0.48, cnord: 0.09, csud: 0.16,  sud: 0.13,  cal: 0.02, sic: 0.07, sar: 0.04 },
+  moltoNord:   { nord: 0.55, cnord: 0.09, csud: 0.165, sud: 0.095, cal: 0.01, sic: 0.04, sar: 0.05 },
+  moltoSud:    { nord: 0.39, cnord: 0.07, csud: 0.17,  sud: 0.16,  cal: 0.04, sic: 0.11, sar: 0.06 },
+  equilibrato: { nord: 0.48, cnord: 0.09, csud: 0.16,  sud: 0.13,  cal: 0.02, sic: 0.07, sar: 0.04 },
 }
 
 // ─── Public API ────────────────────────────────────────────────────────────────

@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react'
 import {
-  BarChart, Bar, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
+  BarChart, Bar, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
 } from 'recharts'
 import { Zap, MapPin } from 'lucide-react'
 import { LevelIntro } from '@/components/layout/LevelIntro'
@@ -213,7 +213,7 @@ export default function Level4() {
                     <XAxis dataKey="label" tick={{ fontSize: 10 }} />
                     <YAxis tick={{ fontSize: 10 }} width={44} unit=" TWh" />
                     <Tooltip
-                      formatter={(v: unknown, name: string, entry: { payload?: { fromName: string; toName: string; util: number } }) => {
+                      formatter={(v: unknown, name: unknown, entry: { payload?: { fromName: string; toName: string; util: number } }) => {
                         const d = entry.payload
                         const dir = name === 'fromTo' ? `${d?.fromName}→${d?.toName}` : `${d?.toName}→${d?.fromName}`
                         return [`${Number(v).toFixed(1)} TWh (util: ${d?.util ?? 0}%)`, dir]
@@ -241,7 +241,7 @@ export default function Level4() {
                       <XAxis type="number" tick={{ fontSize: 10 }} unit=" h" domain={[0, 8760]} />
                       <YAxis type="category" dataKey="label" tick={{ fontSize: 10 }} width={48} />
                       <Tooltip
-                        formatter={(v: unknown, _: string, entry: { payload?: { fromName: string; toName: string; capGW: number } }) => {
+                        formatter={(v: unknown, _: unknown, entry: { payload?: { fromName: string; toName: string; capGW: number } }) => {
                           const d = entry.payload
                           return [
                             `${Number(v).toLocaleString('it-IT')} h/anno`,
