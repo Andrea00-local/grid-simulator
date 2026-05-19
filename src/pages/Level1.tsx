@@ -8,8 +8,6 @@ import { ControlsPanel } from '@/components/controls/ControlsPanel'
 import { EnergyDonutChart } from '@/components/charts/EnergyDonutChart'
 import { EmissionsChart } from '@/components/charts/EmissionsChart'
 import { BalanceIndicator } from '@/components/charts/BalanceIndicator'
-import { PrintButton } from '@/components/print/PrintButton'
-import { ScenarioPrintHeader } from '@/components/print/ScenarioPrintHeader'
 import { YearSelector } from '@/components/ui/YearSelector'
 import { ITALY_CO2_BASELINE_MT } from '@/models/constants'
 
@@ -30,15 +28,7 @@ export default function Level1() {
       {showIntro && <LevelIntro level={1} onStart={() => setShowIntro(false)} />}
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
-      <ScenarioPrintHeader
-        level={1}
-        levelName="Bilancio Nazionale Annuale"
-        coverage={coverage}
-        renewableShare={result.renewableShare}
-        avoidedMt={avoidedMt}
-      />
-
-      <div className="mb-8 print:hidden">
+      <div className="mb-8">
         <div className="flex items-start justify-between">
           <div>
             <div className="flex items-center gap-2 text-sm text-blue-600 font-medium mb-1">
@@ -54,7 +44,6 @@ export default function Level1() {
               >?</button>
             </div>
           </div>
-          <PrintButton className="mt-1 flex-shrink-0" />
         </div>
         <YearSelector />
       </div>
@@ -70,9 +59,7 @@ export default function Level1() {
           <EnergyDonutChart result={result} />
         </div>
 
-        <div className="print:hidden">
-          <ControlsPanel layout="horizontal" />
-        </div>
+        <ControlsPanel layout="horizontal" />
 
         <div className="grid sm:grid-cols-2 gap-6">
           <div className="gs-card p-5">
@@ -85,9 +72,7 @@ export default function Level1() {
 
       </div>
 
-      <div className="print:hidden">
-        <DataSources level={1} />
-      </div>
+      <DataSources level={1} />
     </div>
     </>
   )

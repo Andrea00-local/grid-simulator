@@ -10,8 +10,6 @@ import { MEGAPACK_HOURS } from '@/models/hourlyProfiles'
 import { ControlsPanel } from '@/components/controls/ControlsPanel'
 import { HourlyDispatchChart } from '@/components/charts/HourlyDispatchChart'
 import { SourceBreakdownPanel } from '@/components/charts/SourceBreakdownPanel'
-import { PrintButton } from '@/components/print/PrintButton'
-import { ScenarioPrintHeader } from '@/components/print/ScenarioPrintHeader'
 import { YearSelector } from '@/components/ui/YearSelector'
 import { ITALY_CO2_BASELINE_MT } from '@/models/constants'
 import { SOURCE_DEFINITIONS } from '@/models/sources'
@@ -99,21 +97,8 @@ export default function Level3() {
       {showIntro && <LevelIntro level={3} onStart={() => setShowIntro(false)} />}
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
-      <ScenarioPrintHeader
-        level={3}
-        levelName="Giorno Tipo Orario"
-        coverage={coverage}
-        renewableShare={level3.renewableShareAnnual}
-        avoidedMt={avoidedMt}
-        extraParams={[
-          { label: 'Condizioni meteo', value: SCENARIO_CONFIG[scenario].label },
-          { label: 'Mese visualizzato', value: level3.months[selectedMonth].monthLabel },
-          { label: 'Storage BESS', value: storagePowerGW > 0 ? `${storagePowerGW} GW / ${storageCapacityGWh.toFixed(0)} GWh` : 'Non installato' },
-        ]}
-      />
-
       {/* Header */}
-      <div className="mb-8 print:hidden">
+      <div className="mb-8">
         <div className="flex items-start justify-between">
           <div>
             <div className="flex items-center gap-2 text-sm text-amber-600 font-medium mb-1">
@@ -129,7 +114,6 @@ export default function Level3() {
               >?</button>
             </div>
           </div>
-          <PrintButton className="mt-1 flex-shrink-0" />
         </div>
         <YearSelector />
       </div>
@@ -158,7 +142,7 @@ export default function Level3() {
       <div className="space-y-5">
 
           {/* Scenario selector */}
-          <div className="gs-card p-5 print:hidden">
+          <div className="gs-card p-5">
             <h3 className="text-sm font-semibold text-gray-700 mb-3">Condizioni meteorologiche</h3>
             <div className="flex gap-2">
               {(Object.keys(SCENARIO_CONFIG) as Scenario[]).map(s => {
@@ -185,7 +169,7 @@ export default function Level3() {
           </div>
 
           {/* Month pills */}
-          <div className="flex flex-wrap gap-2 print:hidden">
+          <div className="flex flex-wrap gap-2">
             {level3.months.map((day, i) => {
               const netGWh = (day.dailyBatteryCycledMWh + day.dailyProductionMWh - day.dailyDemandMWh) / 1_000
               const withinMargin = day.dailyDeficitMWh > 0 && day.dailyDeficitMWh < day.dailyDemandMWh * 0.01
@@ -256,16 +240,12 @@ export default function Level3() {
           </div>
 
           {/* Controls immediately below main chart */}
-          <div className="print:hidden">
-            <ControlsPanel showStorage layout="horizontal" />
-          </div>
+          <ControlsPanel showStorage layout="horizontal" />
 
 
       </div>
 
-      <div className="print:hidden">
-        <DataSources level={3} />
-      </div>
+      <DataSources level={3} />
     </div>
     </>
   )

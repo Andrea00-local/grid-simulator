@@ -6,8 +6,6 @@ import { Zap, MapPin } from 'lucide-react'
 import { LevelIntro } from '@/components/layout/LevelIntro'
 import { DataSources } from '@/components/ui/DataSources'
 import { ObjectivesPanel } from '@/components/ui/ObjectivesPanel'
-import { PrintButton } from '@/components/print/PrintButton'
-import { ScenarioPrintHeader } from '@/components/print/ScenarioPrintHeader'
 import { YearSelector } from '@/components/ui/YearSelector'
 import { useSimStore } from '@/store/simulationStore'
 import { LEVEL4_CONFIG } from '@/simulation/levels/level4'
@@ -61,22 +59,8 @@ export default function Level4() {
       {showIntro && <LevelIntro level={4} onStart={() => setShowIntro(false)} />}
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
-      <ScenarioPrintHeader
-        level={4}
-        levelName="Distribuzione Territoriale"
-        coverage={coverage}
-        renewableShare={level4.nationalRenewableShare}
-        avoidedMt={avoidedMt}
-        extraParams={[
-          { label: 'Piano distribuzione', value: PLAN_LABELS[plan] },
-          { label: 'Potenziamento rete', value: `${txBoost.toFixed(1)}×` },
-          { label: 'Batteria', value: storageCapacityGWh > 0 ? `${storageCapacityGWh.toFixed(0)} GWh` : 'Nessuna' },
-          { label: 'Zone in deficit', value: `${level4.zonesWithDeficit.length} / 7` },
-        ]}
-      />
-
       {/* Header */}
-      <div className="mb-8 print:hidden">
+      <div className="mb-8">
         <div className="flex items-start justify-between">
           <div>
             <div className="flex items-center gap-2 text-sm text-violet-600 font-medium mb-1">
@@ -92,7 +76,6 @@ export default function Level4() {
               >?</button>
             </div>
           </div>
-          <PrintButton className="mt-1 flex-shrink-0" />
         </div>
         <YearSelector />
       </div>
@@ -269,7 +252,7 @@ export default function Level4() {
       </div>
 
       {/* Distribution plan + transmission controls */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mt-8 print:hidden">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mt-8">
 
         <div className="gs-card p-5">
           <h2 className="text-sm font-semibold text-gray-700 mb-1">Piano di distribuzione</h2>
@@ -318,13 +301,11 @@ export default function Level4() {
         </div>
       </div>
 
-      <div className="mt-5 print:hidden">
+      <div className="mt-5">
         <ControlsPanel layout="horizontal" showStorage />
       </div>
 
-      <div className="print:hidden">
-        <DataSources level={4} />
-      </div>
+      <DataSources level={4} />
 
       {/* Detail drawer backdrop */}
       {(selected || selectedLink) && (

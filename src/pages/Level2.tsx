@@ -9,8 +9,6 @@ import { EmissionsChart } from '@/components/charts/EmissionsChart'
 import { MonthlyStreamChart } from '@/components/charts/MonthlyStreamChart'
 import { BalanceIndicator } from '@/components/charts/BalanceIndicator'
 import { SourceBreakdownPanel } from '@/components/charts/SourceBreakdownPanel'
-import { PrintButton } from '@/components/print/PrintButton'
-import { ScenarioPrintHeader } from '@/components/print/ScenarioPrintHeader'
 import { YearSelector } from '@/components/ui/YearSelector'
 import { ITALY_CO2_BASELINE_MT } from '@/models/constants'
 import { SOURCE_DEFINITIONS } from '@/models/sources'
@@ -68,15 +66,7 @@ export default function Level2() {
       {showIntro && <LevelIntro level={2} onStart={() => setShowIntro(false)} />}
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
-      <ScenarioPrintHeader
-        level={2}
-        levelName="Stagionalità Mensile"
-        coverage={coverage}
-        renewableShare={result.renewableShare}
-        avoidedMt={avoidedMt}
-      />
-
-      <div className="mb-8 print:hidden">
+      <div className="mb-8">
         <div className="flex items-start justify-between">
           <div>
             <div className="flex items-center gap-2 text-sm text-emerald-600 font-medium mb-1">
@@ -92,7 +82,6 @@ export default function Level2() {
               >?</button>
             </div>
           </div>
-          <PrintButton className="mt-1 flex-shrink-0" />
         </div>
         <YearSelector />
       </div>
@@ -105,7 +94,7 @@ export default function Level2() {
 
       <div className="space-y-6">
         {/* Month pills — above chart */}
-        <div className="flex flex-wrap gap-2 print:hidden">
+        <div className="flex flex-wrap gap-2">
           {result.periods.map((p, i) => {
             const rawBal = p.balance / 1_000_000
             const demandTWh = p.demand / 1_000_000
@@ -155,9 +144,7 @@ export default function Level2() {
         </div>
 
         {/* Controls immediately below main chart */}
-        <div className="print:hidden">
-          <ControlsPanel layout="horizontal" />
-        </div>
+        <ControlsPanel layout="horizontal" />
 
         {/* Gross balance summary */}
         <div className="gs-card p-5">
@@ -176,9 +163,7 @@ export default function Level2() {
 
       </div>
 
-      <div className="print:hidden">
-        <DataSources level={2} />
-      </div>
+      <DataSources level={2} />
     </div>
     </>
   )
