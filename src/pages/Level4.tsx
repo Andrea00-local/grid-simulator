@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react'
 import {
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
+  BarChart, Bar, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
 } from 'recharts'
 import { Zap, MapPin } from 'lucide-react'
 import { LevelIntro } from '@/components/layout/LevelIntro'
@@ -18,7 +18,7 @@ import { ZoneDetail } from '@/components/map/ZoneDetail'
 import { TransmissionDetail } from '@/components/map/TransmissionDetail'
 import { ControlsPanel } from '@/components/controls/ControlsPanel'
 import { ITALY_CO2_BASELINE_MT } from '@/models/constants'
-import { MEGAPACK_HOURS } from '@/models/hourlyProfiles'
+import { MEGAPACK_HOURS, DAYS_PER_MONTH } from '@/models/hourlyProfiles'
 import * as RadixSlider from '@radix-ui/react-slider'
 import type { MarketZoneId, DistributionPlan } from '@/models/types'
 
@@ -156,53 +156,113 @@ export default function Level4() {
           </div>
         </div>
 
-        {/* Flow bar chart */}
+        {/* Flow + saturation charts */}
         {(() => {
-          const chartData = level4.transmissionLinks
-            .filter(l => l.annualFromToTWh + l.annualToFromTWh > 0.001)
+          const activeLinks = level4.transmissionLinks.filter(
+            l => l.annualFromToTWh + l.annualToFromTWh > 0.001,
+          )
+          if (activeLinks.length === 0) return null
+
+          const flowData = activeLinks
             .map(l => ({
-              label:  `${ZONES[l.from].abbr}↔${ZONES[l.to].abbr}`,
-              fromTo: Math.round(l.annualFromToTWh * 10) / 10,
-              toFrom: Math.round(l.annualToFromTWh * 10) / 10,
-              util:   Math.round(l.utilizationPct),
+              label:    `${ZONES[l.from].abbr}↔${ZONES[l.to].abbr}`,
+              fromTo:   Math.round(l.annualFromToTWh * 10) / 10,
+              toFrom:   Math.round(l.annualToFromTWh * 10) / 10,
+              util:     Math.round(l.utilizationPct),
               fromName: ZONES[l.from].name,
               toName:   ZONES[l.to].name,
             }))
             .sort((a, b) => (b.fromTo + b.toFrom) - (a.fromTo + a.toFrom))
 
-          if (chartData.length === 0) return null
+          const satData = level4.transmissionLinks
+            .map(l => {
+              const capMW = l.capacityGW * txBoost * 1000
+              let hours = 0
+              for (let m = 0; m < 12; m++)
+                for (let h = 0; h < 24; h++)
+                  if (Math.abs(l.hourlyMWh[m][h]) >= capMW * 0.9)
+                    hours += DAYS_PER_MONTH[m]
+              return {
+                label:    `${ZONES[l.from].abbr}↔${ZONES[l.to].abbr}`,
+                hours,
+                fromName: ZONES[l.from].name,
+                toName:   ZONES[l.to].name,
+                capGW:    l.capacityGW * txBoost,
+              }
+            })
+            .filter(d => d.hours > 0)
+            .sort((a, b) => b.hours - a.hours)
 
           return (
-            <div className="gs-card p-5">
-              <h3 className="text-sm font-semibold text-gray-700 mb-1">Flussi annuali sulle linee di trasmissione</h3>
-              <div className="flex gap-4 mb-3">
-                <span className="flex items-center gap-1.5 text-xs text-gray-500">
-                  <span className="w-3 h-3 rounded-sm inline-block bg-blue-500" />
-                  Da → A
-                </span>
-                <span className="flex items-center gap-1.5 text-xs text-gray-500">
-                  <span className="w-3 h-3 rounded-sm inline-block bg-orange-400" />
-                  A → Da
-                </span>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              <div className="gs-card p-5">
+                <h3 className="text-sm font-semibold text-gray-700 mb-1">Flussi annuali sulle linee</h3>
+                <div className="flex gap-4 mb-3">
+                  <span className="flex items-center gap-1.5 text-xs text-gray-500">
+                    <span className="w-3 h-3 rounded-sm inline-block bg-blue-500" />
+                    Da → A
+                  </span>
+                  <span className="flex items-center gap-1.5 text-xs text-gray-500">
+                    <span className="w-3 h-3 rounded-sm inline-block bg-orange-400" />
+                    A → Da
+                  </span>
+                </div>
+                <ResponsiveContainer width="100%" height={220}>
+                  <BarChart data={flowData} margin={{ top: 4, right: 10, bottom: 4, left: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                    <XAxis dataKey="label" tick={{ fontSize: 10 }} />
+                    <YAxis tick={{ fontSize: 10 }} width={44} unit=" TWh" />
+                    <Tooltip
+                      formatter={(v: unknown, name: string, entry: { payload?: { fromName: string; toName: string; util: number } }) => {
+                        const d = entry.payload
+                        const dir = name === 'fromTo' ? `${d?.fromName}→${d?.toName}` : `${d?.toName}→${d?.fromName}`
+                        return [`${Number(v).toFixed(1)} TWh (util: ${d?.util ?? 0}%)`, dir]
+                      }}
+                      contentStyle={{ fontSize: 12 }}
+                      wrapperStyle={{ zIndex: 9999 }}
+                    />
+                    <Bar dataKey="fromTo" name="fromTo" fill="#3b82f6" radius={[3, 3, 0, 0]} />
+                    <Bar dataKey="toFrom" name="toFrom" fill="#f97316" radius={[3, 3, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
               </div>
-              <ResponsiveContainer width="100%" height={220}>
-                <BarChart data={chartData} margin={{ top: 4, right: 10, bottom: 4, left: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                  <XAxis dataKey="label" tick={{ fontSize: 10 }} />
-                  <YAxis tick={{ fontSize: 10 }} width={44} unit=" TWh" />
-                  <Tooltip
-                    formatter={(v: unknown, name: string, entry: { payload?: { fromName: string; toName: string; util: number } }) => {
-                      const d = entry.payload
-                      const dir = name === 'fromTo' ? `${d?.fromName}→${d?.toName}` : `${d?.toName}→${d?.fromName}`
-                      return [`${Number(v).toFixed(1)} TWh (util: ${d?.util ?? 0}%)`, dir]
-                    }}
-                    contentStyle={{ fontSize: 12 }}
-                    wrapperStyle={{ zIndex: 9999 }}
-                  />
-                  <Bar dataKey="fromTo" name="fromTo" fill="#3b82f6" radius={[3, 3, 0, 0]} />
-                  <Bar dataKey="toFrom" name="toFrom" fill="#f97316" radius={[3, 3, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
+
+              <div className="gs-card p-5">
+                <h3 className="text-sm font-semibold text-gray-700 mb-1">Ore annuali a saturazione ≥90%</h3>
+                <p className="text-xs text-gray-400 mb-3">Linee più stressate (ore/anno ≥ 90% capacità)</p>
+                {satData.length === 0 ? (
+                  <div className="flex items-center justify-center h-[220px] text-xs text-gray-400">
+                    Nessuna linea a saturazione ≥90%
+                  </div>
+                ) : (
+                  <ResponsiveContainer width="100%" height={220}>
+                    <BarChart data={satData} layout="vertical" margin={{ top: 4, right: 16, bottom: 4, left: 8 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" horizontal={false} />
+                      <XAxis type="number" tick={{ fontSize: 10 }} unit=" h" domain={[0, 8760]} />
+                      <YAxis type="category" dataKey="label" tick={{ fontSize: 10 }} width={48} />
+                      <Tooltip
+                        formatter={(v: unknown, _: string, entry: { payload?: { fromName: string; toName: string; capGW: number } }) => {
+                          const d = entry.payload
+                          return [
+                            `${Number(v).toLocaleString('it-IT')} h/anno`,
+                            `${d?.fromName}↔${d?.toName} (${d?.capGW?.toFixed(1)} GW)`,
+                          ]
+                        }}
+                        contentStyle={{ fontSize: 12 }}
+                        wrapperStyle={{ zIndex: 9999 }}
+                      />
+                      <Bar dataKey="hours" name="hours" radius={[0, 3, 3, 0]}>
+                        {satData.map((d, i) => (
+                          <Cell
+                            key={i}
+                            fill={d.hours >= 4380 ? '#dc2626' : d.hours >= 1752 ? '#f97316' : '#3b82f6'}
+                          />
+                        ))}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                )}
+              </div>
             </div>
           )
         })()}
