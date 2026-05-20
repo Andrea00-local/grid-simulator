@@ -31,7 +31,7 @@ export const SOURCE_DETAILS: Partial<Record<SourceKey, SourceDetail>> = {
     color: '#FFB627',
     unit: 'GW',
     description:
-      'Il fotovoltaico converte direttamente la luce solare in elettricità tramite celle in silicio. La produzione varia fortemente con le stagioni: in Italia raggiunge il picco in luglio e scende quasi a zero nelle notti e nelle giornate nuvolose invernali.',
+      'Il fotovoltaico converte direttamente la luce solare in elettricità tramite celle in silicio. La produzione varia fortemente con le stagioni e all\'interno della giornata, per questo motivo è spesso accoppiato con batterie per rendere più equilibrata la sua produzione. È la fonte meno costosa da installare, specialmente in un paese soleggiato come l\'Italia e per questo motivo si prevede un grande utilizzo in futuro.',
     capacityFactor: {
       value: 0.127,
       range: '5–19%',
@@ -76,7 +76,7 @@ export const SOURCE_DETAILS: Partial<Record<SourceKey, SourceDetail>> = {
     color: '#7DD3FC',
     unit: 'GW',
     description:
-      'Le turbine eoliche convertono l\'energia cinetica del vento in elettricità. In Italia il vento è più forte e costante al Sud (Puglia, Calabria, Sicilia) e sui passi alpini. La produzione è massima in inverno e minima in estate.',
+      'Le turbine eoliche convertono l\'energia cinetica del vento in elettricità. La produzione ha un andamento che è maggiore nei mesi invernali, mentre è costante durante il giorno. Il problema principale è che non è costante: possono capitare giorni interi senza vento. L\'Italia ha una buona potenzialità eolica ma molto concentrata nelle regioni del Sud e nelle isole.',
     capacityFactor: {
       value: 0.215,
       range: '12–30%',
@@ -121,7 +121,7 @@ export const SOURCE_DETAILS: Partial<Record<SourceKey, SourceDetail>> = {
     color: '#0EA5E9',
     unit: 'GW',
     description:
-      'L\'eolico offshore installa turbine in mare aperto, dove il vento è più forte e più costante rispetto alla terraferma. L\'Italia ha zero installazioni offshore al 2023, ma il PNIEC prevede i primi impianti nel Mediterraneo entro il 2030.',
+      'L\'eolico offshore sfrutta lo stesso principio dell\'eolico ma con turbine in mare aperto, dove il vento è più forte e più costante rispetto alla terraferma, permettendo capacity factor più elevati. L\'Italia ha zero installazioni offshore al 2023, ma il PNIEC prevede i primi impianti nel Mediterraneo entro il 2030. I fondali italiani più profondi offrono grandi opportunità per la tecnologia flottante che però è ancora poco sviluppata.',
     capacityFactor: {
       value: 0.305,
       range: '12–47%',
@@ -167,7 +167,7 @@ export const SOURCE_DETAILS: Partial<Record<SourceKey, SourceDetail>> = {
     color: '#14B8A6',
     unit: 'GW',
     description:
-      'Le centrali idroelettriche sfruttano il dislivello dell\'acqua per far girare turbine. Le centrali a bacino (serbatoi) possono regolare la produzione quasi come un generatore termoelettrico; quelle ad acqua fluente seguono invece il regime dei fiumi. In Italia l\'idroelettrico è la principale fonte rinnovabile storica.',
+      'Le centrali idroelettriche sfruttano il dislivello dell\'acqua per far girare turbine. Le centrali a bacino (serbatoi) possono regolare la produzione quasi come un generatore termoelettrico; quelle ad acqua fluente seguono invece il regime dei fiumi. In Italia l\'idroelettrico è la principale fonte rinnovabile storica ed è già ampiamente sfruttata, per cui non si vede la possibilità per una grande espansione.',
     capacityFactor: {
       value: 0.212,
       range: '14–32%',
@@ -426,7 +426,7 @@ export const SOURCE_DETAILS: Partial<Record<SourceKey, SourceDetail>> = {
     color: '#475569',
     unit: 'TWh',
     description:
-      'Le centrali a carbone bruciano carbone per generare vapore ad alta pressione che fa girare turbine. Sono la fonte energetica con le maggiori emissioni di CO₂ per kWh (~1100 gCO₂/kWh). L\'Italia sta progressivamente chiudendo i suoi impianti: il piano di phase-out è previsto entro il 2025.',
+      'Le centrali a carbone bruciano carbone per generare vapore ad alta pressione che fa girare turbine. Sono la fonte energetica con le maggiori emissioni di CO₂ per kWh (~1100 gCO₂/kWh). L\'Italia si era impegnata a completare il phase-out per il 2025, ma questa deadline è stata rinviata.',
     italy2023: {
       value: 13,
       context: 'In forte calo rispetto al picco di ~49 TWh del 2012. Obiettivo phase-out entro il 2025.',

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, type ReactNode } from 'react'
 import { X, ExternalLink, Database } from 'lucide-react'
 import { SimplificationsModal } from './SimplificationsModal'
 import { ModelExplanationModal } from './ModelExplanationModal'
@@ -16,7 +16,21 @@ interface DataSection {
   entries: DataEntry[]
 }
 
-const DATA_BY_LEVEL: Record<number, { intro: string; sections: DataSection[] }> = {
+const DATA_BY_LEVEL: Record<number, { intro: ReactNode; sections: DataSection[] }> = {
+  0: {
+    intro: (
+      <>
+        In ciascuna pagina troverai la possibilità di vedere le fonti usate per i dati presenti su quella specifica pagina.
+        In generale però quasi tutti i dati provengono da <strong>Terna</strong>, la società che gestisce la rete di trasmissione,
+        anche detta TSO (transmission system operator). Per le emissioni invece sono stati usati i dati di{' '}
+        <strong>ISPRA</strong> (Istituto Superiore per la Protezione e la Ricerca Ambientale).
+        Sono presenti diversi riferimenti al <strong>PNIEC</strong> (Piano Nazionale Integrato per l'Energia e il Clima),
+        ovvero la strategia presentata dall'Italia per rispettare i propri obiettivi emissivi presi in ambito europeo,
+        e tutti si basano sui dati contenuti nel documento del Piano stesso.
+      </>
+    ),
+    sections: [],
+  },
   1: {
     intro:
       'Il modello del Livello 1 calcola la produzione annuale di ogni fonte e la confronta con la domanda nazionale. Ecco i parametri chiave e le loro fonti.',
@@ -295,7 +309,7 @@ const DATA_BY_LEVEL: Record<number, { intro: string; sections: DataSection[] }> 
 }
 
 interface Props {
-  level: 1 | 2 | 3 | 4
+  level: 0 | 1 | 2 | 3 | 4
 }
 
 export function DataSources({ level }: Props) {
@@ -305,7 +319,7 @@ export function DataSources({ level }: Props) {
   return (
     <>
       {/* Trigger row */}
-      <div className="mt-8 border-t border-gray-100 pt-5 flex flex-wrap items-center gap-x-8 gap-y-3">
+      <div className="mt-8 border-t border-gray-100 pt-5 flex flex-nowrap items-center gap-x-6 overflow-x-auto">
         <button
           onClick={() => setOpen(true)}
           className="group flex items-center gap-2 text-sm text-gray-500 hover:text-gray-800 transition-colors"

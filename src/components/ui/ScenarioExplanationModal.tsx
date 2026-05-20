@@ -59,46 +59,22 @@ const SCENARIO_INFO: Record<ScenarioId, ScenarioInfo> = {
     color: '#7c3aed',
     tagline: 'Neutralità climatica al 2050',
     description:
-      'Scenario ipotetico di neutralità carbonica del settore elettrico italiano al 2050, ' +
-      'coerente con gli obiettivi dell\'Accordo di Parigi (+1.5°C). Include un ritorno ipotetico ' +
-      'del nucleare (SMR di nuova generazione), rinnovabili massicce e quasi zero fossili.',
+      'Scenario ipotetico compatibile con gli impegni presi dall\'Italia in sede europea di azzerare le proprie emissioni entro il 2050. ' +
+      'Richiede un aumento non solo della potenza eolica e fotovoltaica ma anche del dispiegamento di batterie e dell\'adeguamento della rete di trasmissione.',
     keyNumbers: [
-      { label: 'Solare', value: '120 GW', note: '+3.7× vs 2023' },
-      { label: 'Eolico onshore', value: '28 GW', note: 'Saturazione territoriale' },
-      { label: 'Eolico offshore', value: '8 GW', note: 'Adriatico, Stretto, Canale di Sicilia' },
-      { label: 'Nucleare (SMR)', value: '57 TWh', note: 'Ipotetico, non pianificato dall\'Italia' },
-      { label: 'Gas naturale', value: '12 TWh', note: 'Solo backup estremo con CCS' },
-      { label: 'Domanda', value: '450 TWh', note: '+60% per piena elettrificazione' },
+      { label: 'Solare', value: '170 GW' },
+      { label: 'Eolico onshore', value: '35 GW' },
+      { label: 'Eolico offshore', value: '30 GW' },
+      { label: 'Geotermico', value: '2 GW' },
+      { label: 'Biomasse', value: '5 GW' },
+      { label: 'Nucleare (SMR)', value: '57 TWh' },
+      { label: 'Gas naturale', value: '12 TWh' },
+      { label: 'Importazioni', value: '50 TWh' },
+      { label: 'Batterie', value: '120 GW' },
+      { label: 'Capacità di rete', value: '1.5×' },
+      { label: 'Domanda', value: '400 TWh' },
     ],
-    tradeoffs: [
-      { pro: 'Zero emissioni nette dal settore elettrico', con: 'Il nucleare richiede 15-20 anni di costruzione' },
-      { pro: 'Massima indipendenza energetica', con: 'Investimenti stimati in 800+ miliardi €' },
-      { pro: 'Allineato agli obiettivi climatici internazionali', con: 'Nessun piano governativo italiano include nucleare al 2050' },
-    ],
-  },
-  fullRenewable: {
-    label: '100% Rinnovabili',
-    year: 'Ipotetico',
-    color: '#d97706',
-    tagline: 'Solo rinnovabili, zero fossili e nucleare',
-    description:
-      'Scenario estremo: nessuna fonte fossile né nucleare. Tutta la domanda è coperta da ' +
-      'rinnovabili. In questo simulatore non è modellato lo storage inter-stagionale ' +
-      '(idrogeno, pompaggio), quindi il bilancio mostrerà potenziali deficit invernali ' +
-      'non risolti. È un caso-studio per capire i limiti delle rinnovabili variabili.',
-    keyNumbers: [
-      { label: 'Solare', value: '90 GW', note: 'Principale fonte di energia' },
-      { label: 'Eolico onshore', value: '35 GW', note: 'Oltre il massimo PNIEC' },
-      { label: 'Eolico offshore', value: '6 GW', note: 'Espansione significativa' },
-      { label: 'Geotermico', value: '3.5 GW', note: 'Espansione oltre Larderello' },
-      { label: 'Gas naturale', value: '18 TWh', note: 'Residuo di backup (non zero)' },
-      { label: 'Domanda', value: '380 TWh', note: 'Elettrificazione parziale' },
-    ],
-    tradeoffs: [
-      { pro: 'Minime emissioni operative di CO₂', con: 'Deficit invernali quasi certi senza storage di lungo periodo' },
-      { pro: 'Zero dipendenza da combustibili fossili', con: 'Richiede enormi capacità di storage non ancora esistenti' },
-      { pro: 'Idealmente il più sostenibile a lungo termine', con: 'Costi di bilanciamento molto elevati' },
-    ],
+    tradeoffs: [],
   },
 }
 

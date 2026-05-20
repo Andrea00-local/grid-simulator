@@ -30,9 +30,10 @@ export default function Level4() {
   const demandTWh         = useSimStore(s => s.demandTWh)
 
   const storagePowerGW = useSimStore(s => s.storagePowerGW)
+  const txBoost        = useSimStore(s => s.txBoost)
+  const setTxBoost     = useSimStore(s => s.setTxBoost)
 
   const [plan, setPlan]             = useState<DistributionPlan>('attuale')
-  const [txBoost, setTxBoost]       = useState(1.0)
   const [selected, setSelected]     = useState<MarketZoneId | null>(null)
   const [selectedLink, setSelectedLink] = useState<string | null>(null)
 

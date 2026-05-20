@@ -133,17 +133,17 @@ export function TargetBar({
       : displayed.toFixed(0)
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 flex flex-col gap-3">
+    <div className="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 shadow-sm p-5 flex flex-col gap-3">
 
       {/* Label + tooltip trigger */}
       <div className="flex items-center gap-1.5">
-        <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+        <span className="text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide">
           {label}
         </span>
         <div className="relative">
           <button
             type="button"
-            className="w-4 h-4 rounded-full bg-gray-100 text-gray-400 text-[9px] font-bold flex items-center justify-center hover:bg-gray-200 transition-colors"
+            className="w-4 h-4 rounded-full bg-gray-100 dark:bg-slate-700 text-gray-400 dark:text-slate-500 text-[9px] font-bold flex items-center justify-center hover:bg-gray-200 dark:hover:bg-slate-600 transition-colors"
             onMouseEnter={() => setShowTooltip(true)}
             onMouseLeave={() => setShowTooltip(false)}
             onFocus={() => setShowTooltip(true)}
@@ -171,7 +171,7 @@ export function TargetBar({
         >
           {formatted}
         </span>
-        <span className="text-sm text-gray-400 font-medium">{unita}</span>
+        <span className="text-sm text-gray-400 dark:text-slate-500 font-medium">{unita}</span>
         {isGood && (
           <span className="ml-0.5 text-green-500 font-bold text-lg" aria-label="Obiettivo raggiunto">
             ✓
@@ -210,7 +210,7 @@ export function TargetBar({
                 transform: 'translateX(-50%)',
                 borderLeft:   '5px solid transparent',
                 borderRight:  '5px solid transparent',
-                borderTop:    '6px solid #1e293b',
+                borderTop:    '6px solid var(--marker-color)',
               }}
             />
             {/* Vertical white line through bar */}
@@ -235,7 +235,7 @@ export function TargetBar({
 
       {/* Target label + feedback text */}
       <div className="space-y-0.5">
-        <p className="text-xs text-gray-400">{targetLabel}</p>
+        <p className="text-xs text-gray-400 dark:text-slate-500">{targetLabel}</p>
         <p
           className="text-xs font-medium leading-snug"
           style={{ color: accentColor, transition: 'color 300ms ease-out' }}

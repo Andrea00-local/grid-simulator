@@ -9,6 +9,7 @@
   --chart-tooltip-bg:     #ffffff;
   --chart-tooltip-border: #e5e7eb;
   --chart-tooltip-text:   #111827;
+  --marker-color:  #1e293b;
 }
 .dark {
   --chart-grid:    #1e293b;
@@ -16,6 +17,7 @@
   --chart-tooltip-bg:     #1e293b;
   --chart-tooltip-border: #334155;
   --chart-tooltip-text:   #f1f5f9;
+  --marker-color:  #f1f5f9;
 }
 
 @layer base {

@@ -3,17 +3,16 @@ import type { CapacityMap, Scenario } from '@/models/types'
 import type { SimConfig, LevelConfig } from '@/simulation/types'
 import type { SimResult } from '@/models/types'
 import { run } from '@/simulation/engine'
-import { ITALY_2023, PNIEC_2030, NET_ZERO_2050, FULL_RENEWABLE, type GridScenario } from '@/models/italianGrid'
+import { ITALY_2023, PNIEC_2030, NET_ZERO_2050, type GridScenario } from '@/models/italianGrid'
 import { LEVEL1_CONFIG } from '@/simulation/levels/level1'
 
-export type ScenarioId = 'italy2023' | 'pniec2030' | 'netzero2050' | 'fullRenewable'
+export type ScenarioId = 'italy2023' | 'pniec2030' | 'netzero2050'
 export type TargetYear = 2030 | 2040 | 2050
 
 export const SCENARIOS: Record<ScenarioId, { label: string } & GridScenario> = {
-  italy2023:     { label: 'Italia 2023',      ...ITALY_2023 },
-  pniec2030:     { label: 'PNIEC 2030',       ...PNIEC_2030 },
-  netzero2050:   { label: 'Net Zero 2050',    ...NET_ZERO_2050 },
-  fullRenewable: { label: '100% Rinnovabili', ...FULL_RENEWABLE },
+  italy2023:   { label: 'Italia 2023',   ...ITALY_2023 },
+  pniec2030:   { label: 'PNIEC 2030',   ...PNIEC_2030 },
+  netzero2050: { label: 'Net Zero 2050', ...NET_ZERO_2050 },
 }
 
 interface SimState {
@@ -24,6 +23,7 @@ interface SimState {
   result: SimResult
   scenario: Scenario          // Level 3: weather condition
   storagePowerGW: number      // Level 3: installed battery power
+  txBoost: number             // Level 4: transmission capacity multiplier
   targetYear: TargetYear      // Reference year for projections
 
   setRenewableCapacity: (source: string, gw: number) => void
@@ -34,6 +34,7 @@ interface SimState {
   setLevelConfig: (config: LevelConfig) => void
   setScenario: (s: Scenario) => void
   setStoragePower: (gw: number) => void
+  setTxBoost: (v: number) => void
   setTargetYear: (year: TargetYear) => void
 }
 
@@ -58,6 +59,7 @@ export const useSimStore = create<SimState>()((set, get) => ({
   result:            initResult,
   scenario:          'average' as Scenario,
   storagePowerGW:    0,
+  txBoost:           1.0,
   targetYear:        2030,
 
   setRenewableCapacity(source, gw) {
@@ -91,7 +93,8 @@ export const useSimStore = create<SimState>()((set, get) => ({
     const result = run(buildConfig(get().levelConfig, renewableCapacity, directProduction, demandTWh))
     const targetYear: TargetYear = (id === 'pniec2030' || id === 'italy2023') ? 2030 : 2050
     const storagePowerGW = s.storagePowerGW ?? 0
-    set({ renewableCapacity, directProduction, demandTWh, result, targetYear, storagePowerGW })
+    const txBoost = s.txBoostDefault ?? 1.0
+    set({ renewableCapacity, directProduction, demandTWh, result, targetYear, storagePowerGW, txBoost })
   },
 
   setLevelConfig(config) {
@@ -101,5 +104,6 @@ export const useSimStore = create<SimState>()((set, get) => ({
 
   setScenario(s) { set({ scenario: s }) },
   setStoragePower(gw) { set({ storagePowerGW: gw }) },
+  setTxBoost(v) { set({ txBoost: v }) },
   setTargetYear(year) { set({ targetYear: year }) },
 }))

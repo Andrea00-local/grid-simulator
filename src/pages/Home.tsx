@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
-import { Zap, BarChart2, Clock, Calendar, Map, ChevronRight, Lock } from 'lucide-react'
+import { BarChart2, Clock, Calendar, Map, ChevronRight, Lock } from 'lucide-react'
+import { DataSources } from '@/components/ui/DataSources'
 
 const LEVELS = [
   {
@@ -49,17 +50,12 @@ export default function Home() {
     <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
       {/* Hero */}
       <div className="text-center mb-16">
-        <div className="inline-flex items-center gap-2 bg-blue-50 text-blue-700 rounded-full px-4 py-1.5 text-sm font-medium mb-6">
-          <Zap className="w-4 h-4" />
-          Simulatore didattico — Rete elettrica italiana
-        </div>
         <h1 className="text-4xl sm:text-5xl font-bold text-gray-900 mb-5 tracking-tight">
           Come funziona la rete elettrica<br />
           <span className="text-blue-600">e cosa serve per il net-zero?</span>
         </h1>
         <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-          Quattro livelli di simulazione interattiva per capire le sfide della transizione energetica —
-          dalla capacità installata ai vincoli di trasmissione inter-zonale.
+          Quattro livelli di simulazione interattiva per capire le sfide della transizione energetica.
         </p>
       </div>
 
@@ -112,6 +108,8 @@ export default function Home() {
           )
         })}
       </div>
+
+      <DataSources level={0} />
 
     </div>
   )

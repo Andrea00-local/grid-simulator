@@ -2,8 +2,9 @@ import { useState } from 'react'
 import { X, FlaskConical, XCircle } from 'lucide-react'
 
 const NOT_INCLUDED = [
-  'Componente economica. Ciascuna fonte ha costi differenti ma qui non sono presenti considerazioni economiche.',
-  'Variabilità meteorologica. È presente il giorno con le condizioni meteo avverse, ma ci possono essere ulteriori eventi non considerati, come siccità che incidono anche sull\'idroelettrico.',
+  'Componente economica. Ciascuna fonte ha costi differenti, che le può rendere molto sconvenienti da installare, ma qui non sono presenti considerazioni economiche.',
+  'Variabilità meteorologica. È possibile simulare una giornata con le condizioni meteo avverse, ma ci possono essere ulteriori eventi non considerati, come siccità che incidono anche sull\'idroelettrico.',
+  'Capacità limitata. Per alcune fonti rinnovabili non è possibile aumentare la capacità installata, semplicemente perché non c\'è più la fonte naturale disponibile. Tuttavia nel simulatore non c\'è nessun limite di installazione.',
   'Stabilità di rete. Qui si considera il bilancio ogni ora, ma in una rete reale lo si fa ad ogni secondo, per mantenere la frequenza e la tensione sempre stabile.',
   'Congestioni. La rete reale porta elettricità a milioni di utenti da milioni di punti di produzione, ed è quindi molto più complessa e può dare origine anche a congestioni locali.',
   'Emissioni complessive. Si è utilizzata la metodologia di ISPRA per misurare le emissioni, ma questa considera solo quelle derivanti da combustione diretta, tralasciando quindi quelle derivanti dall\'elettricità importata o indirettamente per le fonti rinnovabili.',

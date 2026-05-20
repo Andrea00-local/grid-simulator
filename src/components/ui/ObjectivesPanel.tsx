@@ -2,16 +2,16 @@ import { useSimStore, type TargetYear } from '@/store/simulationStore'
 import { TargetBar } from './TargetBar'
 import { ITALY_CO2_BASELINE_MT } from '@/models/constants'
 
-const RENEWABLE_TARGETS: Record<TargetYear, { value: number; label: string; noTarget?: boolean }> = {
-  2030: { value: 63,  label: 'Target PNIEC 2030: 63%'          },
-  2040: { value: 100, label: 'Nessun obiettivo specifico', noTarget: true },
-  2050: { value: 100, label: 'Nessun obiettivo specifico', noTarget: true },
+const RENEWABLE_TARGETS: Record<TargetYear, { value: number; label: string; noTarget?: boolean; tooltip: string }> = {
+  2030: { value: 63,  label: 'Target PNIEC 2030: 63%',   tooltip: 'Quota di elettricità prodotta da fonti rinnovabili nel mix complessivo nazionale. Nel PNIEC l\'Italia si è imposta l\'obiettivo di raggiungere il 63%.' },
+  2040: { value: 100, label: 'Nessun obiettivo specifico', noTarget: true, tooltip: 'Quota di elettricità prodotta da fonti rinnovabili nel mix complessivo nazionale. Negli impegni europei non c\'è un target obbligatorio.' },
+  2050: { value: 100, label: 'Nessun obiettivo specifico', noTarget: true, tooltip: 'Quota di elettricità prodotta da fonti rinnovabili nel mix complessivo nazionale. Negli impegni europei non c\'è un target obbligatorio.' },
 }
 
-const EMISSIONS_TARGETS: Record<TargetYear, { target: number; max: number; label: string }> = {
-  2030: { target: 49, max: 100, label: 'Target PNIEC 2030: 49 MtCO₂' },
-  2040: { target: 12.5, max: 100, label: 'Target 2040: 12,5 MtCO₂'        },
-  2050: { target:  0,   max:  50, label: 'Target net-zero 2050: 0 MtCO₂'  },
+const EMISSIONS_TARGETS: Record<TargetYear, { target: number; max: number; label: string; tooltip: string }> = {
+  2030: { target: 49,   max: 100, label: 'Target PNIEC 2030: 49 MtCO₂',        tooltip: 'Emissioni totali di CO₂ del sistema elettrico nazionale. L\'obiettivo è rispettare l\'impegno di ridurre del 55% rispetto al 1990.' },
+  2040: { target: 12.5, max: 100, label: 'Target 2040: 12,5 MtCO₂',             tooltip: 'Emissioni totali di CO₂ del sistema elettrico nazionale. L\'obiettivo è rispettare l\'impegno di ridurre del 90% rispetto al 1990.' },
+  2050: { target:  0,   max:  50, label: 'Target net-zero 2050: 0 MtCO₂',       tooltip: 'Emissioni totali di CO₂ del sistema elettrico nazionale. L\'obiettivo è rispettare l\'impegno di azzerarle completamente nel 2050.' },
 }
 
 interface Props {
@@ -50,7 +50,7 @@ export function ObjectivesPanel({ coverage, renewableShare, avoidedMt }: Props) 
             ok:   'Copertura parziale, quasi al sicuro',
             good: '✓ Domanda completamente coperta',
           }}
-          tooltip="Misura quanta domanda elettrica nazionale è coperta dalla tua produzione. Sotto il 100% devi importare o rischi blackout."
+          tooltip="Misura quanta domanda elettrica è coperta dalla tua produzione. Qualunque valore sotto il 100% è un problema per il sistema."
         />
 
         {/* Rinnovabili — centre, primary goal */}
@@ -69,7 +69,7 @@ export function ObjectivesPanel({ coverage, renewableShare, avoidedMt }: Props) 
             ok:   'Sulla strada giusta',
             good: '✓ Target raggiunto',
           }}
-          tooltip="Quota di elettricità prodotta da fonti rinnovabili (solare, eolico, idro, geotermico, biomasse) sul totale del mix energetico nazionale."
+          tooltip={renewTarget.tooltip}
         />
 
         {/* Emissioni */}
@@ -87,7 +87,7 @@ export function ObjectivesPanel({ coverage, renewableShare, avoidedMt }: Props) 
             ok:   'Vicino al target, riduci ancora',
             good: '✓ Target di emissioni raggiunto',
           }}
-          tooltip="Emissioni totali di CO₂ del sistema elettrico nazionale. Per il net-zero al 2050 devono arrivare a zero."
+          tooltip={emisTarget.tooltip}
         />
 
       </div>
